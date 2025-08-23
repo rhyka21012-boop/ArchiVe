@@ -37,10 +37,19 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         //minSdk = flutter.minSdkVersion
-        minSdk = 23
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+
+        // local.properties から flutter SDK の値を読み込む
+        val localProperties = gradleLocalProperties(rootDir)
+        
+        minSdk = localProperties["flutter.minSdkVersion"]?.toString()?.toInt() ?: 23
+        targetSdk = localProperties["flutter.targetSdkVersion"]?.toString()?.toInt() ?: 34
+        versionCode = localProperties["flutter.versionCode"]?.toString()?.toInt() ?: 1
+        versionName = localProperties["flutter.versionName"]?.toString() ?: "1.0"
+        
+        //minSdk = 23
+        //targetSdk = flutter.targetSdkVersion
+        //versionCode = flutter.versionCode
+        //versionName = flutter.versionName
     }
 
     signingConfigs {
