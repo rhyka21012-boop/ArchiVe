@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "116483118933",
+    "project_id": "archive-66d76",
+    "storage_bucket": "archive-66d76.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116483118933:android:452e62517f74a272e601dc",
+        "android_client_info": {
+          "package_name": "com.walkinggoblins.archive"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyIeeGAQ9OmZkewhgmIrbaj_CLHauXtPQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

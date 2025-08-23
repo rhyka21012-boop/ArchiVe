@@ -1,0 +1,92 @@
+import 'dart:io'; // プラットフォーム判定に必要
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+class MyAdWidgetRect extends StatefulWidget {
+  const MyAdWidgetRect({Key? key}) : super(key: key);
+
+  @override
+  _MyAdWidgetState createState() => _MyAdWidgetState();
+}
+
+class _MyAdWidgetState extends State<MyAdWidgetRect> {
+  late BannerAd _bannerAdRect; // バナー広告のインスタンス
+  bool _isAdLoaded = false; // 広告がロード済みかどうかを管理
+
+  @override
+  void initState() {
+    super.initState();
+
+    // テスト用広告ユニットID（Google公式のテストID）
+    const String testAdUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111';
+    const String testAdUnitIdIOS = 'ca-app-pub-3940256099942544/2934735716';
+
+    // 本番用広告ユニットID（AdMobで発行されたIDを使用）
+    const String productionAdUnitIdAndroid =
+        'ca-app-pub-8268997781284735/1404992063';
+    const String productionAdUnitIdIOS =
+        'ca-app-pub-8268997781284735/1761049434';
+
+    // テストモードの切り替え（true: テスト広告, false: 本番広告）
+    const bool isTestMode = true;
+
+    // プラットフォームごとに適切な広告ユニットIDを選択
+    String adUnitId;
+    if (Platform.isAndroid) {
+      adUnitId = isTestMode ? testAdUnitIdAndroid : productionAdUnitIdAndroid;
+    } else if (Platform.isIOS) {
+      adUnitId = isTestMode ? testAdUnitIdIOS : productionAdUnitIdIOS;
+    } else {
+      debugPrint('Unsupported platform');
+      return; // iOSまたはAndroid以外の環境では処理を行わない
+    }
+
+    // バナー広告のインスタンスを生成
+    _bannerAdRect = BannerAd(
+      adUnitId: adUnitId, // 選択された広告ユニットID
+      size: AdSize.mediumRectangle, // バナー広告のサイズ（標準）
+      request: const AdRequest(), // 広告リクエスト
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          // 広告が正常にロードされた場合
+          setState(() {
+            _isAdLoaded = true;
+          });
+          debugPrint('Ad loaded successfully.');
+        },
+        onAdFailedToLoad: (ad, error) {
+          // 広告のロードが失敗した場合
+          debugPrint('Ad failed to load: $error');
+          ad.dispose(); // メモリリークを防ぐためリソースを解放
+          setState(() {
+            _isAdLoaded = false; // 広告のロードに失敗した場合は非表示
+          });
+        },
+      ),
+    )..load(); // 広告のロードを開始
+  }
+
+  @override
+  void dispose() {
+    // ウィジェットが破棄される際に広告リソースを解放
+    _bannerAdRect.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isAdLoaded) {
+      // 広告がロードされていない場合は空のウィジェットを返す
+      return const SizedBox.shrink();
+    }
+
+    // 広告が正常にロードされた場合のみ表示
+    return Container(
+      //width: _bannerAd.size.width.toDouble(), // 横幅いっぱいに広げる
+      width: double.infinity, // 「横幅をデバイスの横幅いっぱいに広げる」場合
+      height: _bannerAdRect.size.height.toDouble(), // 広告の高さを指定
+      alignment: Alignment.center, // 中央揃え
+      child: AdWidget(ad: _bannerAdRect), // バナー広告を表示
+    );
+  }
+}
