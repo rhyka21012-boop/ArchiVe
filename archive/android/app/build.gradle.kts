@@ -19,7 +19,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.walkinggoblins.archive"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -43,7 +43,6 @@ android {
         versionCode = 1
         versionName = "1.0"
         
-        //minSdk = 23
         //targetSdk = flutter.targetSdkVersion
         //versionCode = flutter.versionCode
         //versionName = flutter.versionName
@@ -51,10 +50,10 @@ android {
 
     signingConfigs {
     create("release") {
-        keyAlias = keystoreProperties["keyAlias"] as String
-        keyPassword = keystoreProperties["keyPassword"] as String
-        storeFile = file(keystoreProperties["storeFile"] as String)
-        storePassword = keystoreProperties["storePassword"] as String
+        keyAlias = keystoreProperties["keyAlias"]?.toString()
+        keyPassword = keystoreProperties["keyPassword"]?.toString()
+        storeFile = keystoreProperties["storeFile"]?.toString()?.let { file(it) }
+        storePassword = keystoreProperties["storePassword"]?.toString()
     }
 }
 
