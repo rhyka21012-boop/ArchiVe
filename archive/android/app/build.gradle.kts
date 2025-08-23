@@ -1,6 +1,5 @@
 import java.util.Properties
 import java.io.FileInputStream
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
     id("com.android.application")
@@ -42,10 +41,10 @@ android {
         // local.properties から flutter SDK の値を読み込む
         val localProperties = gradleLocalProperties(rootDir)
         
-        minSdk = localProperties["flutter.minSdkVersion"]?.toString()?.toInt() ?: 23
-        targetSdk = localProperties["flutter.targetSdkVersion"]?.toString()?.toInt() ?: 34
-        versionCode = localProperties["flutter.versionCode"]?.toString()?.toInt() ?: 1
-        versionName = localProperties["flutter.versionName"]?.toString() ?: "1.0"
+        minSdk = 23
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
         
         //minSdk = 23
         //targetSdk = flutter.targetSdkVersion
