@@ -28,7 +28,7 @@ class _MyAdWidgetState extends State<MyAdWidget> {
         'ca-app-pub-8268997781284735/6780895685';
 
     // テストモードの切り替え（true: テスト広告, false: 本番広告）
-    const bool isTestMode = true;
+    const bool isTestMode = false;
 
     // プラットフォームごとに適切な広告ユニットIDを選択
     String adUnitId;
