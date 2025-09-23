@@ -87,6 +87,16 @@ class _DetailPageState extends State<DetailPage> {
 
   bool _isPremium = false;
 
+  //ローカル画像
+  //表示されているページ数保持
+  int _localImageCorrentIndex = 1;
+  //最大ページ数保持
+  int _localImageMaxIndex = 1;
+
+  //リスト一覧
+  List<String> _listNames = [];
+  String? isSelectedValue;
+
   @override
   void initState() {
     super.initState();
@@ -100,9 +110,7 @@ class _DetailPageState extends State<DetailPage> {
     }
     _updatePalette();
 
-    if (_localImagePaths.isNotEmpty) {
-      _loadLocalImages();
-    }
+    _loadLocalImages();
 
     _originalUrl = widget.url ?? '';
     _urlController.text = _originalUrl;
@@ -117,6 +125,8 @@ class _DetailPageState extends State<DetailPage> {
     }
 
     _checkSubscriptionStatus();
+
+    _loadLists();
   }
 
   void _initializeControllers() {
@@ -239,8 +249,16 @@ class _DetailPageState extends State<DetailPage> {
       _originalUrl = newUrl;
     }
 
+    String? toSaveListName;
+
+    if (isSelectedValue == '選択なし') {
+      toSaveListName = '';
+    } else {
+      toSaveListName = isSelectedValue;
+    }
+
     final data = {
-      'listName': widget.listName,
+      'listName': toSaveListName,
       'url': _urlController.text,
       'title': _titleController.text,
       'image': widget.image ?? _thumbnailUrl,
@@ -412,6 +430,11 @@ class _DetailPageState extends State<DetailPage> {
                 child: PageView.builder(
                   itemCount:
                       _localImagePaths.length + 1, //1ページ目：サムネ、2ページ目以降：ローカル画像
+                  onPageChanged: (index) {
+                    setState(() {
+                      _localImageCorrentIndex = index + 1;
+                    });
+                  },
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       if ((widget.image ?? _thumbnailUrl) != null) {
@@ -506,6 +529,28 @@ class _DetailPageState extends State<DetailPage> {
               ),
 
               //],
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  margin: EdgeInsets.only(top: 2.0),
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.image_outlined, color: Colors.white, size: 18),
+                      Text(
+                        '$_localImageCorrentIndex/$_localImageMaxIndex',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               if (isEditing) ...[
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
@@ -560,6 +605,7 @@ class _DetailPageState extends State<DetailPage> {
                   const SizedBox(height: 10),
                 ],
               ),
+              _buildListDropdownButton(),
 
               _buildTextField(_urlController, 'URL', 'https://archive/...'),
               _buildTextField(
@@ -600,8 +646,6 @@ class _DetailPageState extends State<DetailPage> {
               ),
               _buildMemoTextField(),
 
-              //_buildTagField(),
-              //_buildMemoArea(),
               const SizedBox(height: 70),
             ],
           ),
@@ -817,6 +861,64 @@ class _DetailPageState extends State<DetailPage> {
   void _removeAutocompleteOverlay() {
     _autocompleteOverlay?.remove();
     _autocompleteOverlay = null;
+  }
+
+  //===========================
+  //リスト選択のドロップダウンリスト
+  //===========================
+  Widget _buildListDropdownButton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('リスト', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+              decoration: BoxDecoration(
+                color: isEditing ? Colors.white : Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButton(
+                items:
+                    _listNames.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                value: isSelectedValue,
+                onChanged:
+                    !isEditing
+                        ? null
+                        : (String? value) {
+                          setState(() {
+                            isSelectedValue = value!;
+                          });
+                        },
+              ),
+            ),
+            SizedBox(),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Future<void> _loadLists() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      final loadedLists = prefs.getStringList('all_lists') ?? [];
+      // 先頭に「選択なし」を追加
+      _listNames = ['選択なし', ...loadedLists];
+      if (widget.listName == '') {
+        isSelectedValue = '選択なし';
+      } else {
+        isSelectedValue = widget.listName;
+      }
+    });
   }
 
   //======================
@@ -1039,6 +1141,7 @@ class _DetailPageState extends State<DetailPage> {
     final paths = prefs.getStringList(key) ?? [];
     setState(() {
       _localImagePaths = paths;
+      _localImageMaxIndex = _localImagePaths.length + 1;
     });
   }
 
@@ -1065,6 +1168,7 @@ class _DetailPageState extends State<DetailPage> {
 
     setState(() {
       _localImagePaths.add(savedPath);
+      _localImageMaxIndex = _localImagePaths.length + 1;
     });
 
     await _saveLocalImages();

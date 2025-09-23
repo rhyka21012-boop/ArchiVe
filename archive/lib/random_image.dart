@@ -39,18 +39,24 @@ class _RandomImageContainerState extends State<RandomImageContainer> {
     final data = prefs.getStringList('saved_metadata') ?? [];
 
     final filteredItems =
-        data
-            .map((e) => jsonDecode(e) as Map<String, dynamic>)
-            .where(
-              (item) =>
-                  item['listName'] == widget.listName && item['image'] != null,
-            )
-            .toList();
+        data.map((e) => jsonDecode(e) as Map<String, dynamic>).where((item) {
+          // 「全てのアイテム」ならlistNameで絞り込まない
+          final hasImage = item['image'] != null;
+          if (widget.listName == '全てのアイテム') {
+            return hasImage;
+          } else {
+            return item['listName'] == widget.listName && hasImage;
+          }
+        }).toList();
 
     if (filteredItems.isNotEmpty) {
       filteredItems.shuffle();
       setState(() {
         _randomItem = filteredItems.first;
+      });
+    } else {
+      setState(() {
+        _randomItem = null;
       });
     }
   }
@@ -126,167 +132,174 @@ class _RandomImageContainerState extends State<RandomImageContainer> {
               ),
             ),
 
-            Positioned(
-              top: 0,
-              right: 0,
-              child: IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                onPressed: () {
-                  showModalBottomSheet(
-                    backgroundColor: colorScheme.secondary,
-                    context: context,
-                    builder: (BuildContext context) {
-                      return SafeArea(
-                        child: Wrap(
-                          children: [
-                            ListTile(
-                              leading: Icon(
-                                Icons.edit,
-                                color: colorScheme.onPrimary,
-                              ),
-                              title: Text(
-                                'リスト名を変更',
-                                style: TextStyle(color: colorScheme.onPrimary),
-                              ),
-                              onTap: (() async {
-                                Navigator.of(context).pop();
-                                _showChangeNameModal();
-                              }),
-                            ),
-                            ListTile(
-                              leading: Icon(
-                                Icons.delete,
-                                color: colorScheme.onPrimary,
-                              ),
-                              title: Text(
-                                'リストを削除',
-                                style: TextStyle(color: colorScheme.onPrimary),
-                              ),
-                              onTap: () async {
-                                Navigator.of(
-                                  context,
-                                ).pop(); // BottomSheetを閉じてからダイアログを表示
+            widget.listName != '全てのアイテム'
+                ? Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        backgroundColor: colorScheme.secondary,
+                        context: context,
+                        builder: (BuildContext context) {
+                          return SafeArea(
+                            child: Wrap(
+                              children: [
+                                ListTile(
+                                  leading: Icon(
+                                    Icons.edit,
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                  title: Text(
+                                    'リスト名を変更',
+                                    style: TextStyle(
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                  onTap: (() async {
+                                    Navigator.of(context).pop();
+                                    _showChangeNameModal();
+                                  }),
+                                ),
+                                ListTile(
+                                  leading: Icon(
+                                    Icons.delete,
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                  title: Text(
+                                    'リストを削除',
+                                    style: TextStyle(
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // BottomSheetを閉じてからダイアログを表示
 
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      backgroundColor: colorScheme.secondary,
-                                      title: const Center(
-                                        child: Text(
-                                          'このリストを削除しますか？',
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      content: const Text(
-                                        'リスト内のアイテムも削除されます。',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      actionsAlignment:
-                                          MainAxisAlignment.center,
-                                      actions: <Widget>[
-                                        TextButton(
-                                          style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty.all(
-                                                  Colors.grey[300],
-                                                ),
-                                            foregroundColor:
-                                                MaterialStateProperty.all(
-                                                  Colors.black,
-                                                ),
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          backgroundColor:
+                                              colorScheme.secondary,
+                                          title: const Center(
+                                            child: Text(
+                                              'このリストを削除しますか？',
+                                              textAlign: TextAlign.center,
+                                            ),
                                           ),
-                                          child: const Text('キャンセル'),
-                                          onPressed: () {
-                                            Navigator.of(
-                                              context,
-                                            ).pop(); // ダイアログを閉じる
-                                          },
-                                        ),
-                                        TextButton(
-                                          style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty.all(
-                                                  colorScheme.primary,
-                                                ),
-                                            foregroundColor:
-                                                MaterialStateProperty.all(
-                                                  Colors.white,
-                                                ),
+                                          content: const Text(
+                                            'リスト内のアイテムも削除されます。',
+                                            textAlign: TextAlign.center,
                                           ),
-                                          child: const Text('削除'),
-                                          onPressed: () async {
-                                            Navigator.of(
-                                              context,
-                                            ).pop(); // ダイアログを閉じる
-                                            // 削除処理開始
-                                            final prefs =
-                                                await SharedPreferences.getInstance();
+                                          actionsAlignment:
+                                              MainAxisAlignment.center,
+                                          actions: <Widget>[
+                                            TextButton(
+                                              style: ButtonStyle(
+                                                backgroundColor:
+                                                    MaterialStateProperty.all(
+                                                      Colors.grey[300],
+                                                    ),
+                                                foregroundColor:
+                                                    MaterialStateProperty.all(
+                                                      Colors.black,
+                                                    ),
+                                              ),
+                                              child: const Text('キャンセル'),
+                                              onPressed: () {
+                                                Navigator.of(
+                                                  context,
+                                                ).pop(); // ダイアログを閉じる
+                                              },
+                                            ),
+                                            TextButton(
+                                              style: ButtonStyle(
+                                                backgroundColor:
+                                                    MaterialStateProperty.all(
+                                                      colorScheme.primary,
+                                                    ),
+                                                foregroundColor:
+                                                    MaterialStateProperty.all(
+                                                      Colors.white,
+                                                    ),
+                                              ),
+                                              child: const Text('削除'),
+                                              onPressed: () async {
+                                                Navigator.of(
+                                                  context,
+                                                ).pop(); // ダイアログを閉じる
+                                                // 削除処理開始
+                                                final prefs =
+                                                    await SharedPreferences.getInstance();
 
-                                            //all_listsから削除
-                                            final allLists =
-                                                prefs.getStringList(
+                                                //all_listsから削除
+                                                final allLists =
+                                                    prefs.getStringList(
+                                                      'all_lists',
+                                                    ) ??
+                                                    [];
+                                                final updatedLists =
+                                                    allLists
+                                                        .where(
+                                                          (item) =>
+                                                              item !=
+                                                              widget.listName,
+                                                        )
+                                                        .toList();
+                                                await prefs.setStringList(
                                                   'all_lists',
-                                                ) ??
-                                                [];
-                                            final updatedLists =
-                                                allLists
-                                                    .where(
-                                                      (item) =>
-                                                          item !=
-                                                          widget.listName,
-                                                    )
-                                                    .toList();
-                                            await prefs.setStringList(
-                                              'all_lists',
-                                              updatedLists,
-                                            );
-
-                                            //savedMeta_dataから削除
-                                            final savedMetadata =
-                                                prefs.getStringList(
-                                                  'saved_metadata',
-                                                ) ??
-                                                [];
-                                            final updatedMetadata =
-                                                savedMetadata.where((item) {
-                                                  final map =
-                                                      jsonDecode(item)
-                                                          as Map<
-                                                            String,
-                                                            dynamic
-                                                          >;
-                                                  return map['listName'] !=
-                                                      widget.listName;
-                                                }).toList();
-                                            final success = await prefs
-                                                .setStringList(
-                                                  'saved_metadata',
-                                                  updatedMetadata,
+                                                  updatedLists,
                                                 );
 
-                                            await _loadRandomItem();
+                                                //savedMeta_dataから削除
+                                                final savedMetadata =
+                                                    prefs.getStringList(
+                                                      'saved_metadata',
+                                                    ) ??
+                                                    [];
+                                                final updatedMetadata =
+                                                    savedMetadata.where((item) {
+                                                      final map =
+                                                          jsonDecode(item)
+                                                              as Map<
+                                                                String,
+                                                                dynamic
+                                                              >;
+                                                      return map['listName'] !=
+                                                          widget.listName;
+                                                    }).toList();
+                                                final success = await prefs
+                                                    .setStringList(
+                                                      'saved_metadata',
+                                                      updatedMetadata,
+                                                    );
 
-                                            if (success) {
-                                              widget.onDeleted
-                                                  ?.call(); //削除処理の最後に親に通知
-                                            } else {}
-                                          },
-                                        ),
-                                      ],
+                                                await _loadRandomItem();
+
+                                                if (success) {
+                                                  widget.onDeleted
+                                                      ?.call(); //削除処理の最後に親に通知
+                                                } else {}
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
                                   },
-                                );
-                              },
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
+                  ),
+                )
+                : const SizedBox.shrink(),
           ],
         ),
       ),

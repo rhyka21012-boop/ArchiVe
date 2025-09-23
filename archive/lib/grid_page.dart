@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'detail_page.dart';
 //import 'list_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class GridPage extends StatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -49,11 +52,15 @@ class GridPageState extends State<GridPage> {
   //bool get _showFab =>
   //    _scrollController.position.userScrollDirection == ScrollDirection.reverse;
 
+  //ローカル画像のパスを URL ごとに保存
+  Map<String, List<String>> _localImagesMap = {};
+
   @override
   void initState() {
     //_scrollController.dispose();
     super.initState();
     _searchMetadata();
+    _loadLocalImages();
   }
 
   /*
@@ -120,6 +127,10 @@ class GridPageState extends State<GridPage> {
                   ),
                   itemBuilder: (context, index) {
                     final item = itemsToShow[index];
+
+                    final url = item['url'] ?? '';
+                    final localPaths = _localImagesMap[url] ?? [];
+
                     String? rating = item['rating'];
                     String? iconPath;
                     switch (rating) {
@@ -216,29 +227,37 @@ class GridPageState extends State<GridPage> {
                                         );
                                       },
                                     )
-                                    : Container(
-                                      height: 100,
-                                      color: Colors.grey[300],
-                                      alignment: Alignment.center,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(
-                                            Icons.broken_image,
-                                            size: 40,
-                                            color: Colors.grey,
+                                    //サムネイルがない場合、ローカル画像またはプレースホルダーを表示
+                                    : (localPaths.isNotEmpty
+                                        ? Image.file(
+                                          File(localPaths.first),
+                                          height: 100,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        )
+                                        : Container(
+                                          height: 100,
+                                          color: Colors.grey[300],
+                                          alignment: Alignment.center,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(
+                                                Icons.broken_image,
+                                                size: 40,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Text(
+                                                '画像を読み込めません',
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            '画像を読み込めません',
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                        )),
                                 const SizedBox(height: 8),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -554,6 +573,29 @@ class GridPageState extends State<GridPage> {
     );
   }
 
+  //ローカル画像リストを定義
+  List<String> _localImagePaths = [];
+
+  //SharedPreferencesから画像パスを読み込み／保存
+  Future<void> _loadLocalImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, List<String>> tempMap = {};
+
+    for (final item in _searchedItems) {
+      final url = item['url'] ?? '';
+      if (url.isEmpty) continue;
+      final key = 'local_images_$url';
+      final paths = prefs.getStringList(key) ?? [];
+      tempMap[url] = paths;
+    }
+
+    if (mounted) {
+      setState(() {
+        _localImagesMap = tempMap;
+      });
+    }
+  }
+
   //===
   //検索
   //===
@@ -571,6 +613,7 @@ class GridPageState extends State<GridPage> {
     setState(() {
       _searchedItems =
           data.map((e) => jsonDecode(e) as Map<String, dynamic>).where((item) {
+            //final String url = item['url']?.toString() ?? '';
             final String title = _normalize(item['title']?.toString() ?? '');
             final String rating = item['rating']?.toString() ?? '';
             final String listName = item['listName']?.toString() ?? '';

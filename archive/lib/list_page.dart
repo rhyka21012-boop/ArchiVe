@@ -300,9 +300,49 @@ class ListPageState extends State<ListPage>
                                     mainAxisSpacing: 8,
                                     childAspectRatio: 2,
                                   ),
-                              itemCount: _listNames.length,
+                              itemCount:
+                                  _listNames.length +
+                                  1, //+1することで、先頭に「全アイテム」分を追加
                               itemBuilder: (context, index) {
-                                final listName = _listNames[index];
+                                if (index == 0) {
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      // ここで「全てのアイテム」をタップしたときの処理
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => GridPage(
+                                                selectedItems:
+                                                    <String, List<String>>{},
+                                                searchText: '',
+                                                rating: '',
+                                                listName: '', // ← 特別な値を渡す
+                                                onDeleted: () async {
+                                                  await _loadLists();
+                                                },
+                                              ),
+                                        ),
+                                      );
+                                      await _loadLists();
+                                      setState(() {});
+                                    },
+                                    child: RandomImageContainer(
+                                      listName: '全てのアイテム',
+                                      onDeleted: () async {
+                                        await _loadLists();
+                                        setState(() {});
+                                      },
+                                      onChanged: () async {
+                                        await _loadLists();
+                                        setState(() {});
+                                      },
+                                    ),
+                                  );
+                                }
+                                // 1番目以降は通常のリスト表示
+                                final listName =
+                                    _listNames[index - 1]; // -1 でずらす
                                 return GestureDetector(
                                   onTap: () async {
                                     // GridPageから戻ってきたら続きが実行される
@@ -378,6 +418,7 @@ class ListPageState extends State<ListPage>
                       //labelShadow: ,
                       onTap: () => _showAddListModal(),
                     ),
+                    /*
                     SpeedDialChild(
                       child: Icon(Icons.add, color: colorScheme.primary),
                       label: 'アイテムを追加',
@@ -393,6 +434,7 @@ class ListPageState extends State<ListPage>
                       elevation: 2,
                       onTap: () => _showAddItemModal(),
                     ),
+                    */
                   ],
                 )
                 : null,

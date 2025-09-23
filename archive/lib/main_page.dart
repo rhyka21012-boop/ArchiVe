@@ -1,3 +1,4 @@
+import 'package:archive_app/detail_page.dart';
 import 'package:flutter/material.dart';
 //import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,9 +43,21 @@ class _MainPageState extends State<MainPage> {
   }
 
   // BottomNavigationBarのタップイベント
-  void _onItemTapped(int index) {
+  void _onItemTapped(int index) async {
+    if (index == 2) {
+      // +アイコンをタップでDetailPageを開く
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DetailPage(listName: '選択なし')),
+      );
+      return; // ページ遷移したらBottomNavigationBarの選択は変更しない
+    }
     setState(() {
-      _selectedIndex = index;
+      if (index >= 3) {
+        _selectedIndex = index - 1; // 3→2, 4→3
+      } else {
+        _selectedIndex = index; // 0→0, 1→1
+      }
     });
   }
 
@@ -91,6 +104,10 @@ class _MainPageState extends State<MainPage> {
                   label: 'フォルダ',
                 ),
                 BottomNavigationBarItem(icon: Icon(Icons.search), label: '検索'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.add, size: 30),
+                  label: '',
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.whatshot),
                   label: '統計',
