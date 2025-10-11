@@ -171,10 +171,11 @@ class _DetailPageState extends State<DetailPage> {
         },
       );
       if (response.statusCode == 200) {
+        final html = response.body;
         final document = parse(response.body);
         final metaTags = document.head?.getElementsByTagName('meta') ?? [];
 
-        // og:imageを探す
+        // --- ① og:image を探す ---
         for (final tag in metaTags) {
           final property = tag.attributes['property'] ?? tag.attributes['name'];
           if (property == 'og:image' && tag.attributes['content'] != null) {
@@ -182,7 +183,7 @@ class _DetailPageState extends State<DetailPage> {
           }
         }
 
-        // og:imageがなければimgタグから代替画像を探す
+        // --- ② imgタグの代替画像を探す ---
         final imgTags = document.getElementsByTagName('img');
         for (final img in imgTags) {
           final src = img.attributes['src'];
@@ -195,10 +196,26 @@ class _DetailPageState extends State<DetailPage> {
             }
           }
         }
+
+        // --- ③ videoタグのposter属性を探す ---
+        final posterRegex = RegExp(
+          'poster=["\\\']([^"\\\']+)["\\\']',
+          caseSensitive: false,
+        );
+
+        final match = posterRegex.firstMatch(html);
+        if (match != null) {
+          final poster = match.group(1)!;
+          return poster.startsWith('http')
+              ? poster
+              : Uri.parse(url).resolve(poster).toString();
+        }
       }
     } catch (e) {
       debugPrint('データフェッチエラー: $e');
     }
+
+    // --- ④ 見つからなければnull ---
     return null;
   }
 
@@ -207,6 +224,33 @@ class _DetailPageState extends State<DetailPage> {
     final prefs = await SharedPreferences.getInstance();
     final newUrl = _urlController.text.trim();
     final colorScheme = Theme.of(context).colorScheme;
+
+    // URLが入力されているかチェック
+    if (newUrl.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: colorScheme.secondary,
+              title: const Text('URLが未入力です。', textAlign: TextAlign.center),
+              content: const Text('URLを入力してください。', textAlign: TextAlign.center),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                      colorScheme.primary,
+                    ),
+                    foregroundColor: MaterialStateProperty.all(Colors.black),
+                  ),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+      return; // 保存処理を中断
+    }
 
     // URLが変更されているかチェック
     if (widget.url != null && _originalUrl.trim() != newUrl) {
@@ -295,6 +339,8 @@ class _DetailPageState extends State<DetailPage> {
     if (success) {
       widget.onCreated?.call(); //作成処理の最後に親に通知
     } else {}
+
+    await _saveLocalImages();
   }
 
   @override
@@ -885,7 +931,10 @@ class _DetailPageState extends State<DetailPage> {
                     _listNames.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
-                        child: Text(value),
+                        child: Text(
+                          value,
+                          style: TextStyle(color: Colors.black),
+                        ),
                       );
                     }).toList(),
                 value: isSelectedValue,
@@ -1170,8 +1219,6 @@ class _DetailPageState extends State<DetailPage> {
       _localImagePaths.add(savedPath);
       _localImageMaxIndex = _localImagePaths.length + 1;
     });
-
-    await _saveLocalImages();
   }
 
   //削除処理
