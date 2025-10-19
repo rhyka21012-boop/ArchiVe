@@ -203,7 +203,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         final customerInfo = await Purchases.getCustomerInfo();
 
         // RevenueCatのEntitlement IDを確認（例: "premium"）
-        if (customerInfo.entitlements.all["premium"]?.isActive ?? false) {
+        if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('プレミアムを購入しました！')));

@@ -139,7 +139,7 @@ class _MainPageState extends State<MainPage> {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final isActive =
-          customerInfo.entitlements.all["premium"]?.isActive ?? false;
+          customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
       setState(() {
         _isPremium = isActive;
       });

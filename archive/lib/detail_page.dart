@@ -1242,7 +1242,7 @@ class _DetailPageState extends State<DetailPage> {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final isActive =
-          customerInfo.entitlements.all["premium"]?.isActive ?? false;
+          customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
       setState(() {
         _isPremium = isActive;
       });
@@ -1320,7 +1320,7 @@ class _DetailPageState extends State<DetailPage> {
         final customerInfo = await Purchases.getCustomerInfo();
 
         // RevenueCatのEntitlement IDを確認（例: "premium"）
-        if (customerInfo.entitlements.all["premium"]?.isActive ?? false) {
+        if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('プレミアムを購入しました！')));
