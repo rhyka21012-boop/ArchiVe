@@ -274,6 +274,7 @@ class GridPageState extends State<GridPage> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                SizedBox(height: 16),
                               ],
                             ),
                           ),

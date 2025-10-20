@@ -117,7 +117,8 @@ class _MainPageState extends State<MainPage> {
                   label: '設定',
                 ),
               ],
-              currentIndex: _selectedIndex,
+              currentIndex:
+                  _selectedIndex <= 1 ? _selectedIndex : _selectedIndex + 1,
               //unselectedItemColor: colorScheme.onPrimary,
               unselectedItemColor:
                   colorScheme.brightness == Brightness.dark
