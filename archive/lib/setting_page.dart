@@ -112,7 +112,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ),
 
           const Divider(),
-          const ListTile(title: Text('アプリバージョン'), subtitle: Text('v1.0.0')),
+          const ListTile(title: Text('アプリバージョン'), subtitle: Text('v1.1.0')),
           ListTile(
             title: const Text('プライバシーポリシー'),
             trailing: const Icon(Icons.open_in_new),
