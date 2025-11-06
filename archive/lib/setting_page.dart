@@ -132,12 +132,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ListTile(
             title: const Text('利用規約（EULA）を表示'),
             trailing: const Icon(Icons.open_in_new),
-            onTap: () {
-              launchUrl(
-                Uri.parse(
-                  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
-                ),
-              );
+            onTap: () async {
+              const url =
+                  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+              final uri = Uri.parse(url);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('リンクを開けませんでした')));
+              }
             },
           ),
         ],
