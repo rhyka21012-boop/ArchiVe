@@ -130,7 +130,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             },
           ),
           ListTile(
-            title: const Text('利用規約（EULA）を表示'),
+            title: const Text('利用規約（Apple標準EULA）'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
               const url =
