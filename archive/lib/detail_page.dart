@@ -727,8 +727,12 @@ class _DetailPageState extends State<DetailPage> {
             ),
             if (isEditing && withFetchTitle)
               TextButton.icon(
+                //デバッグ用切り替え箇所
+                //ローカルデバッグ用にプレミアム機能を開放
                 onPressed:
                     _isPremium ? _fetchTitleFromUrl : _showSubscriptionDialog,
+
+                //_fetchTitleFromUrl,
                 icon: Icon(
                   Icons.download,
                   size: 18,
@@ -913,6 +917,7 @@ class _DetailPageState extends State<DetailPage> {
   //リスト選択のドロップダウンリスト
   //===========================
   Widget _buildListDropdownButton() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -926,7 +931,9 @@ class _DetailPageState extends State<DetailPage> {
                 color: isEditing ? Colors.white : Colors.grey[300],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: DropdownButton(
+              child: DropdownButton<String>(
+                dropdownColor: Colors.white,
+                //style: TextStyle(color: colorScheme.onPrimary),
                 items:
                     _listNames.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(

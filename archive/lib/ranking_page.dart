@@ -1,6 +1,7 @@
 //import 'grid_page.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'detail_page.dart';
 
@@ -36,6 +37,8 @@ class _RankingPageState extends State<RankingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.unfocus();
     });
+
+    _loadLocalImages();
   }
 
   @override
@@ -93,6 +96,7 @@ class _RankingPageState extends State<RankingPage> {
                 itemCount: _rankingItems.length,
                 itemBuilder: (context, index) {
                   final item = _rankingItems[index];
+
                   return ListTile(
                     key: ValueKey(item['title']),
                     onTap: () async {
@@ -169,6 +173,8 @@ class _RankingPageState extends State<RankingPage> {
                           ),
 
                         const SizedBox(width: 8),
+                        _buildItemImageMini(item),
+                        /*
                         item['image'] != null
                             ? ClipRRect(
                               borderRadius: BorderRadius.circular(4),
@@ -187,6 +193,7 @@ class _RankingPageState extends State<RankingPage> {
                               ),
                             )
                             : const Icon(Icons.image, size: 40),
+                            */
                       ],
                     ),
                     trailing: IconButton(
@@ -361,6 +368,8 @@ class _RankingPageState extends State<RankingPage> {
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
+                      _buildItemImage(item),
+                      /*
                       item['image'] != null
                           ? Image.network(
                             item['image'],
@@ -369,7 +378,7 @@ class _RankingPageState extends State<RankingPage> {
                             //width: double.infinity,
                             fit: BoxFit.cover,
                           )
-                          : const Placeholder(fallbackHeight: 67),
+                          : const Placeholder(fallbackHeight: 67),*/
                       //const SizedBox(height: 12),
                       /*
                         Padding(
@@ -409,5 +418,120 @@ class _RankingPageState extends State<RankingPage> {
               .map((jsonStr) => jsonDecode(jsonStr) as Map<String, dynamic>)
               .toList();
     });
+  }
+
+  //ローカル画像のパスを URL ごとに保存
+  Map<String, List<String>> _localImagesMap = {};
+
+  //ローカル画像の読み込み
+  Future<void> _loadLocalImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, List<String>> tempMap = {};
+
+    for (final item in itemsToShow) {
+      final url = item['url'] ?? '';
+      if (url.isEmpty) continue;
+      final key = 'local_images_$url';
+      final paths = prefs.getStringList(key) ?? [];
+      tempMap[url] = paths;
+    }
+
+    if (mounted) {
+      setState(() {
+        _localImagesMap = tempMap;
+      });
+    }
+  }
+
+  // 表示優先順位: ネット画像 → ローカル画像 → 画像なしプレースホルダー
+  Widget _buildItemImage(Map<String, dynamic> item) {
+    final imageUrl = item['image'];
+    final url = item['url'] ?? '';
+    final localImages = _localImagesMap[url] ?? [];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      // ネット画像表示
+      return Image.network(
+        imageUrl,
+        height: 67,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // ネット画像エラー → ローカル画像にフォールバック
+          if (localImages.isNotEmpty) {
+            return Image.file(
+              File(localImages.first),
+              height: 67,
+              fit: BoxFit.cover,
+            );
+          }
+          return _fallbackNoImage();
+        },
+      );
+    }
+
+    // ネット画像なし → ローカル画像表示
+    if (localImages.isNotEmpty) {
+      return Image.file(File(localImages.first), height: 67, fit: BoxFit.cover);
+    }
+
+    // どちらもなし → No Image
+    return _fallbackNoImage();
+  }
+
+  Widget _fallbackNoImage() {
+    return Container(
+      height: 67,
+      color: Colors.grey[300],
+      child: const Center(child: Icon(Icons.photo, color: Colors.white70)),
+    );
+  }
+
+  //入れ替え可能リスト用に小さい画像を表示
+  Widget _buildItemImageMini(Map<String, dynamic> item) {
+    final imageUrl = item['image'];
+    final url = item['url'] ?? '';
+    final localImages = _localImagesMap[url] ?? [];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      // ネット画像表示
+      return Image.network(
+        imageUrl,
+        height: 40,
+        width: 40,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // ネット画像エラー → ローカル画像にフォールバック
+          if (localImages.isNotEmpty) {
+            return Image.file(
+              File(localImages.first),
+              height: 67,
+              fit: BoxFit.cover,
+            );
+          }
+          return _fallbackNoImageMini();
+        },
+      );
+    }
+
+    // ネット画像なし → ローカル画像表示
+    if (localImages.isNotEmpty) {
+      return Image.file(
+        File(localImages.first),
+        height: 40,
+        width: 40,
+        fit: BoxFit.cover,
+      );
+    }
+
+    // どちらもなし → No Image
+    return _fallbackNoImageMini();
+  }
+
+  Widget _fallbackNoImageMini() {
+    return Container(
+      height: 40,
+      color: Colors.grey[300],
+      child: const Center(child: Icon(Icons.photo, color: Colors.white70)),
+    );
   }
 }

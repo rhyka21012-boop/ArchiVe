@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart'; //AdMob用のライブラリをインポート
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,15 +16,17 @@ void main() async {
   await container.read(themeModeProvider.notifier).loadTheme();
   await container.read(themeColorProvider.notifier).loadColor();
 
+  // トラッキング許可ダイアログ
+  final status = await AppTrackingTransparency.requestTrackingAuthorization();
+
   // AdMobの初期化処理
-  // 初期化後に広告を表示できるようになります。
   await MobileAds.instance.initialize();
 
   //RevenueCat を初期化
   await Purchases.configure(
     PurchasesConfiguration("appl_kKWivbmxqAEXEBqUmLeiUoAyyRN"),
   );
-  runApp(MyApp());
+  //runApp(MyApp());
 
   runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 }

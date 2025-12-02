@@ -550,7 +550,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               ],
             ),
           ),
+          //デバッグ用切り替え箇所
+          //デバッグ用にプレミアム機能を開放
           if (!_isPremium) ...[
+            //if (false) ...[
             // ぼかし効果
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -1114,18 +1117,18 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final maxCount = ratingCounts.values.reduce((a, b) => a > b ? a : b);
 
     // グリッド線間隔を動的に決定
-    double interval;
+    int interval;
     if (maxCount < 6) {
       interval = 1;
     } else if (maxCount < 10) {
-      interval = maxY;
+      interval = maxY.ceil();
     } else {
-      interval = (maxY / 5).ceilToDouble(); // 約5本にする
+      interval = (maxY / 5).ceil(); // 約5本にする
     }
 
     //maxYより小さく補正
     if (interval >= maxY) {
-      interval = maxY / 2;
+      interval = (maxY / 2).ceil();
     }
 
     //棒グラフデータ
@@ -1349,7 +1352,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         show: true,
         drawHorizontalLine: true,
         drawVerticalLine: false, // 縦線を描画するか（棒グラフでは通常false）
-        horizontalInterval: (maxY / 5).ceilToDouble(),
+        horizontalInterval: (maxY / 5).ceil().toDouble(),
         getDrawingHorizontalLine:
             (value) => FlLine(color: colorScheme.onPrimary, strokeWidth: 0.5),
       ),
