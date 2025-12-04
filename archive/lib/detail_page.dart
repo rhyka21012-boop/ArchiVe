@@ -1193,7 +1193,7 @@ class _DetailPageState extends State<DetailPage> {
   //SharedPreferencesから画像パスを読み込み／保存
   Future<void> _loadLocalImages() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'local_images_${_urlController.text}';
+    final key = 'local_images_${widget.url}';
     final paths = prefs.getStringList(key) ?? [];
     setState(() {
       _localImagePaths = paths;
