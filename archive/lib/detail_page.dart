@@ -118,8 +118,6 @@ class _DetailPageState extends State<DetailPage> {
     _controllers['label'] = _labelController;
     _controllers['maker'] = _makerController;
 
-    _loadLocalImages();
-
     for (final key in _controllers.keys) {
       _controllers[key]!.addListener(() => _onFieldChanged(key));
     }
@@ -127,6 +125,8 @@ class _DetailPageState extends State<DetailPage> {
     _checkSubscriptionStatus();
 
     _loadLists();
+
+    _loadLocalImages();
   }
 
   void _initializeControllers() {
