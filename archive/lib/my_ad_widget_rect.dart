@@ -25,7 +25,8 @@ class _MyAdWidgetState extends State<MyAdWidgetRect> {
     const String productionAdUnitIdAndroid =
         'ca-app-pub-8268997781284735/1404992063';
     const String productionAdUnitIdIOS =
-        'ca-app-pub-8268997781284735/1761049434';
+        //'ca-app-pub-8268997781284735/1761049434';
+        'ca-app-pub-8268997781284735/7146088730';
 
     // テストモードの切り替え（true: テスト広告, false: 本番広告）
     const bool isTestMode = false;

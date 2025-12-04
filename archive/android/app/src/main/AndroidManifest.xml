@@ -4,7 +4,7 @@
         android:label="ArchiVe"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- AdMobアプリケーションID（リリース時は本番用IDに置き換え） -->
+        <!-- AdMobアプリケーションID（Android用） -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8268997781284735~2745112010"/> 
