@@ -110,8 +110,6 @@ class _DetailPageState extends State<DetailPage> {
     }
     _updatePalette();
 
-    _loadLocalImages();
-
     _originalUrl = widget.url ?? '';
     _urlController.text = _originalUrl;
     _controllers['cast'] = _castController;
@@ -119,6 +117,8 @@ class _DetailPageState extends State<DetailPage> {
     _controllers['series'] = _seriesController;
     _controllers['label'] = _labelController;
     _controllers['maker'] = _makerController;
+
+    _loadLocalImages();
 
     for (final key in _controllers.keys) {
       _controllers[key]!.addListener(() => _onFieldChanged(key));
