@@ -1193,10 +1193,14 @@ class _DetailPageState extends State<DetailPage> {
   //SharedPreferencesから画像パスを読み込み／保存
   Future<void> _loadLocalImages() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'local_images_${widget.url}';
-    final paths = prefs.getStringList(key) ?? [];
+    final key = 'local_images_${_urlController.text}';
+    final fileNames = prefs.getStringList(key) ?? [];
+
+    final directory = await getApplicationDocumentsDirectory();
     setState(() {
-      _localImagePaths = paths;
+      //_localImagePaths = paths;
+      _localImagePaths =
+          fileNames.map((name) => path.join(directory.path, name)).toList();
       _localImageMaxIndex = _localImagePaths.length + 1;
     });
   }
@@ -1205,7 +1209,8 @@ class _DetailPageState extends State<DetailPage> {
   Future<void> _saveLocalImages() async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'local_images_${_urlController.text}';
-    await prefs.setStringList(key, _localImagePaths);
+    final fileNames = _localImagePaths.map((p) => path.basename(p)).toList();
+    await prefs.setStringList(key, fileNames);
   }
 
   //追加処理

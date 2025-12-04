@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'detail_page.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class RankingPage extends StatefulWidget {
   @override
@@ -423,17 +425,22 @@ class _RankingPageState extends State<RankingPage> {
   //ローカル画像のパスを URL ごとに保存
   Map<String, List<String>> _localImagesMap = {};
 
-  //ローカル画像の読み込み
+  // ローカル画像の読み込み
   Future<void> _loadLocalImages() async {
     final prefs = await SharedPreferences.getInstance();
+    final directory = await getApplicationDocumentsDirectory();
     final Map<String, List<String>> tempMap = {};
 
     for (final item in itemsToShow) {
       final url = item['url'] ?? '';
       if (url.isEmpty) continue;
+
       final key = 'local_images_$url';
-      final paths = prefs.getStringList(key) ?? [];
-      tempMap[url] = paths;
+      final fileNames = prefs.getStringList(key) ?? [];
+
+      // Documentsディレクトリと組み合わせて絶対パスを作成
+      tempMap[url] =
+          fileNames.map((name) => path.join(directory.path, name)).toList();
     }
 
     if (mounted) {

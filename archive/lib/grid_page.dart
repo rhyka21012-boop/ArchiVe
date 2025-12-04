@@ -9,6 +9,7 @@ import 'detail_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 class GridPage extends StatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -577,17 +578,22 @@ class GridPageState extends State<GridPage> {
   //ローカル画像リストを定義
   List<String> _localImagePaths = [];
 
-  //SharedPreferencesから画像パスを読み込み／保存
+  // SharedPreferencesから画像パスを読み込み／保存
   Future<void> _loadLocalImages() async {
     final prefs = await SharedPreferences.getInstance();
+    final directory = await getApplicationDocumentsDirectory();
     final Map<String, List<String>> tempMap = {};
 
     for (final item in _searchedItems) {
       final url = item['url'] ?? '';
       if (url.isEmpty) continue;
+
       final key = 'local_images_$url';
-      final paths = prefs.getStringList(key) ?? [];
-      tempMap[url] = paths;
+      final fileNames = prefs.getStringList(key) ?? [];
+
+      // Documentsディレクトリの絶対パスと組み合わせる
+      tempMap[url] =
+          fileNames.map((name) => path.join(directory.path, name)).toList();
     }
 
     if (mounted) {
