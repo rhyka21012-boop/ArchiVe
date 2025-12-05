@@ -8,10 +8,15 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
+//import 'package:webview_flutter/webview_flutter.dart';
+//import 'package:webview_flutter_android/webview_flutter_android.dart';
+//import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'dart:async';
 //import 'tag_input_field.dart';
 //import 'package:flutter_tagging/flutter_tagging.dart';
 //import 'package:cloud_firestore/cloud_firestore.dart';
 //import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'view_counter.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
@@ -97,6 +102,9 @@ class _DetailPageState extends State<DetailPage> {
   List<String> _listNames = [];
   String? isSelectedValue;
 
+  //隠しWebView用のコントローラ
+  InAppWebViewController? _hiddenWebViewController;
+
   @override
   void initState() {
     super.initState();
@@ -151,16 +159,240 @@ class _DetailPageState extends State<DetailPage> {
   }
   */
 
-  // サムネイル画像の初期化
   Future<void> _initializeThumbnail(String url) async {
-    final fetchedThumb = await _fetchOgImageOrFallback(url);
-    if (fetchedThumb != null) {
-      setState(() => _thumbnailUrl = fetchedThumb);
+    final thumb = await fetchThumbnailByWebView(url);
+
+    if (thumb != null) {
+      setState(() => _thumbnailUrl = thumb);
+      await _saveChanges(exitEditMode: false);
     }
-    await _saveChanges(exitEditMode: false); //サムネが取得されたら保存
   }
 
+  /*
   // og:imageがなければimgタグから代替画像を探す処理を含む
+  Future<String?> _fetchOgImageOrFallback(String url) async {
+    // --- ① まず従来の http.get + HTML パースで試す ---
+    final fromHttp = await _fetchOgImageByHttp(url);
+    if (fromHttp != null) return fromHttp;
+
+    // --- ② 取れなければ WebView + JS 抽出 ---
+    final fromWebView = await _fetchOgImageByWebView(url);
+    if (fromWebView != null) return fromWebView;
+
+    return null;
+  }
+  */
+
+  /*
+  Future<String?> _fetchOgImageByHttp(String url) async {
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        },
+      );
+
+      if (response.statusCode != 200) return null;
+
+      final document = parse(response.body);
+      final metaTags = document.head?.getElementsByTagName('meta') ?? [];
+
+      // ① og:image
+      for (final tag in metaTags) {
+        final property = tag.attributes['property'] ?? tag.attributes['name'];
+        if (property != null &&
+            (property == 'og:image' || property == 'og:image:secure_url') &&
+            tag.attributes['content'] != null) {
+          return tag.attributes['content'];
+        }
+      }
+
+      // ①.5 itemprop="image"
+      for (final tag in metaTags) {
+        if (tag.attributes['itemprop'] == 'image' &&
+            tag.attributes['content'] != null) {
+          final src = tag.attributes['content']!;
+          return src.startsWith('http')
+              ? src
+              : Uri.parse(url).resolve(src).toString();
+        }
+      }
+
+      // ② WordPress画像など
+      final imgTags = document.getElementsByTagName('img');
+      for (final img in imgTags) {
+        final src = img.attributes['src'];
+        if (src != null && src.isNotEmpty) {
+          if (src.contains('/wp-content/uploads')) {
+            return src.startsWith('http')
+                ? src
+                : Uri.parse(url).resolve(src).toString();
+          }
+        }
+      }
+
+      // ③ video poster
+      final videoTags = document.getElementsByTagName('video');
+      for (final v in videoTags) {
+        final poster = v.attributes['poster'];
+        if (poster != null && poster.isNotEmpty) {
+          return poster.startsWith('http')
+              ? poster
+              : Uri.parse(url).resolve(poster).toString();
+        }
+      }
+
+      // ④ link rel="image_src"
+      final linkTags = document.head?.getElementsByTagName('link') ?? [];
+      for (final link in linkTags) {
+        if (link.attributes['rel'] == 'image_src' &&
+            link.attributes['href'] != null) {
+          final href = link.attributes['href']!;
+          return href.startsWith('http')
+              ? href
+              : Uri.parse(url).resolve(href).toString();
+        }
+      }
+    } catch (e) {
+      debugPrint('HTTPフェッチエラー: $e');
+    }
+
+    return null;
+  }
+  */
+
+  Future<String?> fetchThumbnailByWebView(String url) async {
+    final Completer<String?> completer = Completer();
+
+    // Invisible WebView を作る
+    final InAppWebView webView = InAppWebView(
+      initialUrlRequest: URLRequest(url: WebUri(url)),
+      initialSettings: InAppWebViewSettings(
+        javaScriptEnabled: true,
+        transparentBackground: true,
+      ),
+      onLoadStop: (controller, uri) async {
+        try {
+          final js = """
+          (function() {
+            var og = document.querySelector('meta[property="og:image"]');
+            if (og && og.content) return og.content;
+
+            var item = document.querySelector('meta[itemprop="image"]');
+            if (item && item.content) return item.content;
+
+            var video = document.querySelector('video');
+            if (video && video.poster) return video.poster;
+
+            var link = document.querySelector('link[rel="image_src"]');
+            if (link && link.href) return link.href;
+
+            var imgs = document.querySelectorAll('img');
+            for (var i = 0; i < imgs.length; i++) {
+              var s = imgs[i].src;
+              if (s.includes("/wp-content/uploads")) return s;
+            }
+
+            var img = document.querySelector('img');
+            if (img && img.src) return img.src;
+
+            return null;
+          })();
+        """;
+
+          final result = await controller.evaluateJavascript(source: js);
+
+          if (!completer.isCompleted) {
+            if (result == null || result == "null") {
+              completer.complete(null);
+            } else {
+              String resolved =
+                  Uri.parse(url).resolve(result.toString()).toString();
+              completer.complete(resolved);
+            }
+          }
+        } catch (_) {
+          if (!completer.isCompleted) completer.complete(null);
+        }
+      },
+    );
+
+    // WebView を非表示で画面に追加する
+    OverlayEntry entry = OverlayEntry(
+      builder: (_) {
+        return Positioned(
+          left: 0,
+          top: 0,
+          width: 1,
+          height: 1,
+          child: Opacity(opacity: 0.0, child: webView),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(entry);
+
+    // タイムアウト 10秒
+    return completer.future
+        .timeout(
+          Duration(seconds: 10),
+          onTimeout: () {
+            entry.remove();
+            return null;
+          },
+        )
+        .whenComplete(() {
+          entry.remove();
+        });
+  }
+
+  /*
+  Future<String?> _fetchOgImageByWebView(String url) async {
+    final controller =
+        WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    final js = """
+  (function() {
+    var og = document.querySelector('meta[property="og:image"]');
+    if (og && og.content) return og.content;
+
+    var img = document.querySelector('img');
+    if (img && img.src) return img.src;
+
+    return null;
+  })();
+  """;
+
+    final completer = Completer<String?>();
+
+    controller.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (_) async {
+          try {
+            final result = await controller.runJavascriptReturningResult(js);
+            final decoded = jsonDecode(result);
+            completer.complete(decoded?.toString());
+          } catch (e) {
+            print("JSエラー: $e");
+            completer.complete(null);
+          }
+        },
+      ),
+    );
+
+    await controller.loadRequest(Uri.parse(url));
+
+    // ⚠ iOS/Android で安定させるため、必ず Widget に組み込む必要があります
+    // 画面に表示しなくても良い場合：
+    // SizedBox(height: 0, width: 0, child: WebViewWidget(controller: controller));
+
+    return completer.future;
+  }
+  */
+
+  /*
   Future<String?> _fetchOgImageOrFallback(String url) async {
     try {
       final response = await http.get(
@@ -178,8 +410,21 @@ class _DetailPageState extends State<DetailPage> {
         // --- ① og:image を探す ---
         for (final tag in metaTags) {
           final property = tag.attributes['property'] ?? tag.attributes['name'];
-          if (property == 'og:image' && tag.attributes['content'] != null) {
+          if (property != null &&
+              (property == 'og:image' || property == 'og:image:secure_url') &&
+              tag.attributes['content'] != null) {
             return tag.attributes['content'];
+          }
+        }
+
+        // --- ①.5 <meta itemprop="image"> を探す ---
+        for (final tag in metaTags) {
+          if (tag.attributes['itemprop'] == 'image' &&
+              tag.attributes['content'] != null) {
+            final src = tag.attributes['content']!;
+            return src.startsWith('http')
+                ? src
+                : Uri.parse(url).resolve(src).toString();
           }
         }
 
@@ -198,26 +443,36 @@ class _DetailPageState extends State<DetailPage> {
         }
 
         // --- ③ videoタグのposter属性を探す ---
-        final posterRegex = RegExp(
-          'poster=["\\\']([^"\\\']+)["\\\']',
-          caseSensitive: false,
-        );
+        final videoTags = document.getElementsByTagName('video');
+        for (final v in videoTags) {
+          final poster = v.attributes['poster'];
+          if (poster != null && poster.isNotEmpty) {
+            return poster.startsWith('http')
+                ? poster
+                : Uri.parse(url).resolve(poster).toString();
+          }
+        }
 
-        final match = posterRegex.firstMatch(html);
-        if (match != null) {
-          final poster = match.group(1)!;
-          return poster.startsWith('http')
-              ? poster
-              : Uri.parse(url).resolve(poster).toString();
+        // --- ④<link rel="image_src">への対応 ---
+        final linkTags = document.head?.getElementsByTagName('link') ?? [];
+        for (final link in linkTags) {
+          if (link.attributes['rel'] == 'image_src' &&
+              link.attributes['href'] != null) {
+            final href = link.attributes['href']!;
+            return href.startsWith('http')
+                ? href
+                : Uri.parse(url).resolve(href).toString();
+          }
         }
       }
     } catch (e) {
       debugPrint('データフェッチエラー: $e');
     }
 
-    // --- ④ 見つからなければnull ---
+    // --- ⑤ 見つからなければnull ---
     return null;
   }
+  */
 
   //入力情報を保存
   Future<void> _saveChanges({bool exitEditMode = true}) async {
@@ -564,6 +819,19 @@ class _DetailPageState extends State<DetailPage> {
                                     size: 20,
                                   ),
                                 ),
+                              ),
+                            ),
+                            Positioned(
+                              width: 0,
+                              height: 0,
+                              child: InAppWebView(
+                                initialSettings: InAppWebViewSettings(
+                                  javaScriptEnabled: true,
+                                  transparentBackground: true,
+                                ),
+                                onWebViewCreated: (controller) {
+                                  _hiddenWebViewController = controller;
+                                },
                               ),
                             ),
                           ],

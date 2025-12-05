@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.5.0+3
+version: 1.5.0+4
 
 environment:
   sdk: ^3.7.2
@@ -31,6 +31,10 @@ dependencies:
   path: ^1.9.0
   purchases_flutter: ^9.2.1
   app_tracking_transparency: ^2.0.6+1
+  #webview_flutter: ^4.13.0
+  #webview_flutter_android: ^4.13.0
+  #webview_flutter_wkwebview: ^4.13.0
+  flutter_inappwebview: ^6.1.5
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
