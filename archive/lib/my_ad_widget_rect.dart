@@ -45,7 +45,7 @@ class _MyAdWidgetState extends State<MyAdWidgetRect> {
     // バナー広告のインスタンスを生成
     _bannerAdRect = BannerAd(
       adUnitId: adUnitId, // 選択された広告ユニットID
-      size: AdSize.mediumRectangle, // バナー広告のサイズ（標準）
+      size: AdSize.banner, // バナー広告のサイズ（標準）
       request: const AdRequest(), // 広告リクエスト
       listener: BannerAdListener(
         onAdLoaded: (_) {

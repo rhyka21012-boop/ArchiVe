@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 import 'dart:ui';
 import 'dart:async';
+import 'thumbnail_setting_provider.dart';
 
-class RandomImageContainer extends StatefulWidget {
+class RandomImageContainer extends ConsumerStatefulWidget {
   final String listName;
   final VoidCallback? onDeleted;
   final VoidCallback? onChanged;
@@ -17,10 +19,11 @@ class RandomImageContainer extends StatefulWidget {
   });
 
   @override
-  State<RandomImageContainer> createState() => _RandomImageContainerState();
+  ConsumerState<RandomImageContainer> createState() =>
+      _RandomImageContainerState();
 }
 
-class _RandomImageContainerState extends State<RandomImageContainer> {
+class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
   Map<String, dynamic>? _randomItem;
 
   @override
@@ -63,6 +66,7 @@ class _RandomImageContainerState extends State<RandomImageContainer> {
 
   @override
   Widget build(BuildContext context) {
+    final bool showThumbnail = ref.watch(showThumbnailProvider);
     final imageUrl = _randomItem?['image'];
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -84,41 +88,44 @@ class _RandomImageContainerState extends State<RandomImageContainer> {
               width: 300,
               child:
                   imageUrl != null
-                      ? Image.network(
-                        imageUrl,
-                        key: ValueKey(imageUrl),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 100,
-                            color: Colors.grey[300],
-                            alignment: Alignment.center,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  Icons.broken_image,
-                                  size: 40,
-                                  color: Colors.grey,
+                      ? (showThumbnail
+                          ? Image.network(
+                            imageUrl,
+                            key: ValueKey(imageUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 100,
+                                color: Colors.grey[300],
+                                alignment: Alignment.center,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.broken_image,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      '画像を読み込めません',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  '画像を読み込めません',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      )
+                              );
+                            },
+                          )
+                          : const SizedBox.shrink())
                       : const SizedBox.shrink(),
             ),
 
             if (_randomItem != null)
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                child: Container(color: Colors.black.withOpacity(0.3)),
-              ),
+              if (showThumbnail)
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                  child: Container(color: Colors.black.withOpacity(0.3)),
+                ),
 
             Center(
               child: Text(

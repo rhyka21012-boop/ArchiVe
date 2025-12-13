@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'thumbnail_setting_provider.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -85,7 +86,13 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               },
             ),
           ),
-
+          SwitchListTile(
+            title: const Text('リスト画像の表示/非表示'),
+            value: ref.watch(showThumbnailProvider),
+            onChanged: (value) {
+              ref.read(showThumbnailProvider.notifier).set(value);
+            },
+          ),
           const SizedBox(height: 16),
           Center(
             child: ElevatedButton.icon(
@@ -117,8 +124,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             title: const Text('プライバシーポリシー'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              const url =
-                  'https://drive.google.com/file/d/1USLSc2d0scQ5wTje7om3wBDd_vhsN0vz/view?usp=drive_link';
+              const url = 'https://archive-e4efc.firebaseapp.com/privacy.html';
               final uri = Uri.parse(url);
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);

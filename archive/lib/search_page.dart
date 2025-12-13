@@ -61,10 +61,10 @@ class SearchPageState extends State<SearchPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isMetadataLoaded) {
-      _loadSavedMetadata();
-      _isMetadataLoaded = true;
-    }
+    //if (!_isMetadataLoaded) {
+    _loadSavedMetadata();
+    //  _isMetadataLoaded = true;
+    //}
   }
 
   @override

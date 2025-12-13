@@ -998,9 +998,8 @@ class _DetailPageState extends State<DetailPage> {
                 //デバッグ用切り替え箇所
                 //ローカルデバッグ用にプレミアム機能を開放
                 onPressed:
-                    _isPremium ? _fetchTitleFromUrl : _showSubscriptionDialog,
-
-                //_fetchTitleFromUrl,
+                    //_isPremium ? _fetchTitleFromUrl : _showSubscriptionDialog,
+                    _fetchTitleFromUrl,
                 icon: Icon(
                   Icons.download,
                   size: 18,
