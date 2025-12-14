@@ -21,6 +21,7 @@ import 'view_counter.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:flutter/services.dart';
 
 class DetailPage extends StatefulWidget {
   final String? listName;
@@ -159,12 +160,27 @@ class _DetailPageState extends State<DetailPage> {
   }
   */
 
+  bool _isLoadingThumbnail = false;
+
   Future<void> _initializeThumbnail(String url) async {
+    setState(() {
+      _isLoadingThumbnail = true;
+    });
+
     final thumb = await fetchThumbnailByWebView(url);
 
+    if (!mounted) return;
+
     if (thumb != null) {
-      setState(() => _thumbnailUrl = thumb);
+      setState(() {
+        _thumbnailUrl = thumb;
+        _isLoadingThumbnail = false;
+      });
       await _saveChanges(exitEditMode: false);
+    } else {
+      setState(() {
+        _isLoadingThumbnail = false;
+      });
     }
   }
 
@@ -738,6 +754,24 @@ class _DetailPageState extends State<DetailPage> {
                   },
                   itemBuilder: (context, index) {
                     if (index == 0) {
+                      //サムネ取得中
+                      if (_isLoadingThumbnail) {
+                        return Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            const SizedBox(
+                              height: 200,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ViewingCounterWidget(url: widget.url),
+                            ),
+                          ],
+                        );
+                      }
+
+                      //サムネ表示
                       if ((widget.image ?? _thumbnailUrl) != null) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(12),
@@ -761,6 +795,7 @@ class _DetailPageState extends State<DetailPage> {
                           ),
                         );
                       } else {
+                        //サムネ未取得
                         return Stack(
                           alignment: Alignment.bottomRight,
                           children: [
@@ -921,7 +956,7 @@ class _DetailPageState extends State<DetailPage> {
               ),
               _buildListDropdownButton(),
 
-              _buildTextField(_urlController, 'URL', 'https://archive/...'),
+              _buildTextField(_urlController, 'URL', 'https://...'),
               _buildTextField(
                 _titleController,
                 'タイトル',
@@ -993,26 +1028,56 @@ class _DetailPageState extends State<DetailPage> {
                 color: colorScheme.onPrimary,
               ),
             ),
-            if (isEditing && withFetchTitle)
-              TextButton.icon(
-                //デバッグ用切り替え箇所
-                //ローカルデバッグ用にプレミアム機能を開放
-                onPressed:
-                    //_isPremium ? _fetchTitleFromUrl : _showSubscriptionDialog,
-                    _fetchTitleFromUrl,
-                icon: Icon(
-                  Icons.download,
-                  size: 18,
-                  color: colorScheme.onPrimary,
-                ),
-                label: Text(
-                  'URLからタイトルを取得',
-                  style: TextStyle(color: colorScheme.onPrimary),
-                ),
-              ),
+
+            /// 右側ボタン群
+            Row(
+              children: [
+                /// URL用：ペーストボタン
+                if (isEditing && controller == _urlController)
+                  TextButton.icon(
+                    icon: Icon(
+                      Icons.paste,
+                      size: 20,
+                      color: colorScheme.onPrimary,
+                    ),
+                    label: Text(
+                      'URLをペースト',
+                      style: TextStyle(color: colorScheme.onPrimary),
+                    ),
+                    onPressed: () async {
+                      final data = await Clipboard.getData(
+                        Clipboard.kTextPlain,
+                      );
+                      if (data?.text != null) {
+                        controller.text = data!.text!;
+                        controller.selection = TextSelection.fromPosition(
+                          TextPosition(offset: controller.text.length),
+                        );
+                      }
+                    },
+                  ),
+
+                //URLからタイトル取得
+                if (isEditing && withFetchTitle)
+                  TextButton.icon(
+                    onPressed: _fetchTitleFromUrl,
+                    icon: Icon(
+                      Icons.download,
+                      size: 18,
+                      color: colorScheme.onPrimary,
+                    ),
+                    label: Text(
+                      'URLからタイトルを取得',
+                      style: TextStyle(color: colorScheme.onPrimary),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
+
         const SizedBox(height: 4),
+
         CompositedTransformTarget(
           link:
               autocompleteKey != null
@@ -1025,7 +1090,7 @@ class _DetailPageState extends State<DetailPage> {
               readOnly: !isEditing,
               decoration: InputDecoration(
                 hintText: hintLabel,
-                hintStyle: TextStyle(color: Colors.grey),
+                hintStyle: const TextStyle(color: Colors.grey),
                 filled: true,
                 fillColor: isEditing ? Colors.white : Colors.grey[300],
                 border: InputBorder.none,

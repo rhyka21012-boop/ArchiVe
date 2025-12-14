@@ -176,10 +176,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              Text(
-                '• 広告なし\n• 好みの傾向がわかる統計機能\n• URLからタイトルを自動入力',
-                style: TextStyle(fontSize: 18),
-              ),
+              Text('• 広告なし\n• 好みの傾向がわかる統計機能', style: TextStyle(fontSize: 18)),
               SizedBox(height: 16),
               Text(
                 '¥170/月',
