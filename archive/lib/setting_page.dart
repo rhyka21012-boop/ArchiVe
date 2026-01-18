@@ -26,9 +26,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   int baseLimit = 100; // 基本上限
   int watchedAdsToday = 1; // 今日見た広告回数（0〜3）
 
-  static const bool isDebug = true;
+  static const bool isTestMode = false;
   String rewardedAdUnitId =
-      isDebug
+      isTestMode
           ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
           : 'ca-app-pub-8268997781284735/5356923320'; //本番用
 
