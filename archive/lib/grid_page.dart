@@ -10,6 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'premium_detail.dart';
 
 class GridPage extends StatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -55,6 +57,8 @@ class GridPageState extends State<GridPage> {
 
   //ローカル画像のパスを URL ごとに保存
   Map<String, List<String>> _localImagesMap = {};
+
+  bool _isPremium = false; //サブスク購入状態を保持
 
   @override
   void initState() {
@@ -103,15 +107,16 @@ class GridPageState extends State<GridPage> {
             //style: TextStyle(color: Colors.white),
           ),
           actions:
-              widget.listName.isNotEmpty
-                  ? [
-                    IconButton(
-                      //color: Colors.white,
-                      onPressed: _showSortModal,
-                      icon: Icon(Icons.sort),
-                    ),
-                  ]
-                  : [],
+          //widget.listName.isNotEmpty
+          //  ?
+          [
+            IconButton(
+              //color: Colors.white,
+              onPressed: _showSortModal,
+              icon: Icon(Icons.sort),
+            ),
+          ],
+          // : [],
         ),
         body:
             itemsToShow.isEmpty
@@ -280,9 +285,9 @@ class GridPageState extends State<GridPage> {
                             ),
                           ),
                           Positioned(
-                            bottom: 4,
-                            left: 4,
-                            right: 4,
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -559,6 +564,23 @@ class GridPageState extends State<GridPage> {
                 ),
         floatingActionButton: FloatingActionButton(
           onPressed: (() async {
+            //最大保存数
+            final limit = await _countSaveLimit();
+
+            //作品数
+            final savedCount = await _countSavedItems();
+
+            //プレミアムプランか判定
+            _isPremium = await _checkPremium();
+
+            //作品数 > 最大数かつ、非プレミアムユーザーであれば、ポップアップ表示
+            if (!_isPremium && savedCount >= limit) {
+              //if (true) {
+              //デバッグ用切り替え箇所
+              await _showSaveLimitDialog(savedCount, limit);
+              return;
+            }
+
             await Navigator.push(
               context,
               MaterialPageRoute(
@@ -935,4 +957,87 @@ class GridPageState extends State<GridPage> {
     setState(() {}); // 表示を更新
   }
   */
+
+  //*************
+  //保存数の上限管理
+  //*************
+  //保存数の上限をカウント
+  Future<int> _countSaveLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
+    return 100 + extraSaveLimit;
+  }
+
+  //作品数カウント
+  Future<int> _countSavedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    return list.length;
+  }
+
+  //作品数上限オーバー時の案内ダイアログ
+  Future<void> _showSaveLimitDialog(int count, int limit) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('保存数の上限に達しました。'),
+          content: Text(
+            '現在の作品の保存枠は最大$limit 件です。\n\n'
+            '現在の作品数：$count 件\n\n'
+            '$limit 件以上保存するには、\n'
+            '・既存の作品を削除いただく\n'
+            '・プレミアムプランをご利用いただく\n'
+            '・設定ページから広告を視聴して保存枠を増やす',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('戻る'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (!await PremiumGate.ensurePremium(context)) return;
+
+                setState(() {
+                  _isPremium = true;
+                });
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+              },
+              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
+              label: const Text(
+                'プレミアムの詳細',
+                style: TextStyle(
+                  color: Color(0xFFB8860B),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+
+                backgroundColor: Colors.black,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Future<bool> _checkPremium() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+    } catch (e) {
+      debugPrint('Subscription check error: $e');
+      return false;
+    }
+  }
 }

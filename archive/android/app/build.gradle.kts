@@ -34,9 +34,9 @@ android {
     defaultConfig {
         applicationId = "com.walkinggoblins.archive"
         minSdk = 23
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     signingConfigs {

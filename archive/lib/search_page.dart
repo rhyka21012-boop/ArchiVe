@@ -61,10 +61,10 @@ class SearchPageState extends State<SearchPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    //if (!_isMetadataLoaded) {
-    _loadSavedMetadata();
-    //  _isMetadataLoaded = true;
-    //}
+    if (!_isMetadataLoaded) {
+      _loadSavedMetadata();
+      _isMetadataLoaded = true;
+    }
   }
 
   @override
@@ -128,6 +128,16 @@ class SearchPageState extends State<SearchPage> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
+                        //選択したカテゴリ数をカウント
+                        final selectedCategoryCount =
+                            _countSelectedCategories();
+
+                        //複数カテゴリ指定はプレミアム限定
+                        if (selectedCategoryCount >= 2) {
+                          await _showPremiumInfoDialog();
+                          return;
+                        }
+
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -540,5 +550,50 @@ class SearchPageState extends State<SearchPage> {
     const maxLines = 2; // 初期は2行分表示
     final maxVisible = itemsPerLine * maxLines;
     return total < maxVisible ? total : maxVisible;
+  }
+
+  //================================
+  //プレミアム機能(選択するカテゴリ数制限)
+  //================================
+  //選択したカテゴリ数をカウント
+  int _countSelectedCategories() {
+    int count = 0;
+
+    for (final entry in _selectedListByKey.entries) {
+      if (entry.value.any((selected) => selected)) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  //非プレミアムユーザ用説明ウィンドウ
+  Future<void> _showPremiumInfoDialog() async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            '複数のタグを選択★',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB8860B),
+            ),
+          ),
+          content: const Text(
+            '複数のカテゴリを組み合わせた検索は\n'
+            'プレミアムプラン限定の機能です。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

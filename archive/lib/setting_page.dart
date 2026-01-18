@@ -5,6 +5,8 @@ import 'theme_provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'thumbnail_setting_provider.dart';
+import 'premium_detail.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -18,10 +20,25 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   final List<String> _colors = ['オレンジ', 'グリーン', 'ブルー', 'ホワイト', 'レッド', 'イエロー'];
 
+  bool _isPremium = false;
+
+  int currentCount = 0; // 現在の保存数
+  int baseLimit = 100; // 基本上限
+  int watchedAdsToday = 1; // 今日見た広告回数（0〜3）
+
+  static const bool isDebug = true;
+  String rewardedAdUnitId =
+      isDebug
+          ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
+          : 'ca-app-pub-8268997781284735/5356923320'; //本番用
+
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    loadAdState();
+    _loadRewardedAd();
+    _countSavedItems();
     ref.read(themeModeProvider.notifier).loadTheme();
   }
 
@@ -69,7 +86,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           */
           ListTile(
-            title: const Text('テーマカラー'),
+            title: const Text(
+              'テーマカラー★',
+              style: TextStyle(color: Color(0xFFB8860B)),
+            ),
+            //デバッグ用切り替え箇所
+            onTap: () async {
+              if (!await PremiumGate.ensurePremium(context)) return;
+
+              setState(() {
+                _isPremium = true;
+              });
+            },
             trailing: DropdownButton<String>(
               value: selectedColor,
               items:
@@ -79,11 +107,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                             DropdownMenuItem(value: color, child: Text(color)),
                       )
                       .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(themeColorProvider.notifier).setColor(value);
-                }
-              },
+              onChanged:
+                  _isPremium
+                      //true //デバッグ用切り替え箇所
+                      ? (value) {
+                        if (value != null) {
+                          ref.read(themeColorProvider.notifier).setColor(value);
+                        }
+                      }
+                      : null,
             ),
           ),
           SwitchListTile(
@@ -94,13 +126,139 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             },
           ),
           const SizedBox(height: 16),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color:
+                colorScheme.brightness == Brightness.light
+                    ? Colors.grey[200]
+                    : Color(0xFF2C2C2C),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // タイトル
+                  const Row(
+                    children: [
+                      Icon(Icons.inventory_2, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '作品保存数の状態',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // 保存数表示
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('保存数'),
+                      Text(
+                        '$currentCount / $maxSaveLimit',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // 広告視聴回数
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('本日の視聴回数'),
+                      Text(
+                        '$watchedAdsToday / 3 回',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // 広告ボタン
+                  SizedBox(
+                    width: double.infinity,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                watchedAdsToday >= 3
+                                    ? null
+                                    : () async {
+                                      await _showRewardedAd();
+                                    },
+                            icon: const Icon(
+                              Icons.play_circle_fill,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              '広告を見て +5 枠',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade800,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // 🔴 赤バッチ
+                        if (watchedAdsToday < 3)
+                          Positioned(top: 3, right: 0, child: _AdBadge()),
+                      ],
+                    ),
+                  ),
+
+                  if (watchedAdsToday >= 3) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      '本日の広告視聴上限に達しました',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
           Center(
             child: ElevatedButton.icon(
-              onPressed: _showSubscriptionDialog,
-              icon: const Icon(Icons.star, color: Colors.amber),
+              onPressed: () async {
+                if (!await PremiumGate.ensurePremium(context)) return;
+
+                setState(() {
+                  _isPremium = true;
+                });
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+              },
+              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
               label: const Text(
                 'ArchiVe プレミアム',
-                style: TextStyle(color: Colors.amber, fontSize: 18),
+                style: TextStyle(
+                  color: Color(0xFFB8860B),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -109,15 +267,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
 
                 backgroundColor: Colors.black,
-                /*
-                    colorScheme.brightness == Brightness.light
-                        ? Colors.grey[200]
-                        : Color(0xFF2C2C2C),
-                        */
               ),
             ),
           ),
-
           const Divider(),
           const ListTile(title: Text('アプリバージョン'), subtitle: Text('v1.2.0')),
           ListTile(
@@ -156,6 +308,88 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
+  //リワード広告のロード
+  int extraSaveLimit = 0; // 広告で増えた保存枠（+5ずつ）
+  RewardedAd? _rewardedAd;
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('RewardedAd failed: $error');
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
+  //広告回数を日付跨ぎでリセット
+  Future<void> loadAdState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    final savedDate = prefs.getString('ad_date');
+
+    if (savedDate != today) {
+      // 日付が変わったら「今日の広告回数」だけリセット
+      await prefs.setString('ad_date', today);
+      await prefs.setInt('watched_ads_today', 0);
+    }
+
+    setState(() {
+      watchedAdsToday = prefs.getInt('watched_ads_today') ?? 0;
+      extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
+    });
+  }
+
+  //広告を表示して報酬付与（+5枠）
+  Future<void> _showRewardedAd() async {
+    if (_rewardedAd == null) {
+      _loadRewardedAd();
+      return;
+    }
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (ad, reward) async {
+        final prefs = await SharedPreferences.getInstance();
+
+        watchedAdsToday++;
+        extraSaveLimit += 5;
+
+        await prefs.setInt('watched_ads_today', watchedAdsToday);
+        await prefs.setInt('extra_save_limit', extraSaveLimit);
+
+        setState(() {});
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('保存枠が +5 されました')));
+      },
+    );
+
+    _rewardedAd = null;
+    _loadRewardedAd();
+  }
+
+  //保存上限の計算
+  int get maxSaveLimit {
+    if (_isPremium) return 999999; // 実質無制限
+    return 100 + extraSaveLimit;
+  }
+
+  //保存作品数カウント
+  Future<void> _countSavedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    currentCount = list.length;
+  }
+
+  /*　premium_detail.dartに移植済み
   void _showSubscriptionDialog() {
     showDialog(
       context: context,
@@ -206,6 +440,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       },
     );
   }
+  
 
   void _startPurchase() async {
     try {
@@ -241,5 +476,20 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         context,
       ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
     }
+  }
+  */
+}
+
+class _AdBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+    );
   }
 }

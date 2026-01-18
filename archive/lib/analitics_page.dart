@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'premium_detail.dart';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -584,28 +585,36 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'プレミアム会員専用機能',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              '統計機能★',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB8860B),
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
-              '統計ページはプレミアム会員専用です。\n機能を使うにはアップグレードしてください。',
+              'ArchiVeプレミアムでは統計機能を利用できます。\n機能を使うにはアップグレードしてください。',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-              icon: const Icon(Icons.star, color: Colors.black),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
               label: const Text(
-                'プレミアムに登録',
+                'プレミアムの詳細をみる',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: Color(0xFFB8860B),
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
               ),
-              onPressed: () {
-                _startPurchase();
+              onPressed: () async {
+                if (!await PremiumGate.ensurePremium(context)) return;
+
+                setState(() {
+                  _isPremium = true;
+                });
               },
             ),
           ],

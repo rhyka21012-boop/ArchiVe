@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _waitForInitialization() async {
     // ここではあえてディレイを入れることで、初期描画前の安定化を図ります。
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 50));
     setState(() => _initialized = true);
   }
 
@@ -93,6 +93,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
+            fontFamily: 'NotoSansJP',
             colorScheme: ColorScheme.light(
               brightness: Brightness.light,
               surface: Colors.white,
@@ -105,6 +106,7 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           darkTheme: ThemeData(
+            fontFamily: 'NotoSansJP',
             colorScheme: ColorScheme.dark(
               brightness: Brightness.dark,
               surface: Color(0xFF121212),

@@ -2,13 +2,15 @@ import 'package:archive_app/detail_page.dart';
 import 'package:flutter/material.dart';
 //import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'list_page.dart';
 import 'search_page.dart';
 import 'analitics_page.dart';
 import 'setting_page.dart';
 import 'my_ad_widget.dart'; // バナー広告ウィジェットをインポート
 //import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+import 'premium_detail.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -45,6 +47,24 @@ class _MainPageState extends State<MainPage> {
   // BottomNavigationBarのタップイベント
   void _onItemTapped(int index) async {
     if (index == 2) {
+      //最大保存数
+      final limit = await _countSaveLimit();
+
+      //作品数
+      final savedCount = await _countSavedItems();
+
+      //プレミアムプランか判定
+      _isPremium = await _checkPremium();
+
+      //作品数 > 最大数かつ、非プレミアムユーザーであれば、ポップアップ表示
+      if (!_isPremium && savedCount >= limit) {
+        //if (true) {
+        //デバッグ用切り替え箇所
+        await _showSaveLimitDialog(savedCount, limit);
+        return;
+      }
+
+      //作品数 <= 100または、プレミアム会員の場合のは作品追加画面へ
       // +アイコンをタップでDetailPageを開く
       await Navigator.push(
         context,
@@ -59,6 +79,86 @@ class _MainPageState extends State<MainPage> {
         _selectedIndex = index; // 0→0, 1→1
       }
     });
+  }
+
+  //保存数の上限をカウント
+  Future<int> _countSaveLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
+    return 100 + extraSaveLimit;
+  }
+
+  //作品数カウント
+  Future<int> _countSavedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    return list.length;
+  }
+
+  //作品数上限オーバー時の案内ダイアログ
+  Future<void> _showSaveLimitDialog(int count, int limit) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('保存数の上限に達しました。'),
+          content: Text(
+            '現在の作品の保存枠は最大$limit 件です。\n\n'
+            '現在の作品数：$count 件\n\n'
+            '$limit 件以上保存するには、\n'
+            '・既存の作品を削除いただく\n'
+            '・プレミアムプランをご利用いただく\n'
+            '・設定ページから広告を視聴して保存枠を増やす',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('戻る'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (!await PremiumGate.ensurePremium(context)) return;
+
+                setState(() {
+                  _isPremium = true;
+                });
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+              },
+              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
+              label: const Text(
+                'プレミアムの詳細',
+                style: TextStyle(
+                  color: Color(0xFFB8860B),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+
+                backgroundColor: Colors.black,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Future<bool> _checkPremium() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+    } catch (e) {
+      debugPrint('Subscription check error: $e');
+      return false;
+    }
   }
 
   @override

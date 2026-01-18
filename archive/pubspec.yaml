@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.7.0+0
+version: 1.7.1+0
 
 environment:
   sdk: ^3.7.2
@@ -51,5 +51,10 @@ flutter:
     - assets/icons/critical_gray.png
     - assets/icons/normal_gray.png
     - assets/icons/maniac_gray.png
+
+  fonts:
+    - family: NotoSerifJP
+      fonts:
+        - asset: assets/fonts/NotoSerifJP-VariableFont_wght.ttf
 
   uses-material-design: true

@@ -93,90 +93,103 @@ class _RankingPageState extends State<RankingPage> {
           children: [
             // ReorderableListView 部分（スクロール可能）
             Expanded(
-              child: ReorderableListView.builder(
-                padding: const EdgeInsets.only(bottom: 310), // ← 高さ分余白を追加
-                itemCount: _rankingItems.length,
-                itemBuilder: (context, index) {
-                  final item = _rankingItems[index];
-
-                  return ListTile(
-                    key: ValueKey(item['title']),
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => DetailPage(
-                                listName: item['listName'],
-                                url: item['url'],
-                                title: item['title'],
-                                image: item['image'],
-                                cast: item['cast'] ?? '',
-                                genre: item['genre'] ?? '',
-                                series: item['series'] ?? '',
-                                label: item['label'] ?? '',
-                                maker: item['maker'] ?? '',
-                                rating: item['rating'],
-                                memo: item['memo'],
-                                isReadOnly: true,
-                              ),
-                        ),
-                      );
-                      _searchFocusNode.unfocus();
-                      _loadMetadata();
-                      _loadRanking();
-                      setState(() {});
-                    },
-                    leading: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (index < 3)
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.emoji_events,
-                                color:
-                                    [
-                                      Colors.amber, // 金
-                                      Colors.grey, // 銀
-                                      Colors.brown, // 銅
-                                    ][index],
-                                size: 36,
-                              ),
-                              Text(
-                                '${index + 1}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black54,
-                                      blurRadius: 2,
-                                      offset: Offset(1, 1),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Container(
-                            alignment: Alignment.center,
-                            width: 36,
-                            child: Text(
-                              '${index + 1}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+              child:
+                  _rankingItems.isEmpty
+                      ? _buildEmptyRankingState()
+                      : ReorderableListView.builder(
+                        padding: const EdgeInsets.only(
+                          bottom: 310,
+                        ), // ← 高さ分余白を追加
+                        onReorderStart: (index) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('ドラッグして順番を変更できます'),
+                              duration: Duration(seconds: 2),
                             ),
-                          ),
+                          );
+                        },
+                        itemCount: _rankingItems.length,
+                        itemBuilder: (context, index) {
+                          final item = _rankingItems[index];
 
-                        const SizedBox(width: 8),
-                        _buildItemImageMini(item),
-                        /*
+                          return ListTile(
+                            key: ValueKey(item['title']),
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => DetailPage(
+                                        listName: item['listName'],
+                                        url: item['url'],
+                                        title: item['title'],
+                                        image: item['image'],
+                                        cast: item['cast'] ?? '',
+                                        genre: item['genre'] ?? '',
+                                        series: item['series'] ?? '',
+                                        label: item['label'] ?? '',
+                                        maker: item['maker'] ?? '',
+                                        rating: item['rating'],
+                                        memo: item['memo'],
+                                        isReadOnly: true,
+                                      ),
+                                ),
+                              );
+                              _searchFocusNode.unfocus();
+                              _loadMetadata();
+                              _loadRanking();
+                              setState(() {});
+                            },
+                            leading: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (index < 3)
+                                  Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.emoji_events,
+                                        color:
+                                            [
+                                              Colors.amber, // 金
+                                              Colors.grey, // 銀
+                                              Colors.brown, // 銅
+                                            ][index],
+                                        size: 36,
+                                      ),
+                                      Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black54,
+                                              blurRadius: 2,
+                                              offset: Offset(1, 1),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Container(
+                                    alignment: Alignment.center,
+                                    width: 36,
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+
+                                const SizedBox(width: 8),
+                                _buildItemImageMini(item),
+                                /*
                         item['image'] != null
                             ? ClipRRect(
                               borderRadius: BorderRadius.circular(4),
@@ -196,33 +209,36 @@ class _RankingPageState extends State<RankingPage> {
                             )
                             : const Icon(Icons.image, size: 40),
                             */
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.grey),
-                      onPressed: () async {
-                        setState(() {
-                          _rankingItems.removeAt(index);
-                        });
-                        await _saveRanking();
-                      },
-                    ),
-                    title: Text(
-                      item['title'] ?? '（タイトルなし）',
-                      style: TextStyle(color: colorScheme.onPrimary),
-                      maxLines: 2,
-                    ),
-                  );
-                },
-                onReorder: (oldIndex, newIndex) async {
-                  setState(() {
-                    if (newIndex > oldIndex) newIndex -= 1;
-                    final item = _rankingItems.removeAt(oldIndex);
-                    _rankingItems.insert(newIndex, item);
-                  });
-                  await _saveRanking();
-                },
-              ),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () async {
+                                setState(() {
+                                  _rankingItems.removeAt(index);
+                                });
+                                await _saveRanking();
+                              },
+                            ),
+                            title: Text(
+                              item['title'] ?? '（タイトルなし）',
+                              style: TextStyle(color: colorScheme.onPrimary),
+                              maxLines: 2,
+                            ),
+                          );
+                        },
+                        onReorder: (oldIndex, newIndex) async {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = _rankingItems.removeAt(oldIndex);
+                            _rankingItems.insert(newIndex, item);
+                          });
+                          await _saveRanking();
+                        },
+                      ),
             ),
 
             // 固定オーバーレイ（検索バー＋グリッド）
@@ -539,6 +555,35 @@ class _RankingPageState extends State<RankingPage> {
       height: 40,
       color: Colors.grey[300],
       child: const Center(child: Icon(Icons.photo, color: Colors.white70)),
+    );
+  }
+
+  //アイテムがない場合の表示
+  Widget _buildEmptyRankingState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 12),
+            Text(
+              'ランキングに作品がありません',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '下の一覧から追加してください',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

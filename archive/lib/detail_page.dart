@@ -22,6 +22,7 @@ import 'view_counter.dart';
 import 'dart:io';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
+import 'premium_detail.dart';
 
 class DetailPage extends StatefulWidget {
   final String? listName;
@@ -525,6 +526,23 @@ class _DetailPageState extends State<DetailPage> {
 
     // URLが変更されているかチェック
     if (widget.url != null && _originalUrl.trim() != newUrl) {
+      //最大保存数
+      final limit = await _countSaveLimit();
+
+      //作品数
+      final savedCount = await _countSavedItems();
+
+      //プレミアムプランか判定
+      _isPremium = await _checkPremium();
+
+      //作品数 > 最大数かつ、非プレミアムユーザーであれば、ポップアップ表示
+      if (!_isPremium && savedCount >= limit) {
+        //if (true) {
+        //デバッグ用切り替え箇所
+        await _showSaveLimitDialog(savedCount, limit);
+        return;
+      }
+
       final confirmed = await showDialog<bool>(
         context: context,
         builder:
@@ -880,44 +898,68 @@ class _DetailPageState extends State<DetailPage> {
               //],
               Align(
                 alignment: Alignment.centerRight,
-                child: Container(
-                  margin: EdgeInsets.only(top: 2.0),
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.image_outlined, color: Colors.white, size: 18),
-                      Text(
-                        '$_localImageCorrentIndex/$_localImageMaxIndex',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (isEditing) ...[
+                      SizedBox(
+                        height: 23,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            if (!await PremiumGate.ensurePremium(context))
+                              return;
+
+                            setState(() {
+                              _isPremium = true;
+                            });
+                            _isPremium ? _addLocalImage : null;
+                          },
+                          icon: const Icon(
+                            Icons.add_photo_alternate,
+                            color: Color(0xFFB8860B),
+                          ),
+                          label: const Text(
+                            '画像を追加★',
+                            style: TextStyle(
+                              color: Color(0xFFB8860B),
+                              fontSize: 12,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            //backgroundColor: Colors.black.withOpacity(0.5),
+                            backgroundColor: Color(0xFF121212),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
+                    SizedBox(width: 8),
+                    Container(
+                      margin: EdgeInsets.only(top: 2.0),
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.image_outlined,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          Text(
+                            '$_localImageCorrentIndex/$_localImageMaxIndex',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              if (isEditing) ...[
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: _addLocalImage,
-                  icon: const Icon(
-                    Icons.add_photo_alternate,
-                    color: Colors.black,
-                  ),
-                  label: const Text(
-                    '画像を追加',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-              ] else
-                const SizedBox(height: 10),
+              const SizedBox(height: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1682,6 +1724,90 @@ class _DetailPageState extends State<DetailPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
+    }
+  }
+
+  //*************
+  //保存数の上限管理
+  //*************
+  //保存数の上限をカウント
+  Future<int> _countSaveLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
+    return 100 + extraSaveLimit;
+  }
+
+  //作品数カウント
+  Future<int> _countSavedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    return list.length;
+  }
+
+  //作品数上限オーバー時の案内ダイアログ
+  Future<void> _showSaveLimitDialog(int count, int limit) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('保存数の上限に達しました。'),
+          content: Text(
+            'URLが変更されたため、新規作品として保存されます。\n\n'
+            '現在の作品の保存枠は最大$limit 件です。\n\n'
+            '現在の作品数：$count 件\n\n'
+            '$limit 件以上保存するには、\n'
+            '・既存の作品を削除いただく\n'
+            '・プレミアムプランをご利用いただく\n'
+            '・設定ページから広告を視聴して保存枠を増やす',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('戻る'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (!await PremiumGate.ensurePremium(context)) return;
+
+                setState(() {
+                  _isPremium = true;
+                });
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+              },
+              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
+              label: const Text(
+                'プレミアムの詳細',
+                style: TextStyle(
+                  color: Color(0xFFB8860B),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+
+                backgroundColor: Colors.black,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Future<bool> _checkPremium() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+    } catch (e) {
+      debugPrint('Subscription check error: $e');
+      return false;
     }
   }
 }
