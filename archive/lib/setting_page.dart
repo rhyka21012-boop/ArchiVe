@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+//import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'thumbnail_setting_provider.dart';
 import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+//import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'ad_badge_provider.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -26,7 +28,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   int baseLimit = 100; // 基本上限
   int watchedAdsToday = 1; // 今日見た広告回数（0〜3）
 
-  static const bool isTestMode = false;
+  static const bool isTestMode = true;
   String rewardedAdUnitId =
       isTestMode
           ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
@@ -62,6 +64,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final showAdBadge = ref.watch(adBadgeProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
@@ -220,7 +223,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
 
                         // 🔴 赤バッチ
-                        if (watchedAdsToday < 3)
+                        if (showAdBadge)
                           Positioned(top: 3, right: 0, child: _AdBadge()),
                       ],
                     ),
@@ -363,6 +366,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
         await prefs.setInt('watched_ads_today', watchedAdsToday);
         await prefs.setInt('extra_save_limit', extraSaveLimit);
+
+        ref.read(adBadgeProvider.notifier).incrementWatchedAds();
 
         setState(() {});
 

@@ -11,22 +11,16 @@ import 'setting_page.dart';
 import 'my_ad_widget.dart'; // バナー広告ウィジェットをインポート
 //import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'premium_detail.dart';
+import 'ad_badge_provider.dart';
 
-class MainPage extends StatefulWidget {
+class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
 
-  /*
-  Future<InitializationStatus> _initGoogleMobileAds() {
-    // TODO: Initialize Google Mobile Ads SDK
-    return MobileAds.instance.initialize();
-  }
-  */
-
   @override
-  State<MainPage> createState() => _MainPageState();
+  ConsumerState<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends ConsumerState<MainPage> {
   int _selectedIndex = 0;
   bool _isPremium = false; //サブスク購入状態を保持
 
@@ -35,8 +29,6 @@ class _MainPageState extends State<MainPage> {
       GlobalKey<SearchPageState>();
   final GlobalKey<AnalyticsPageState> _AnalyticsPageKey =
       GlobalKey<AnalyticsPageState>();
-  final GlobalKey<ConsumerState<SettingsPage>> _SettingsPageKey =
-      GlobalKey<ConsumerState<SettingsPage>>();
 
   @override
   void initState() {
@@ -163,12 +155,13 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final showAdBadge = ref.watch(adBadgeProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final List<Widget> _pages = [
       ListPage(key: _listPageKey),
       SearchPage(key: _SearchPageKey),
       AnalyticsPage(key: _AnalyticsPageKey),
-      SettingsPage(key: _SettingsPageKey),
+      const SettingsPage(),
     ];
 
     return Scaffold(
@@ -198,7 +191,7 @@ class _MainPageState extends State<MainPage> {
             BottomNavigationBar(
               backgroundColor: colorScheme.secondary,
               type: BottomNavigationBarType.fixed,
-              items: const [
+              items: [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.folder),
                   label: 'フォルダ',
@@ -213,7 +206,25 @@ class _MainPageState extends State<MainPage> {
                   label: '統計',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.settings),
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.settings),
+                      if (showAdBadge)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   label: '設定',
                 ),
               ],
