@@ -48,7 +48,7 @@ class ListPageState extends State<ListPage>
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final isActive =
-          customerInfo.entitlements.all["premium"]?.isActive ?? false;
+          customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
       setState(() {
         _isPremium = isActive;
       });

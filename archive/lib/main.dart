@@ -17,7 +17,7 @@ void main() async {
   await container.read(themeColorProvider.notifier).loadColor();
 
   // トラッキング許可ダイアログ
-  final status = await AppTrackingTransparency.requestTrackingAuthorization();
+  //final status = await AppTrackingTransparency.requestTrackingAuthorization();
 
   // AdMobの初期化処理
   await MobileAds.instance.initialize();

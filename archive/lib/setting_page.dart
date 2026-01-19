@@ -26,9 +26,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   int currentCount = 0; // 現在の保存数
   int baseLimit = 100; // 基本上限
-  int watchedAdsToday = 1; // 今日見た広告回数（0〜3）
 
-  static const bool isTestMode = true;
+  static const bool isTestMode = false;
   String rewardedAdUnitId =
       isTestMode
           ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
@@ -38,7 +37,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     _loadSettings();
-    loadAdState();
+
     _loadRewardedAd();
     _countSavedItems();
     ref.read(themeModeProvider.notifier).loadTheme();
@@ -64,7 +63,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final showAdBadge = ref.watch(adBadgeProvider);
+    final watchedAdsToday = ref.watch(adBadgeProvider);
+    final showAdBadge = watchedAdsToday < 3;
     final colorScheme = Theme.of(context).colorScheme;
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
@@ -331,25 +331,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  //広告回数を日付跨ぎでリセット
-  Future<void> loadAdState() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-
-    final savedDate = prefs.getString('ad_date');
-
-    if (savedDate != today) {
-      // 日付が変わったら「今日の広告回数」だけリセット
-      await prefs.setString('ad_date', today);
-      await prefs.setInt('watched_ads_today', 0);
-    }
-
-    setState(() {
-      watchedAdsToday = prefs.getInt('watched_ads_today') ?? 0;
-      extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
-    });
-  }
-
   //広告を表示して報酬付与（+5枠）
   Future<void> _showRewardedAd() async {
     if (_rewardedAd == null) {
@@ -360,16 +341,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) async {
         final prefs = await SharedPreferences.getInstance();
-
-        watchedAdsToday++;
         extraSaveLimit += 5;
-
-        await prefs.setInt('watched_ads_today', watchedAdsToday);
         await prefs.setInt('extra_save_limit', extraSaveLimit);
 
-        ref.read(adBadgeProvider.notifier).incrementWatchedAds();
-
-        setState(() {});
+        ref.read(adBadgeProvider.notifier).increment();
 
         ScaffoldMessenger.of(
           context,

@@ -12,6 +12,7 @@ import 'my_ad_widget.dart'; // バナー広告ウィジェットをインポー�
 //import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'premium_detail.dart';
 import 'ad_badge_provider.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -33,6 +34,10 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await AppTrackingTransparency.requestTrackingAuthorization();
+    });
     _checkSubscriptionStatus();
   }
 
@@ -155,7 +160,8 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final showAdBadge = ref.watch(adBadgeProvider);
+    final watchedAdToday = ref.watch(adBadgeProvider);
+    final showAdBadge = watchedAdToday < 3;
     final colorScheme = Theme.of(context).colorScheme;
     final List<Widget> _pages = [
       ListPage(key: _listPageKey),
