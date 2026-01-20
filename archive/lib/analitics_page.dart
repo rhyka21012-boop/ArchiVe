@@ -27,6 +27,71 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   bool _isPremium = false;
 
+  bool isDebug = false; //デバッグ用切り替え箇所
+
+  int pieTopN = 5;
+
+  Color getTopColor(int index) {
+    return Colors.primaries[index % Colors.primaries.length];
+  }
+
+  /// Map → TOP5 + その他（PieChart用）
+  List<PieChartSectionData> buildTopPieSections(Map<String, int> source) {
+    if (source.isEmpty) return [];
+
+    final sorted =
+        source.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    final top = sorted.take(pieTopN).toList();
+    final others = sorted.skip(pieTopN);
+
+    final total = source.values.fold<int>(0, (a, b) => a + b);
+    if (total == 0) return [];
+
+    final otherTotal = others.fold<int>(0, (a, b) => a + b.value);
+
+    final sections = <PieChartSectionData>[];
+
+    for (var i = 0; i < top.length; i++) {
+      final e = top[i];
+      final percent = e.value / total * 100;
+
+      sections.add(
+        PieChartSectionData(
+          value: e.value.toDouble(),
+          title:
+              '${_shortenTitle(e.key, maxLength: 6)}\n${percent.toStringAsFixed(1)}%',
+          color: getTopColor(i),
+          radius: 110,
+          titleStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    if (otherTotal > 0) {
+      final percent = otherTotal / total * 100;
+      sections.add(
+        PieChartSectionData(
+          value: otherTotal.toDouble(),
+          title: 'その他\n${percent.toStringAsFixed(1)}%',
+          color: Colors.grey,
+          radius: 110,
+          titleStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    return sections;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -38,9 +103,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   Future<void> _loadAllStats() async {
     setState(() {
-      // 状態を初期化（上書き）
       hourBuckets = List.filled(8, 0);
-      ratingCounts = {'critical': 0, 'normal': 0, 'maniac': 0};
+      ratingCounts = {'critical': 0, 'normal': 0, 'maniac': 0, 'unrated': 0};
       castCounts.clear();
       genreCounts.clear();
       seriesCounts.clear();
@@ -116,7 +180,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty);
         for (final name in castList) {
-          castCounts[name] = (castCounts[cast] ?? 0) + 1;
+          castCounts[name] = (castCounts[name] ?? 0) + 1;
         }
       }
       /*
@@ -135,7 +199,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty);
         for (final name in genreList) {
-          genreCounts[name] = (genreCounts[genre] ?? 0) + 1;
+          genreCounts[name] = (genreCounts[name] ?? 0) + 1;
         }
       }
 
@@ -148,7 +212,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty);
         for (final name in seriesList) {
-          seriesCounts[name] = (seriesCounts[series] ?? 0) + 1;
+          seriesCounts[name] = (seriesCounts[name] ?? 0) + 1;
         }
       }
 
@@ -161,7 +225,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty);
         for (final name in labelList) {
-          labelCounts[name] = (labelCounts[label] ?? 0) + 1;
+          labelCounts[name] = (labelCounts[name] ?? 0) + 1;
         }
       }
 
@@ -174,7 +238,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty);
         for (final name in makerList) {
-          makerCounts[name] = (makerCounts[maker] ?? 0) + 1;
+          makerCounts[name] = (makerCounts[name] ?? 0) + 1;
         }
       }
     }
@@ -182,391 +246,125 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('統計情報', style: TextStyle(color: colorScheme.onPrimary)),
+        title: const Text('統計'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
             onPressed: () {
               _loadAllStats();
               _loadViewingCountByRating();
               _loadTop5ViewingStats();
             },
-            icon: Icon(Icons.refresh),
-            color:
-                colorScheme.brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
           ),
         ],
       ),
       body: Stack(
         children: [
-          SingleChildScrollView(
+          ListView(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildTitle('視聴回数'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 30,
-                    right: 30,
-                    top: 0,
-                    bottom: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          '視聴回数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child:
-                            top5Viewings.isEmpty
-                                ? const Center(child: Text('データがありません'))
-                                : BarChart(top5ViewingBarChartData()),
-                      ),
-                      SizedBox(height: 50),
-                    ],
-                  ),
+            children: [
+              _section(
+                icon: Icons.bar_chart,
+                title: '視聴回数 TOP5',
+                child: SizedBox(
+                  height: 300,
+                  child:
+                      top5Viewings.isEmpty
+                          ? const Center(child: Text('データがありません'))
+                          : BarChart(top5ViewingBarChartData()),
                 ),
-                const SizedBox(height: 32),
-                _buildTitle('評価'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 30,
-                    right: 30,
-                    top: 0,
-                    bottom: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          '評価の割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(ratingPieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          '評価毎の視聴回数',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 220,
-                        child: BarChart(viewingCountBarChartData()),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                _buildTitle('出演'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          '出演の割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(castPieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'アイテム数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 300, child: buildTop5CastList()),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                _buildTitle('ジャンル'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'ジャンルの割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(genrePieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'アイテム数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 300, child: buildTop5GenreList()),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                _buildTitle('シリーズ'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'シリーズの割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(seriesPieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'アイテム数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 300, child: buildTop5SeriesList()),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                _buildTitle('レーベル'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'レーベルの割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(labelPieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'アイテム数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 300, child: buildTop5LabelList()),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                _buildTitle('メーカー'),
-                Container(
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color:
-                        colorScheme.brightness == Brightness.light
-                            ? Colors.grey[200]
-                            : Color(0xFF2C2C2C),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'メーカーの割合',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 270,
-                        child: PieChart(makerPieChartData()),
-                      ),
-                      Container(
-                        height: 70,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'アイテム数TOP5',
-                          style: TextStyle(
-                            fontSize: 20,
-                            //fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 300, child: buildTop5MakerList()),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 150),
-
-                //_buildTitle('メーカー別（トップ5）'),
-                //SizedBox(height: 800, child: BarChart(makerBarChartData())),
-              ],
-            ),
-          ),
-          //デバッグ用切り替え箇所
-          //デバッグ用にプレミアム機能を開放
-          if (!_isPremium) ...[
-            //if (false) ...[
-            // ぼかし効果
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Container(
-                color: Colors.black.withOpacity(0.3), // 半透明オーバーレイ
               ),
-            ),
+              _section(
+                icon: Icons.star,
+                title: '評価',
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 260,
+                      child: PieChart(ratingPieChartData()),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 220,
+                      child: BarChart(viewingCountBarChartData()),
+                    ),
+                  ],
+                ),
+              ),
+              buildPieSection(
+                title: '出演',
+                data: castCounts,
+                top5List: buildTop5CastList(),
+              ),
+              buildPieSection(
+                title: 'ジャンル',
+                data: genreCounts,
+                top5List: buildTop5GenreList(),
+              ),
+              buildPieSection(
+                title: 'シリーズ',
+                data: seriesCounts,
+                top5List: buildTop5SeriesList(),
+              ),
+              buildPieSection(
+                title: 'レーベル',
+                data: labelCounts,
+                top5List: buildTop5LabelList(),
+              ),
+              buildPieSection(
+                title: 'メーカー',
+                data: makerCounts,
+                top5List: buildTop5MakerList(),
+              ),
 
-            // 中央のプレミアム案内ウィンドウ
+              const SizedBox(height: 120),
+            ],
+          ),
+          if (!isDebug) ...[
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(color: Colors.black26),
+            ),
             Center(child: _buildPremiumDialog(context)),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _section({
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 24),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -680,32 +478,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  //==================
-  //出演データ（円グラフ）
-  //==================
-  PieChartData castPieChartData() {
-    final total = castCounts.values.fold(0, (a, b) => a + b);
-    final sections =
-        castCounts.entries.map((entry) {
-          final percentage = entry.value / total;
-          return PieChartSectionData(
-            title: '${entry.key} (${(percentage * 100).toStringAsFixed(1)}%)',
-            value: entry.value.toDouble(),
-            color:
-                Colors.primaries[castCounts.keys.toList().indexOf(entry.key) %
-                    Colors.primaries.length],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
-    );
-  }
-
   Widget buildTop5CastList() {
     final sortedEntries =
         castCounts.entries.toList()
@@ -722,10 +494,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
 
-        final colorIndex =
-            castCounts.keys.toList().indexOf(entry.key) %
-            Colors.primaries.length;
-        final color = Colors.primaries[colorIndex];
+        final color = getTopColor(index);
 
         return ListTile(
           leading: CircleAvatar(backgroundColor: color),
@@ -739,30 +508,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ),
         );
       },
-    );
-  }
-
-  //ジャンルデータ（円グラフ）
-  PieChartData genrePieChartData() {
-    final total = genreCounts.values.fold(0, (a, b) => a + b);
-    final sections =
-        genreCounts.entries.map((entry) {
-          final percentage = entry.value / total;
-          return PieChartSectionData(
-            title: '${entry.key} (${(percentage * 100).toStringAsFixed(1)}%)',
-            value: entry.value.toDouble(),
-            color:
-                Colors.primaries[genreCounts.keys.toList().indexOf(entry.key) %
-                    Colors.primaries.length],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
     );
   }
 
@@ -782,10 +527,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
 
-        final colorIndex =
-            genreCounts.keys.toList().indexOf(entry.key) %
-            Colors.primaries.length;
-        final color = Colors.primaries[colorIndex];
+        final color = getTopColor(index);
 
         return ListTile(
           leading: CircleAvatar(backgroundColor: color),
@@ -799,30 +541,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ),
         );
       },
-    );
-  }
-
-  //シリーズデータ（円グラフ）
-  PieChartData seriesPieChartData() {
-    final total = seriesCounts.values.fold(0, (a, b) => a + b);
-    final sections =
-        seriesCounts.entries.map((entry) {
-          final percentage = entry.value / total;
-          return PieChartSectionData(
-            title: '${entry.key} (${(percentage * 100).toStringAsFixed(1)}%)',
-            value: entry.value.toDouble(),
-            color:
-                Colors.primaries[seriesCounts.keys.toList().indexOf(entry.key) %
-                    Colors.primaries.length],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
     );
   }
 
@@ -842,10 +560,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
 
-        final colorIndex =
-            seriesCounts.keys.toList().indexOf(entry.key) %
-            Colors.primaries.length;
-        final color = Colors.primaries[colorIndex];
+        final color = getTopColor(index);
 
         return ListTile(
           leading: CircleAvatar(backgroundColor: color),
@@ -859,30 +574,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ),
         );
       },
-    );
-  }
-
-  //レーベルデータ（円グラフ）
-  PieChartData labelPieChartData() {
-    final total = labelCounts.values.fold(0, (a, b) => a + b);
-    final sections =
-        labelCounts.entries.map((entry) {
-          final percentage = entry.value / total;
-          return PieChartSectionData(
-            title: '${entry.key} (${(percentage * 100).toStringAsFixed(1)}%)',
-            value: entry.value.toDouble(),
-            color:
-                Colors.primaries[labelCounts.keys.toList().indexOf(entry.key) %
-                    Colors.primaries.length],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
     );
   }
 
@@ -902,10 +593,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
 
-        final colorIndex =
-            labelCounts.keys.toList().indexOf(entry.key) %
-            Colors.primaries.length;
-        final color = Colors.primaries[colorIndex];
+        final color = getTopColor(index);
 
         return ListTile(
           leading: CircleAvatar(backgroundColor: color),
@@ -919,30 +607,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ),
         );
       },
-    );
-  }
-
-  //メーカーデータ（円グラフ）
-  PieChartData makerPieChartData() {
-    final total = makerCounts.values.fold(0, (a, b) => a + b);
-    final sections =
-        makerCounts.entries.map((entry) {
-          final percentage = entry.value / total;
-          return PieChartSectionData(
-            title: '${entry.key} (${(percentage * 100).toStringAsFixed(1)}%)',
-            value: entry.value.toDouble(),
-            color:
-                Colors.primaries[makerCounts.keys.toList().indexOf(entry.key) %
-                    Colors.primaries.length],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
     );
   }
 
@@ -962,10 +626,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
 
-        final colorIndex =
-            makerCounts.keys.toList().indexOf(entry.key) %
-            Colors.primaries.length;
-        final color = Colors.primaries[colorIndex];
+        final color = getTopColor(index);
 
         return ListTile(
           leading: CircleAvatar(backgroundColor: color),
@@ -1034,7 +695,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
       'unrated': ratingCounts['unrated'] ?? 0, // 未評価も集計されている想定
     };
 
-    final total = ratingMap.values.fold(0, (a, b) => a + b) + 1;
+    final total = ratingMap.values.fold(0, (a, b) => a + b);
     if (total == 0) {
       return PieChartData(sections: []);
     }
@@ -1298,6 +959,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
+            reservedSize: 80,
             getTitlesWidget: (value, _) {
               final index = value.toInt();
               if (index < 0 || index >= top5Viewings.length)
@@ -1311,7 +973,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                 children: [
                   SizedBox(height: 10),
                   SizedBox(
-                    height: 40,
+                    height: 45,
+                    width: 45,
                     child:
                         imageUrl != null
                             ? Image.network(
@@ -1325,7 +988,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                             )
                             : const Icon(Icons.image_not_supported, size: 40),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     _shortenTitle(urlToTitleMap[url] ?? 'タイトルなし'),
                     style: const TextStyle(fontSize: 10),
@@ -1390,5 +1053,45 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     return title.length <= maxLength
         ? title
         : '${title.substring(0, maxLength)}...';
+  }
+
+  Widget buildPieSection({
+    required String title,
+    required Map<String, int> data,
+    required Widget top5List,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color:
+            colorScheme.brightness == Brightness.light
+                ? Colors.grey[200]
+                : const Color(0xFF2C2C2C),
+      ),
+      child: Column(
+        children: [
+          Text(title, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 260,
+            child: PieChart(
+              PieChartData(
+                sections: buildTopPieSections(data),
+                centerSpaceRadius: 0,
+                sectionsSpace: 2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('アイテム数 TOP5', style: TextStyle(fontSize: 18)),
+          const SizedBox(height: 8),
+          SizedBox(height: 280, child: top5List),
+        ],
+      ),
+    );
   }
 }

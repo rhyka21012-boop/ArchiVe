@@ -79,6 +79,7 @@ class ListPageState extends State<ListPage>
               color: colorScheme.primary,
             ),
           ),
+
           centerTitle: true,
           backgroundColor: colorScheme.surface,
           /*
