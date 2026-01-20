@@ -322,7 +322,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               const SizedBox(height: 120),
             ],
           ),
-          if (!isDebug) ...[
+          if (!_isPremium) ...[
+            //if (!isDebug) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.black26),
