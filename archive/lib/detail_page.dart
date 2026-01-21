@@ -23,6 +23,7 @@ import 'dart:io';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
 import 'premium_detail.dart';
+import 'package:in_app_review/in_app_review.dart';
 
 class DetailPage extends StatefulWidget {
   final String? listName;
@@ -627,6 +628,9 @@ class _DetailPageState extends State<DetailPage> {
     }
     if (success) {
       widget.onCreated?.call(); //作成処理の最後に親に通知
+
+      // 保存完了後にレビュー促進
+      await _maybeShowReviewPrompt();
     } else {}
 
     await _saveLocalImages();
@@ -1808,6 +1812,66 @@ class _DetailPageState extends State<DetailPage> {
     } catch (e) {
       debugPrint('Subscription check error: $e');
       return false;
+    }
+  }
+
+  //レビュー促進画面
+  Future<void> showReviewPrompt(BuildContext context) async {
+    final inAppReview = InAppReview.instance;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？'),
+          content: const Text('もしよろしければ、ぜひご感想をお聞かせください。'),
+          actions: [
+            TextButton(
+              child: const Text('いいえ'),
+              onPressed: () {
+                Navigator.pop(context);
+                _openSupport(); // 下で定義
+              },
+            ),
+            ElevatedButton(
+              child: const Text('はい'),
+              onPressed: () async {
+                Navigator.pop(context);
+
+                if (await inAppReview.isAvailable()) {
+                  await inAppReview.requestReview();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openSupport() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'walkinggoblins@gmail.com',
+      query: Uri.encodeQueryComponent('subject=ArchiVe ご意見・ご要望'),
+    );
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _maybeShowReviewPrompt() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final alreadyReviewed = prefs.getBool('review_prompted') ?? false;
+    final saveCount = prefs.getInt('save_count') ?? 0;
+
+    await prefs.setInt('save_count', saveCount + 1);
+
+    // 例：10件目で1回だけ表示
+    if (!alreadyReviewed && saveCount + 1 >= 10) {
+      await prefs.setBool('review_prompted', true);
+      if (!mounted) return;
+      await showReviewPrompt(context);
     }
   }
 }

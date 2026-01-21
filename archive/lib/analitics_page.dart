@@ -422,6 +422,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
+  /*
   //プレミアム購入処理
   void _startPurchase() async {
     try {
@@ -458,7 +459,9 @@ class AnalyticsPageState extends State<AnalyticsPage> {
       ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
     }
   }
+  */
 
+  /*
   Widget _buildTitle(String text) {
     final color = Theme.of(context).colorScheme.onPrimary;
     return Column(
@@ -478,6 +481,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
       ],
     );
   }
+  */
 
   Widget buildTop5CastList() {
     final sortedEntries =
@@ -487,28 +491,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
     final total = castCounts.values.fold(0, (a, b) => a + b); // 合計数
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // 必要に応じて調整
-      itemCount: top5.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(top5.length, (index) {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
-
         final color = getTopColor(index);
 
         return ListTile(
+          contentPadding: EdgeInsets.zero, // ★ 余白も削除
           leading: CircleAvatar(backgroundColor: color),
-          title: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
             '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
-            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.right,
           ),
         );
-      },
+      }),
     );
   }
 
@@ -520,28 +518,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
     final total = genreCounts.values.fold(0, (a, b) => a + b); // 合計数
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // 必要に応じて調整
-      itemCount: top5.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(top5.length, (index) {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
-
         final color = getTopColor(index);
 
         return ListTile(
+          contentPadding: EdgeInsets.zero, // ★ 余白も削除
           leading: CircleAvatar(backgroundColor: color),
-          title: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
             '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
-            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.right,
           ),
         );
-      },
+      }),
     );
   }
 
@@ -553,28 +545,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
     final total = seriesCounts.values.fold(0, (a, b) => a + b); // 合計数
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // 必要に応じて調整
-      itemCount: top5.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(top5.length, (index) {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
-
         final color = getTopColor(index);
 
         return ListTile(
+          contentPadding: EdgeInsets.zero, // ★ 余白も削除
           leading: CircleAvatar(backgroundColor: color),
-          title: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
             '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
-            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.right,
           ),
         );
-      },
+      }),
     );
   }
 
@@ -586,28 +572,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
     final total = labelCounts.values.fold(0, (a, b) => a + b); // 合計数
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // 必要に応じて調整
-      itemCount: top5.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(top5.length, (index) {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
-
         final color = getTopColor(index);
 
         return ListTile(
+          contentPadding: EdgeInsets.zero, // ★ 余白も削除
           leading: CircleAvatar(backgroundColor: color),
-          title: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
             '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
-            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.right,
           ),
         );
-      },
+      }),
     );
   }
 
@@ -619,28 +599,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
     final total = makerCounts.values.fold(0, (a, b) => a + b); // 合計数
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // 必要に応じて調整
-      itemCount: top5.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: List.generate(top5.length, (index) {
         final entry = top5[index];
         final percentage = (entry.value / total) * 100;
-
         final color = getTopColor(index);
 
         return ListTile(
+          contentPadding: EdgeInsets.zero, // ★ 余白も削除
           leading: CircleAvatar(backgroundColor: color),
-          title: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
             '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
-            style: TextStyle(fontSize: 18),
+            textAlign: TextAlign.right,
           ),
         );
-      },
+      }),
     );
   }
 
@@ -1090,7 +1064,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           const SizedBox(height: 24),
           const Text('アイテム数 TOP5', style: TextStyle(fontSize: 18)),
           const SizedBox(height: 8),
-          SizedBox(height: 280, child: top5List),
+          top5List,
         ],
       ),
     );
