@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.7.7+0
+version: 1.7.8+0
 
 environment:
   sdk: ^3.7.2
@@ -12,6 +12,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl:  ^0.19.0
   metadata_fetch: ^0.4.2
   shared_preferences: ^2.2.2
   url_launcher: ^6.1.10
@@ -45,6 +48,8 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  generate: true
+
   assets:
     - assets/icons/critical.png
     - assets/icons/normal.png

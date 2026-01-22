@@ -9,6 +9,8 @@ import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -33,11 +35,13 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
           : 'ca-app-pub-8268997781284735/5356923320'; //本番用
 
+  //final l10n = AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
     _loadSettings();
-
+    _loadExtraSaveLimit();
     _loadRewardedAd();
     _countSavedItems();
     ref.read(themeModeProvider.notifier).loadTheme();
@@ -341,7 +345,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) async {
         final prefs = await SharedPreferences.getInstance();
-        extraSaveLimit += 5;
+
+        setState(() {
+          extraSaveLimit += 5;
+        });
+
         await prefs.setInt('extra_save_limit', extraSaveLimit);
 
         ref.read(adBadgeProvider.notifier).increment();
@@ -366,7 +374,24 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _countSavedItems() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList('saved_metadata') ?? [];
-    currentCount = list.length;
+
+    setState(() {
+      currentCount = list.length;
+    });
+  }
+
+  //保存枠を再読み込み
+  Future<void> _loadExtraSaveLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _countSavedItems();
   }
 
   /*　premium_detail.dartに移植済み
