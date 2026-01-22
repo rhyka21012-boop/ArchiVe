@@ -9,8 +9,6 @@ import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -34,8 +32,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       isTestMode
           ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
           : 'ca-app-pub-8268997781284735/5356923320'; //本番用
-
-  //final l10n = AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -73,13 +69,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
     final selectedColor = ref.watch(themeColorProvider);
+    //final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text('設定')),
       body: ListView(
         children: [
           SwitchListTile(
-            title: const Text('ダークモード'),
+            title: Text('ダークモード'),
             value: isDarkMode,
             onChanged: (value) {
               ref.read(themeModeProvider.notifier).updateTheme(value);
