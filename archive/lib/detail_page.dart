@@ -8,22 +8,15 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
-//import 'package:webview_flutter/webview_flutter.dart';
-//import 'package:webview_flutter_android/webview_flutter_android.dart';
-//import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'dart:async';
-//import 'tag_input_field.dart';
-//import 'package:flutter_tagging/flutter_tagging.dart';
-//import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'view_counter.dart';
-//import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
 import 'premium_detail.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DetailPage extends StatefulWidget {
   final String? listName;
@@ -108,6 +101,9 @@ class _DetailPageState extends State<DetailPage> {
   //隠しWebView用のコントローラ
   InAppWebViewController? _hiddenWebViewController;
 
+  //選択なし
+  static const String noneListValue = '__none__';
+
   @override
   void initState() {
     super.initState();
@@ -185,101 +181,6 @@ class _DetailPageState extends State<DetailPage> {
       });
     }
   }
-
-  /*
-  // og:imageがなければimgタグから代替画像を探す処理を含む
-  Future<String?> _fetchOgImageOrFallback(String url) async {
-    // --- ① まず従来の http.get + HTML パースで試す ---
-    final fromHttp = await _fetchOgImageByHttp(url);
-    if (fromHttp != null) return fromHttp;
-
-    // --- ② 取れなければ WebView + JS 抽出 ---
-    final fromWebView = await _fetchOgImageByWebView(url);
-    if (fromWebView != null) return fromWebView;
-
-    return null;
-  }
-  */
-
-  /*
-  Future<String?> _fetchOgImageByHttp(String url) async {
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        },
-      );
-
-      if (response.statusCode != 200) return null;
-
-      final document = parse(response.body);
-      final metaTags = document.head?.getElementsByTagName('meta') ?? [];
-
-      // ① og:image
-      for (final tag in metaTags) {
-        final property = tag.attributes['property'] ?? tag.attributes['name'];
-        if (property != null &&
-            (property == 'og:image' || property == 'og:image:secure_url') &&
-            tag.attributes['content'] != null) {
-          return tag.attributes['content'];
-        }
-      }
-
-      // ①.5 itemprop="image"
-      for (final tag in metaTags) {
-        if (tag.attributes['itemprop'] == 'image' &&
-            tag.attributes['content'] != null) {
-          final src = tag.attributes['content']!;
-          return src.startsWith('http')
-              ? src
-              : Uri.parse(url).resolve(src).toString();
-        }
-      }
-
-      // ② WordPress画像など
-      final imgTags = document.getElementsByTagName('img');
-      for (final img in imgTags) {
-        final src = img.attributes['src'];
-        if (src != null && src.isNotEmpty) {
-          if (src.contains('/wp-content/uploads')) {
-            return src.startsWith('http')
-                ? src
-                : Uri.parse(url).resolve(src).toString();
-          }
-        }
-      }
-
-      // ③ video poster
-      final videoTags = document.getElementsByTagName('video');
-      for (final v in videoTags) {
-        final poster = v.attributes['poster'];
-        if (poster != null && poster.isNotEmpty) {
-          return poster.startsWith('http')
-              ? poster
-              : Uri.parse(url).resolve(poster).toString();
-        }
-      }
-
-      // ④ link rel="image_src"
-      final linkTags = document.head?.getElementsByTagName('link') ?? [];
-      for (final link in linkTags) {
-        if (link.attributes['rel'] == 'image_src' &&
-            link.attributes['href'] != null) {
-          final href = link.attributes['href']!;
-          return href.startsWith('http')
-              ? href
-              : Uri.parse(url).resolve(href).toString();
-        }
-      }
-    } catch (e) {
-      debugPrint('HTTPフェッチエラー: $e');
-    }
-
-    return null;
-  }
-  */
 
   Future<String?> fetchThumbnailByWebView(String url) async {
     final Completer<String?> completer = Completer();
@@ -366,132 +267,6 @@ class _DetailPageState extends State<DetailPage> {
         });
   }
 
-  /*
-  Future<String?> _fetchOgImageByWebView(String url) async {
-    final controller =
-        WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
-
-    final js = """
-  (function() {
-    var og = document.querySelector('meta[property="og:image"]');
-    if (og && og.content) return og.content;
-
-    var img = document.querySelector('img');
-    if (img && img.src) return img.src;
-
-    return null;
-  })();
-  """;
-
-    final completer = Completer<String?>();
-
-    controller.setNavigationDelegate(
-      NavigationDelegate(
-        onPageFinished: (_) async {
-          try {
-            final result = await controller.runJavascriptReturningResult(js);
-            final decoded = jsonDecode(result);
-            completer.complete(decoded?.toString());
-          } catch (e) {
-            print("JSエラー: $e");
-            completer.complete(null);
-          }
-        },
-      ),
-    );
-
-    await controller.loadRequest(Uri.parse(url));
-
-    // ⚠ iOS/Android で安定させるため、必ず Widget に組み込む必要があります
-    // 画面に表示しなくても良い場合：
-    // SizedBox(height: 0, width: 0, child: WebViewWidget(controller: controller));
-
-    return completer.future;
-  }
-  */
-
-  /*
-  Future<String?> _fetchOgImageOrFallback(String url) async {
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        },
-      );
-      if (response.statusCode == 200) {
-        final html = response.body;
-        final document = parse(response.body);
-        final metaTags = document.head?.getElementsByTagName('meta') ?? [];
-
-        // --- ① og:image を探す ---
-        for (final tag in metaTags) {
-          final property = tag.attributes['property'] ?? tag.attributes['name'];
-          if (property != null &&
-              (property == 'og:image' || property == 'og:image:secure_url') &&
-              tag.attributes['content'] != null) {
-            return tag.attributes['content'];
-          }
-        }
-
-        // --- ①.5 <meta itemprop="image"> を探す ---
-        for (final tag in metaTags) {
-          if (tag.attributes['itemprop'] == 'image' &&
-              tag.attributes['content'] != null) {
-            final src = tag.attributes['content']!;
-            return src.startsWith('http')
-                ? src
-                : Uri.parse(url).resolve(src).toString();
-          }
-        }
-
-        // --- ② imgタグの代替画像を探す ---
-        final imgTags = document.getElementsByTagName('img');
-        for (final img in imgTags) {
-          final src = img.attributes['src'];
-          if (src != null && src.isNotEmpty) {
-            // 例: WordPressのアップロード画像を優先
-            if (src.contains('/wp-content/uploads')) {
-              return src.startsWith('http')
-                  ? src
-                  : Uri.parse(url).resolve(src).toString();
-            }
-          }
-        }
-
-        // --- ③ videoタグのposter属性を探す ---
-        final videoTags = document.getElementsByTagName('video');
-        for (final v in videoTags) {
-          final poster = v.attributes['poster'];
-          if (poster != null && poster.isNotEmpty) {
-            return poster.startsWith('http')
-                ? poster
-                : Uri.parse(url).resolve(poster).toString();
-          }
-        }
-
-        // --- ④<link rel="image_src">への対応 ---
-        final linkTags = document.head?.getElementsByTagName('link') ?? [];
-        for (final link in linkTags) {
-          if (link.attributes['rel'] == 'image_src' &&
-              link.attributes['href'] != null) {
-            final href = link.attributes['href']!;
-            return href.startsWith('http')
-                ? href
-                : Uri.parse(url).resolve(href).toString();
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('データフェッチエラー: $e');
-    }
-
-    // --- ⑤ 見つからなければnull ---
-    return null;
-  }
-  */
-
   //入力情報を保存
   Future<void> _saveChanges({bool exitEditMode = true}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -505,8 +280,14 @@ class _DetailPageState extends State<DetailPage> {
         builder:
             (context) => AlertDialog(
               backgroundColor: colorScheme.secondary,
-              title: const Text('URLが未入力です。', textAlign: TextAlign.center),
-              content: const Text('URLを入力してください。', textAlign: TextAlign.center),
+              title: Text(
+                L10n.of(context)!.detail_page_url_empty,
+                textAlign: TextAlign.center,
+              ),
+              content: Text(
+                L10n.of(context)!.detail_page_input_url,
+                textAlign: TextAlign.center,
+              ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
                 ElevatedButton(
@@ -517,7 +298,7 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
                   ),
-                  child: const Text('OK'),
+                  child: Text(L10n.of(context)!.ok),
                 ),
               ],
             ),
@@ -549,8 +330,8 @@ class _DetailPageState extends State<DetailPage> {
         builder:
             (context) => AlertDialog(
               backgroundColor: colorScheme.secondary,
-              title: const Text('URLが変更されました。'),
-              content: const Text('URLを変更すると別のアイテムとして保存されます。\n続行しますか？'),
+              title: Text(L10n.of(context)!.detail_page_url_changed),
+              content: Text(L10n.of(context)!.detail_page_url_changed_note),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
                 ElevatedButton(
@@ -561,7 +342,7 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
                   ),
-                  child: const Text('キャンセル'),
+                  child: Text(L10n.of(context)!.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
@@ -571,7 +352,7 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.white),
                   ),
-                  child: const Text('OK'),
+                  child: Text(L10n.of(context)!.ok),
                 ),
               ],
             ),
@@ -585,7 +366,7 @@ class _DetailPageState extends State<DetailPage> {
 
     String? toSaveListName;
 
-    if (isSelectedValue == '選択なし') {
+    if (isSelectedValue == noneListValue) {
       toSaveListName = '';
     } else {
       toSaveListName = isSelectedValue;
@@ -704,18 +485,34 @@ class _DetailPageState extends State<DetailPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212).withOpacity(0.3),
-        title: const Text("作品詳細", style: TextStyle(color: Colors.white)),
+        title: Text(
+          L10n.of(context)!.detail_page_item_detail,
+          style: TextStyle(color: Colors.white),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          _buildIconWithLabel(Icons.delete, "削除", _confirmDelete),
-          _buildIconWithLabel(Icons.open_in_new, "サイトへ", _launchUrl),
+          _buildIconWithLabel(
+            Icons.delete,
+            L10n.of(context)!.detail_page_delete,
+            _confirmDelete,
+          ),
+          _buildIconWithLabel(
+            Icons.open_in_new,
+            L10n.of(context)!.detail_page_access,
+            _launchUrl,
+          ),
           if (!isEditing)
             _buildIconWithLabel(
               Icons.edit,
-              "編集",
+              L10n.of(context)!.detail_page_modify,
               () => setState(() => isEditing = true),
             ),
-          if (isEditing) _buildIconWithLabel(Icons.save, "保存", _saveChanges),
+          if (isEditing)
+            _buildIconWithLabel(
+              Icons.save,
+              L10n.of(context)!.detail_page_save,
+              _saveChanges,
+            ),
         ],
       ),
       body: Container(
@@ -823,9 +620,13 @@ class _DetailPageState extends State<DetailPage> {
                           children: [
                             SizedBox(
                               height: 300,
-                              child: const Align(
+                              child: Align(
                                 alignment: Alignment.center,
-                                child: Text('保存するとサムネイルが表示されます'),
+                                child: Text(
+                                  L10n.of(
+                                    context,
+                                  )!.detail_page_thumbnail_placeholder,
+                                ),
                               ),
                             ),
                             Padding(
@@ -922,8 +723,8 @@ class _DetailPageState extends State<DetailPage> {
                             Icons.add_photo_alternate,
                             color: Color(0xFFB8860B),
                           ),
-                          label: const Text(
-                            '画像を追加★',
+                          label: Text(
+                            L10n.of(context)!.detail_page_add_image,
                             style: TextStyle(
                               color: Color(0xFFB8860B),
                               fontSize: 12,
@@ -968,7 +769,7 @@ class _DetailPageState extends State<DetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '評価',
+                    L10n.of(context)!.detail_page_rate,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onPrimary,
@@ -979,19 +780,19 @@ class _DetailPageState extends State<DetailPage> {
                     children: [
                       _ratingButton(
                         'critical',
-                        'クリティカル',
+                        L10n.of(context)!.critical,
                         'assets/icons/critical.png',
                         'assets/icons/critical_gray.png',
                       ),
                       _ratingButton(
                         'normal',
-                        'ノーマル',
+                        L10n.of(context)!.normal,
                         'assets/icons/normal.png',
                         'assets/icons/normal_gray.png',
                       ),
                       _ratingButton(
                         'maniac',
-                        'マニアック',
+                        L10n.of(context)!.maniac,
                         'assets/icons/maniac.png',
                         'assets/icons/maniac_gray.png',
                       ),
@@ -1005,38 +806,38 @@ class _DetailPageState extends State<DetailPage> {
               _buildTextField(_urlController, 'URL', 'https://...'),
               _buildTextField(
                 _titleController,
-                'タイトル',
-                'タイトル',
+                L10n.of(context)!.detail_page_title,
+                L10n.of(context)!.detail_page_title_placeholder,
                 withFetchTitle: true,
               ),
               _buildTextField(
                 _castController,
-                '出演 (#で複数入力)',
-                '#出演1 #出演2 ...',
+                L10n.of(context)!.detail_page_cast,
+                L10n.of(context)!.detail_page_cast_placeholder,
                 autocompleteKey: 'cast',
               ),
               _buildTextField(
                 _genreController,
-                'ジャンル (#で複数入力)',
-                '#ジャンル1 #ジャンル2 ...',
+                L10n.of(context)!.detail_page_genre,
+                L10n.of(context)!.detail_page_genre_placeholder,
                 autocompleteKey: 'genre',
               ),
               _buildTextField(
                 _seriesController,
-                'シリーズ (#で複数入力)',
-                '#シリーズ1 #シリーズ2 ...',
+                L10n.of(context)!.detail_page_series,
+                L10n.of(context)!.detail_page_series_placeholder,
                 autocompleteKey: 'series',
               ),
               _buildTextField(
                 _labelController,
-                'レーベル (#で複数入力)',
-                '#レーベル1 #レーベル2 ...',
+                L10n.of(context)!.detail_page_label,
+                L10n.of(context)!.detail_page_label_placeholder,
                 autocompleteKey: 'label',
               ),
               _buildTextField(
                 _makerController,
-                'メーカー (#で複数入力)',
-                '#メーカー1 #メーカー2 ...',
+                L10n.of(context)!.detail_page_maker,
+                L10n.of(context)!.detail_page_maker_placeholder,
                 autocompleteKey: 'maker',
               ),
               _buildMemoTextField(),
@@ -1087,7 +888,7 @@ class _DetailPageState extends State<DetailPage> {
                       color: colorScheme.onPrimary,
                     ),
                     label: Text(
-                      'URLをペースト',
+                      L10n.of(context)!.detail_page_paste_url,
                       style: TextStyle(color: colorScheme.onPrimary),
                     ),
                     onPressed: () async {
@@ -1113,7 +914,7 @@ class _DetailPageState extends State<DetailPage> {
                       color: colorScheme.onPrimary,
                     ),
                     label: Text(
-                      'URLからタイトルを取得',
+                      L10n.of(context)!.detail_page_fetch_title,
                       style: TextStyle(color: colorScheme.onPrimary),
                     ),
                   ),
@@ -1292,48 +1093,62 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   //===========================
-  //リスト選択のドロップダウンリスト
+  // リスト選択のドロップダウンリスト
   //===========================
   Widget _buildListDropdownButton() {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('リスト', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+          L10n.of(context)!.detail_page_list,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
                 color: isEditing ? Colors.white : Colors.grey[300],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButton<String>(
                 dropdownColor: Colors.white,
-                //style: TextStyle(color: colorScheme.onPrimary),
-                items:
-                    _listNames.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      );
-                    }).toList(),
+
+                items: [
+                  DropdownMenuItem<String>(
+                    value: noneListValue, // '選択なし'
+                    child: Text(
+                      L10n.of(context)!.detail_page_no_selected,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  ..._listNames.map(
+                    (value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ],
+
                 value: isSelectedValue,
+
                 onChanged:
                     !isEditing
                         ? null
                         : (String? value) {
+                          if (value == null) return;
                           setState(() {
-                            isSelectedValue = value!;
+                            isSelectedValue = value;
                           });
                         },
               ),
             ),
-            SizedBox(),
           ],
         ),
         const SizedBox(height: 16),
@@ -1343,14 +1158,18 @@ class _DetailPageState extends State<DetailPage> {
 
   Future<void> _loadLists() async {
     final prefs = await SharedPreferences.getInstance();
+
+    final loadedLists = prefs.getStringList('all_lists') ?? [];
+
     setState(() {
-      final loadedLists = prefs.getStringList('all_lists') ?? [];
-      // 先頭に「選択なし」を追加
-      _listNames = ['選択なし', ...loadedLists];
-      if (widget.listName == '') {
-        isSelectedValue = '選択なし';
-      } else {
+      _listNames = loadedLists; // ← ★ noneListValue を入れない
+
+      if (widget.listName == null || widget.listName!.isEmpty) {
+        isSelectedValue = noneListValue;
+      } else if (_listNames.contains(widget.listName)) {
         isSelectedValue = widget.listName;
+      } else {
+        isSelectedValue = noneListValue;
       }
     });
   }
@@ -1363,7 +1182,7 @@ class _DetailPageState extends State<DetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'メモ',
+          L10n.of(context)!.detail_page_memo,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             //color: Colors.white,
@@ -1379,7 +1198,7 @@ class _DetailPageState extends State<DetailPage> {
             maxLines: 15,
             textAlign: TextAlign.left,
             decoration: InputDecoration(
-              hintText: 'メモ',
+              hintText: L10n.of(context)!.detail_page_memo,
               hintStyle: TextStyle(color: Colors.grey),
               filled: true,
               fillColor: isEditing ? Colors.white : Colors.grey[300],
@@ -1409,13 +1228,13 @@ class _DetailPageState extends State<DetailPage> {
             _titleController.text = titleTag.text.trim();
           });
         } else {
-          _showMessage('タイトルが見つかりませんでした。');
+          _showMessage(L10n.of(context)!.detail_page_fetch_title_fail);
         }
       } else {
-        _showMessage('ページ取得に失敗しました。');
+        _showMessage(L10n.of(context)!.detail_page_fetch_page_fail);
       }
     } catch (e) {
-      _showMessage('エラーが発生しました。');
+      _showMessage(L10n.of(context)!.detail_page_ex);
     }
   }
 
@@ -1427,10 +1246,16 @@ class _DetailPageState extends State<DetailPage> {
       builder:
           (context) => AlertDialog(
             backgroundColor: colorScheme.secondary,
-            title: const Center(
-              child: Text('削除しますか？', textAlign: TextAlign.center),
+            title: Center(
+              child: Text(
+                L10n.of(context)!.detail_page_delete_confirm01,
+                textAlign: TextAlign.center,
+              ),
             ),
-            content: const Text('削除後は復元できません。', textAlign: TextAlign.center),
+            content: Text(
+              L10n.of(context)!.detail_page_delete_confirm02,
+              textAlign: TextAlign.center,
+            ),
             actionsAlignment: MainAxisAlignment.center,
             actions: [
               TextButton(
@@ -1439,7 +1264,7 @@ class _DetailPageState extends State<DetailPage> {
                   backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                   foregroundColor: MaterialStateProperty.all(Colors.black),
                 ),
-                child: const Text('キャンセル'),
+                child: Text(L10n.of(context)!.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -1449,7 +1274,7 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                   foregroundColor: MaterialStateProperty.all(Colors.white),
                 ),
-                child: const Text('削除'),
+                child: Text(L10n.of(context)!.delete),
               ),
             ],
           ),
@@ -1556,9 +1381,9 @@ class _DetailPageState extends State<DetailPage> {
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('有効なURLではありません')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(L10n.of(context)!.detail_page_url_unable)),
+    );
   }
 
   //============
@@ -1641,6 +1466,7 @@ class _DetailPageState extends State<DetailPage> {
     }
   }
 
+  /*
   void _showSubscriptionDialog() {
     showDialog(
       context: context,
@@ -1730,6 +1556,7 @@ class _DetailPageState extends State<DetailPage> {
       ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
     }
   }
+  */
 
   //*************
   //保存数の上限管理
@@ -1754,20 +1581,14 @@ class _DetailPageState extends State<DetailPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('保存数の上限に達しました。'),
+          title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
-            'URLが変更されたため、新規作品として保存されます。\n\n'
-            '現在の作品の保存枠は最大$limit 件です。\n\n'
-            '現在の作品数：$count 件\n\n'
-            '$limit 件以上保存するには、\n'
-            '・既存の作品を削除いただく\n'
-            '・プレミアムプランをご利用いただく\n'
-            '・設定ページから広告を視聴して保存枠を増やす',
+            L10n.of(context)!.save_limit_dialog_description(limit, count),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('戻る'),
+              child: Text(L10n.of(context)!.back),
             ),
             ElevatedButton.icon(
               onPressed: () async {
@@ -1777,13 +1598,17 @@ class _DetailPageState extends State<DetailPage> {
                   _isPremium = true;
                 });
 
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      L10n.of(context)!.save_limit_dialog_already_purchased,
+                    ),
+                  ),
+                );
               },
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: const Text(
-                'プレミアムの詳細',
+              label: Text(
+                L10n.of(context)!.save_limit_dialog_premium_detail,
                 style: TextStyle(
                   color: Color(0xFFB8860B),
                   fontSize: 18,
@@ -1823,18 +1648,18 @@ class _DetailPageState extends State<DetailPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？'),
-          content: const Text('もしよろしければ、ぜひご感想をお聞かせください。'),
+          title: Text(L10n.of(context)!.detail_page_review_confirm01),
+          content: Text(L10n.of(context)!.detail_page_review_confirm02),
           actions: [
             TextButton(
-              child: const Text('いいえ'),
+              child: Text(L10n.of(context)!.no),
               onPressed: () {
                 Navigator.pop(context);
                 _openSupport(); // 下で定義
               },
             ),
             ElevatedButton(
-              child: const Text('はい'),
+              child: Text(L10n.of(context)!.yes),
               onPressed: () async {
                 Navigator.pop(context);
 
@@ -1853,7 +1678,9 @@ class _DetailPageState extends State<DetailPage> {
     final uri = Uri(
       scheme: 'mailto',
       path: 'walkinggoblins@gmail.com',
-      query: Uri.encodeQueryComponent('subject=ArchiVe ご意見・ご要望'),
+      query: Uri.encodeQueryComponent(
+        L10n.of(context)!.detail_page_mail_subject,
+      ),
     );
 
     await launchUrl(uri, mode: LaunchMode.externalApplication);

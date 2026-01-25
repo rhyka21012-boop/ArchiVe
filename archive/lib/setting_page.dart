@@ -9,6 +9,7 @@ import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -19,8 +20,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class SettingsPageState extends ConsumerState<SettingsPage> {
   bool _notificationsEnabled = true;
-
-  final List<String> _colors = ['オレンジ', 'グリーン', 'ブルー', 'ホワイト', 'レッド', 'イエロー'];
 
   bool _isPremium = false;
 
@@ -72,11 +71,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     //final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text('設定')),
+      appBar: AppBar(title: Text(L10n.of(context)!.settings)),
       body: ListView(
         children: [
           SwitchListTile(
-            title: Text('ダークモード'),
+            title: Text(L10n.of(context)!.settings_page_dark_mode),
             value: isDarkMode,
             onChanged: (value) {
               ref.read(themeModeProvider.notifier).updateTheme(value);
@@ -90,8 +89,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           */
           ListTile(
-            title: const Text(
-              'テーマカラー★',
+            title: Text(
+              L10n.of(context)!.settings_page_theme_color,
               style: TextStyle(color: Color(0xFFB8860B)),
             ),
             //デバッグ用切り替え箇所
@@ -102,15 +101,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 _isPremium = true;
               });
             },
-            trailing: DropdownButton<String>(
+            trailing: DropdownButton<ThemeColorType>(
               value: selectedColor,
               items:
-                  _colors
-                      .map(
-                        (color) =>
-                            DropdownMenuItem(value: color, child: Text(color)),
-                      )
-                      .toList(),
+                  ThemeColorType.values.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(themeColorLabel(context, type)),
+                    );
+                  }).toList(),
               onChanged:
                   _isPremium
                       //true //デバッグ用切り替え箇所
@@ -123,7 +122,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
           SwitchListTile(
-            title: const Text('リスト画像の表示/非表示'),
+            title: Text(L10n.of(context)!.settings_page_thumbnail_visibility),
             value: ref.watch(showThumbnailProvider),
             onChanged: (value) {
               ref.read(showThumbnailProvider.notifier).set(value);
@@ -146,12 +145,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // タイトル
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.inventory_2, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        '作品保存数の状態',
+                        L10n.of(context)!.settings_page_save_status,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -166,7 +165,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('保存数'),
+                      Text(L10n.of(context)!.settings_page_save_count),
                       Text(
                         '$currentCount / $maxSaveLimit',
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -180,9 +179,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('本日の視聴回数'),
+                      Text(L10n.of(context)!.settings_page_watch_count),
                       Text(
-                        '$watchedAdsToday / 3 回',
+                        L10n.of(
+                          context,
+                        )!.settings_page_watch_ad_today(watchedAdsToday),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -209,8 +210,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                               Icons.play_circle_fill,
                               color: Colors.white,
                             ),
-                            label: const Text(
-                              '広告を見て +5 枠',
+                            label: Text(
+                              L10n.of(context)!.settings_page_watch_ad,
                               style: TextStyle(color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -232,8 +233,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
                   if (watchedAdsToday >= 3) ...[
                     const SizedBox(height: 8),
-                    const Text(
-                      '本日の広告視聴上限に達しました',
+                    Text(
+                      L10n.of(context)!.settings_page_ad_limit_reached,
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -251,13 +252,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   _isPremium = true;
                 });
 
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      L10n.of(context)!.settings_page_already_purchased,
+                    ),
+                  ),
+                );
               },
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: const Text(
-                'ArchiVe プレミアム',
+              label: Text(
+                L10n.of(context)!.settings_page_premium,
                 style: TextStyle(
                   color: Color(0xFFB8860B),
                   fontSize: 18,
@@ -275,9 +280,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
           const Divider(),
-          const ListTile(title: Text('アプリバージョン'), subtitle: Text('v1.2.0')),
           ListTile(
-            title: const Text('プライバシーポリシー'),
+            title: Text(L10n.of(context)!.settings_page_app_version),
+            subtitle: Text(L10n.of(context)!.version),
+          ),
+          ListTile(
+            title: Text(L10n.of(context)!.settings_page_plivacy_policy),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
               const url = 'https://archive-e4efc.firebaseapp.com/privacy.html';
@@ -285,14 +293,16 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('リンクを開けませんでした')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(L10n.of(context)!.settings_page_disable_link),
+                  ),
+                );
               }
             },
           ),
           ListTile(
-            title: const Text('利用規約（Apple標準EULA）'),
+            title: Text(L10n.of(context)!.settings_page_terms),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
               const url =
@@ -301,9 +311,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('リンクを開けませんでした')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(L10n.of(context)!.settings_page_disable_link),
+                  ),
+                );
               }
             },
           ),
@@ -351,9 +363,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
         ref.read(adBadgeProvider.notifier).increment();
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('保存枠が +5 されました')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.of(context)!.settings_page_save_count_increased),
+          ),
+        );
       },
     );
 

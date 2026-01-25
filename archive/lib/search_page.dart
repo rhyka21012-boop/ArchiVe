@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'grid_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -19,7 +20,7 @@ class SearchPageState extends State<SearchPage> {
   List<String> _searchHistory = [];
   List<Map<String, dynamic>> _savedItems = [];
 
-  final List<String> _categoryNames = ['出演', 'ジャンル', 'シリーズ', 'レーベル', 'メーカー'];
+  //final List<String> _categoryNames = ['出演', 'ジャンル', 'シリーズ', 'レーベル', 'メーカー'];
   final List<String> _searchNames = [
     'cast',
     'genre',
@@ -106,7 +107,7 @@ class SearchPageState extends State<SearchPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     Text(
-                      'カテゴリを選択',
+                      L10n.of(context)!.search_page_select_category,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -124,7 +125,7 @@ class SearchPageState extends State<SearchPage> {
                           Colors.black,
                         ),
                       ),
-                      child: const Text('クリア'),
+                      child: Text(L10n.of(context)!.clear),
                     ),
                     ElevatedButton(
                       onPressed: () async {
@@ -159,7 +160,7 @@ class SearchPageState extends State<SearchPage> {
                           Colors.white,
                         ),
                       ),
-                      child: const Text('検索'),
+                      child: Text(L10n.of(context)!.search_page_search),
                     ),
                   ],
                 ),
@@ -168,7 +169,14 @@ class SearchPageState extends State<SearchPage> {
                 ..._searchNames.asMap().entries.map((entry) {
                   int index = entry.key;
                   String key = entry.value;
-                  String label = _categoryNames[index];
+                  String label =
+                      [
+                        L10n.of(context)!.search_page_cast,
+                        L10n.of(context)!.search_page_genre,
+                        L10n.of(context)!.search_page_series,
+                        L10n.of(context)!.search_page_label,
+                        L10n.of(context)!.search_page_maker,
+                      ][index];
                   List<String> options = _optionsByKey[key] ?? [];
                   final selectedCount =
                       _selectedListByKey[key]
@@ -272,7 +280,11 @@ class SearchPageState extends State<SearchPage> {
                                                 _showAllByKey[key] = true;
                                               });
                                             },
-                                            child: Text('もっと見る'),
+                                            child: Text(
+                                              L10n.of(
+                                                context,
+                                              )!.search_page_more,
+                                            ),
                                           ),
                                         ),
                                       if (!(_showAllByKey[key] ?? false) &&
@@ -294,7 +306,11 @@ class SearchPageState extends State<SearchPage> {
                                                 _showAllByKey[key] = false;
                                               });
                                             },
-                                            child: Text('折りたたむ'),
+                                            child: Text(
+                                              L10n.of(
+                                                context,
+                                              )!.search_page_fold,
+                                            ),
                                           ),
                                         ),
                                     ],
@@ -380,7 +396,7 @@ class SearchPageState extends State<SearchPage> {
                       )
                       : null,
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              hintText: 'タイトルを検索',
+              hintText: L10n.of(context)!.search_page_search_title,
               hintStyle: const TextStyle(color: Colors.black, fontSize: 16),
             ),
             focusNode: _searchFocusNode,
@@ -574,22 +590,19 @@ class SearchPageState extends State<SearchPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            '複数のタグを選択★',
+          title: Text(
+            L10n.of(context)!.search_page_premium_title,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Color(0xFFB8860B),
             ),
           ),
-          content: const Text(
-            '複数のカテゴリを組み合わせた検索は\n'
-            'プレミアムプラン限定の機能です。',
-          ),
+          content: Text(L10n.of(context)!.search_page_premium_description),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+              child: Text(L10n.of(context)!.ok),
             ),
           ],
         );

@@ -1,6 +1,5 @@
 import 'package:archive_app/detail_page.dart';
 import 'package:flutter/material.dart';
-//import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -8,11 +7,11 @@ import 'list_page.dart';
 import 'search_page.dart';
 import 'analitics_page.dart';
 import 'setting_page.dart';
-import 'my_ad_widget.dart'; // バナー広告ウィジェットをインポート
-//import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'my_ad_widget.dart';
 import 'premium_detail.dart';
 import 'ad_badge_provider.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -98,19 +97,14 @@ class _MainPageState extends ConsumerState<MainPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('保存数の上限に達しました。'),
+          title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
-            '現在の作品の保存枠は最大$limit 件です。\n\n'
-            '現在の作品数：$count 件\n\n'
-            '$limit 件以上保存するには、\n'
-            '・既存の作品を削除いただく\n'
-            '・プレミアムプランをご利用いただく\n'
-            '・設定ページから広告を視聴して保存枠を増やす',
+            L10n.of(context)!.save_limit_dialog_description(limit, count),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('戻る'),
+              child: Text(L10n.of(context)!.back),
             ),
             ElevatedButton.icon(
               onPressed: () async {
@@ -120,13 +114,17 @@ class _MainPageState extends ConsumerState<MainPage> {
                   _isPremium = true;
                 });
 
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      L10n.of(context)!.save_limit_dialog_already_purchased,
+                    ),
+                  ),
+                );
               },
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: const Text(
-                'プレミアムの詳細',
+              label: Text(
+                L10n.of(context)!.save_limit_dialog_premium_detail,
                 style: TextStyle(
                   color: Color(0xFFB8860B),
                   fontSize: 18,
@@ -200,16 +198,19 @@ class _MainPageState extends ConsumerState<MainPage> {
               items: [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.folder),
-                  label: 'フォルダ',
+                  label: L10n.of(context)!.main_page_lists,
                 ),
-                BottomNavigationBarItem(icon: Icon(Icons.search), label: '検索'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.search),
+                  label: L10n.of(context)!.main_page_search,
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.add, size: 30),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.whatshot),
-                  label: '統計',
+                  label: L10n.of(context)!.main_page_analytics,
                 ),
                 BottomNavigationBarItem(
                   icon: Stack(
@@ -231,7 +232,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         ),
                     ],
                   ),
-                  label: '設定',
+                  label: L10n.of(context)!.main_page_settings,
                 ),
               ],
               currentIndex:

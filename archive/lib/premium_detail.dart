@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// ===============================
 /// 外部から呼ぶためのゲートクラス
@@ -7,8 +8,8 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 class PremiumGate {
   static const String entitlementId = 'Premium Plan';
 
-  /// プレミアムなら true
-  /// 非プレミアムなら購入画面を表示
+  /// プレミアムなら trueを返し、
+  /// 非プレミアムなら購入画面を表示するウィジェット
   static Future<bool> ensurePremium(BuildContext context) async {
     final isPremium = await _checkSubscriptionStatus();
     if (isPremium) return true;
@@ -64,23 +65,29 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
         // RevenueCatのEntitlement IDを確認（例: "premium"）
         if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('プレミアムを購入しました！')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.of(context)!.premium_detail_purchase_complete),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('購入は完了しましたが、プレミアムが有効化されませんでした')),
+            SnackBar(
+              content: Text(
+                L10n.of(context)!.premium_detail_purchase_incomplete,
+              ),
+            ),
           );
         }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('購入可能なプランが見つかりません')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.premium_detail_no_item)),
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.premium_detail_ex(e))),
+      );
     }
   }
 
@@ -106,19 +113,19 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
             const SizedBox(height: 16),
 
-            const Text(
-              'ArchiVe Premium',
+            Text(
+              L10n.of(context)!.premium_detail_premium_title,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 32),
 
-            const _FeatureItem(text: '広告なしで快適に利用'),
-            const _FeatureItem(text: 'テーマカラーを自由に変更'),
-            const _FeatureItem(text: '画像を自由に変更'),
-            const _FeatureItem(text: '複数のタグで検索'),
-            const _FeatureItem(text: '無制限の保存枠'),
-            const _FeatureItem(text: '統計機能'),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item01),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item02),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item03),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item04),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item05),
+            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item06),
 
             const Spacer(),
 
@@ -143,8 +150,8 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                             color: Colors.white,
                           ),
                         )
-                        : const Text(
-                          '¥170 / 月で始める',
+                        : Text(
+                          L10n.of(context)!.premium_detail_price,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -155,8 +162,8 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
             const SizedBox(height: 12),
 
-            const Text(
-              'いつでもキャンセル可能',
+            Text(
+              L10n.of(context)!.premium_detail_note,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
 

@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'premium_detail.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -77,7 +78,9 @@ class AnalyticsPageState extends State<AnalyticsPage> {
       sections.add(
         PieChartSectionData(
           value: otherTotal.toDouble(),
-          title: 'その他\n${percent.toStringAsFixed(1)}%',
+          title: L10n.of(
+            context,
+          )!.analytics_page_piechart_others(percent.toStringAsFixed(1)),
           color: Colors.grey,
           radius: 110,
           titleStyle: const TextStyle(
@@ -248,7 +251,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('統計'),
+        title: Text(L10n.of(context)!.analytics),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -267,18 +270,22 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             children: [
               _section(
                 icon: Icons.bar_chart,
-                title: '視聴回数 TOP5',
+                title: L10n.of(context)!.analytics_page_view_count_top5,
                 child: SizedBox(
                   height: 300,
                   child:
                       top5Viewings.isEmpty
-                          ? const Center(child: Text('データがありません'))
+                          ? Center(
+                            child: Text(
+                              L10n.of(context)!.analytics_page_no_data,
+                            ),
+                          )
                           : BarChart(top5ViewingBarChartData()),
                 ),
               ),
               _section(
                 icon: Icons.star,
-                title: '評価',
+                title: L10n.of(context)!.analytics_page_evaluation,
                 child: Column(
                   children: [
                     SizedBox(
@@ -294,27 +301,27 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                 ),
               ),
               buildPieSection(
-                title: '出演',
+                title: L10n.of(context)!.analytics_page_cast,
                 data: castCounts,
                 top5List: buildTop5CastList(),
               ),
               buildPieSection(
-                title: 'ジャンル',
+                title: L10n.of(context)!.analytics_page_genre,
                 data: genreCounts,
                 top5List: buildTop5GenreList(),
               ),
               buildPieSection(
-                title: 'シリーズ',
+                title: L10n.of(context)!.analytics_page_series,
                 data: seriesCounts,
                 top5List: buildTop5SeriesList(),
               ),
               buildPieSection(
-                title: 'レーベル',
+                title: L10n.of(context)!.analytics_page_label,
                 data: labelCounts,
                 top5List: buildTop5LabelList(),
               ),
               buildPieSection(
-                title: 'メーカー',
+                title: L10n.of(context)!.analytics_page_maker,
                 data: makerCounts,
                 top5List: buildTop5MakerList(),
               ),
@@ -383,8 +390,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '統計機能★',
+            Text(
+              L10n.of(context)!.analytics_page_premium_title,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -392,16 +399,16 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'ArchiVeプレミアムでは統計機能を利用できます。\n機能を使うにはアップグレードしてください。',
+            Text(
+              L10n.of(context)!.analytics_page_premium_description,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: const Text(
-                'プレミアムの詳細をみる',
+              label: Text(
+                L10n.of(context)!.analytics_page_premium_button,
                 style: TextStyle(
                   color: Color(0xFFB8860B),
                   fontWeight: FontWeight.bold,
@@ -502,7 +509,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           leading: CircleAvatar(backgroundColor: color),
           title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
-            '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
+            L10n.of(context)!.analytics_page_list_value(
+              percentage.toStringAsFixed(1),
+              entry.value,
+            ),
             textAlign: TextAlign.right,
           ),
         );
@@ -529,7 +539,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           leading: CircleAvatar(backgroundColor: color),
           title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
-            '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
+            L10n.of(context)!.analytics_page_list_value(
+              percentage.toStringAsFixed(1),
+              entry.value,
+            ),
             textAlign: TextAlign.right,
           ),
         );
@@ -556,7 +569,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           leading: CircleAvatar(backgroundColor: color),
           title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
-            '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
+            L10n.of(context)!.analytics_page_list_value(
+              percentage.toStringAsFixed(1),
+              entry.value,
+            ),
             textAlign: TextAlign.right,
           ),
         );
@@ -583,7 +599,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           leading: CircleAvatar(backgroundColor: color),
           title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
-            '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
+            L10n.of(context)!.analytics_page_list_value(
+              percentage.toStringAsFixed(1),
+              entry.value,
+            ),
             textAlign: TextAlign.right,
           ),
         );
@@ -610,7 +629,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           leading: CircleAvatar(backgroundColor: color),
           title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: Text(
-            '${percentage.toStringAsFixed(1)}% (${entry.value}件)',
+            L10n.of(context)!.analytics_page_list_value(
+              percentage.toStringAsFixed(1),
+              entry.value,
+            ),
             textAlign: TextAlign.right,
           ),
         );
@@ -676,10 +698,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     }
 
     final labelsJP = {
-      'critical': 'クリティカル',
-      'normal': 'ノーマル',
-      'maniac': 'マニアック',
-      'unrated': '未評価',
+      'critical': L10n.of(context)!.critical,
+      'normal': L10n.of(context)!.normal,
+      'maniac': L10n.of(context)!.maniac,
+      'unrated': L10n.of(context)!.unrated,
     };
 
     final colors = {
@@ -798,9 +820,13 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: (value, _) {
-              const jpLabels = ['クリティカル', 'ノーマル', 'マニアック', '未評価'];
               return Text(
-                jpLabels[value.toInt()],
+                [
+                  L10n.of(context)!.critical,
+                  L10n.of(context)!.normal,
+                  L10n.of(context)!.maniac,
+                  L10n.of(context)!.unrated,
+                ][value.toInt()],
                 style: const TextStyle(fontSize: 12),
               );
             },
@@ -815,7 +841,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             getTitlesWidget: (value, meta) {
               if (value == 0) {
                 // 左下の位置だけ「(回)」と表示
-                return const Text('(回)', style: TextStyle(fontSize: 16));
+                return Text(
+                  L10n.of(context)!.analytics_page_count,
+                  style: TextStyle(fontSize: 16),
+                );
               } else {
                 return Text(
                   value.toInt().toString(),
@@ -849,7 +878,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           tooltipBgColor: Colors.black87, // 背景色（任意）
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             return BarTooltipItem(
-              '${rod.toY.toInt()}回',
+              L10n.of(context)!.analytics_page_toolchip_count(rod.toY.toInt()),
               TextStyle(
                 color: Colors.white, // ← ここがtipの文字色
                 fontSize: 12,
@@ -965,7 +994,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _shortenTitle(urlToTitleMap[url] ?? 'タイトルなし'),
+                    _shortenTitle(
+                      urlToTitleMap[url] ??
+                          L10n.of(context)!.analytics_page_no_title,
+                    ),
                     style: const TextStyle(fontSize: 10),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
@@ -982,7 +1014,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             reservedSize: 40,
             getTitlesWidget: (value, _) {
               if (value == 0) {
-                return const Text('(回)', style: TextStyle(fontSize: 12));
+                return Text(
+                  L10n.of(context)!.analytics_page_count,
+                  style: TextStyle(fontSize: 12),
+                );
               } else {
                 return Text(
                   '${value.toInt()}',
@@ -1010,7 +1045,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           tooltipBgColor: Colors.black87, // 背景色（任意）
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             return BarTooltipItem(
-              '${rod.toY.toInt()}回',
+              L10n.of(context)!.analytics_page_toolchip_count(rod.toY.toInt()),
               TextStyle(
                 color: Colors.white, // ← ここがtipの文字色
                 fontSize: 12,
@@ -1062,7 +1097,10 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('アイテム数 TOP5', style: TextStyle(fontSize: 18)),
+          Text(
+            L10n.of(context)!.analytics_page_item_count_top5,
+            style: TextStyle(fontSize: 18),
+          ),
           const SizedBox(height: 8),
           top5List,
         ],

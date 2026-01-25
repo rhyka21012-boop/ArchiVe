@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'dart:async';
 import 'thumbnail_setting_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RandomImageContainer extends ConsumerStatefulWidget {
   final String listName;
@@ -45,7 +46,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
         data.map((e) => jsonDecode(e) as Map<String, dynamic>).where((item) {
           // 「全てのアイテム」ならlistNameで絞り込まない
           final hasImage = item['image'] != null;
-          if (widget.listName == '全てのアイテム') {
+          if (widget.listName == L10n.of(context)!.all_item_list_name) {
             return hasImage;
           } else {
             return item['listName'] == widget.listName && hasImage;
@@ -100,7 +101,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                 alignment: Alignment.center,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       Icons.broken_image,
                                       size: 40,
@@ -108,7 +109,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      '画像を読み込めません',
+                                      L10n.of(context)!.random_image_no_image,
                                       style: TextStyle(color: Colors.grey),
                                     ),
                                   ],
@@ -139,7 +140,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
               ),
             ),
 
-            widget.listName != '全てのアイテム'
+            widget.listName != L10n.of(context)!.all_item_list_name
                 ? Positioned(
                   top: 0,
                   right: 0,
@@ -159,7 +160,9 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                     color: colorScheme.onPrimary,
                                   ),
                                   title: Text(
-                                    'リスト名を変更',
+                                    L10n.of(
+                                      context,
+                                    )!.random_image_change_list_name,
                                     style: TextStyle(
                                       color: colorScheme.onPrimary,
                                     ),
@@ -175,7 +178,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                     color: colorScheme.onPrimary,
                                   ),
                                   title: Text(
-                                    'リストを削除',
+                                    L10n.of(context)!.random_image_delete_list,
                                     style: TextStyle(
                                       color: colorScheme.onPrimary,
                                     ),
@@ -191,14 +194,18 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                         return AlertDialog(
                                           backgroundColor:
                                               colorScheme.secondary,
-                                          title: const Center(
+                                          title: Center(
                                             child: Text(
-                                              'このリストを削除しますか？',
+                                              L10n.of(
+                                                context,
+                                              )!.random_image_delete_list_dialog,
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
-                                          content: const Text(
-                                            'リスト内のアイテムも削除されます。',
+                                          content: Text(
+                                            L10n.of(
+                                              context,
+                                            )!.random_image_delete_list_dialog_description,
                                             textAlign: TextAlign.center,
                                           ),
                                           actionsAlignment:
@@ -215,7 +222,9 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                                       Colors.black,
                                                     ),
                                               ),
-                                              child: const Text('キャンセル'),
+                                              child: Text(
+                                                L10n.of(context)!.cancel,
+                                              ),
                                               onPressed: () {
                                                 Navigator.of(
                                                   context,
@@ -233,7 +242,11 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                                       Colors.white,
                                                     ),
                                               ),
-                                              child: const Text('削除'),
+                                              child: Text(
+                                                L10n.of(
+                                                  context,
+                                                )!.random_image_delete_list_confirm,
+                                              ),
                                               onPressed: () async {
                                                 Navigator.of(
                                                   context,
@@ -327,11 +340,11 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
 
         return AlertDialog(
           backgroundColor: colorScheme.secondary,
-          title: Text('リスト名を変更'),
+          title: Text(L10n.of(context)!.random_image_change_list_name_dialog),
           content: TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText: 'リスト名を入力',
+              hintText: L10n.of(context)!.random_image_change_list_name_hint,
               hintStyle: TextStyle(color: Colors.grey),
             ),
           ),
@@ -341,7 +354,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
-              child: Text('キャンセル'),
+              child: Text(L10n.of(context)!.cancel),
               onPressed: () => Navigator.pop(context),
             ),
             TextButton(
@@ -349,7 +362,9 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
-              child: Text('変更'),
+              child: Text(
+                L10n.of(context)!.random_image_change_list_name_confirm,
+              ),
               onPressed: () async {
                 Navigator.of(context).pop(); // ダイアログを閉じる
 
@@ -359,7 +374,6 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 //変更後の名前
                 final newListName = _controller.text.trim();
                 if (newListName.isEmpty) {
-                  print('新しいリスト名が空です');
                   return;
                 }
 

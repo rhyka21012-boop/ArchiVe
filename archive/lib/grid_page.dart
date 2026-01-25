@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-//import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-//import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'dart:convert';
 import 'detail_page.dart';
-//import 'list_page.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'premium_detail.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GridPage extends StatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -42,18 +39,10 @@ class GridPageState extends State<GridPage> {
   //ソートボタンの選択値
   List<bool> _sortedMenuSelected = [false, false, false, false, false];
 
-  //int _selectedIndex = 0;
-
-  //final GlobalKey<ListPageState> _listPageKey = GlobalKey<ListPageState>();
-
   //スクロール管理
   final ScrollController _scrollController = ScrollController();
 
   bool _isGridView = true;
-  //bool _showFab = true;
-
-  //bool get _showFab =>
-  //    _scrollController.position.userScrollDirection == ScrollDirection.reverse;
 
   //ローカル画像のパスを URL ごとに保存
   Map<String, List<String>> _localImagesMap = {};
@@ -62,27 +51,10 @@ class GridPageState extends State<GridPage> {
 
   @override
   void initState() {
-    //_scrollController.dispose();
     super.initState();
     _searchMetadata();
     _loadLocalImages();
   }
-
-  /*
-    _scrollController.addListener(() {
-      final direction = _scrollController.position.userScrollDirection;
-
-      if (direction == ScrollDirection.reverse && _showFab) {
-        setState(() {
-          _showFab = false;
-        });
-      } else if (direction == ScrollDirection.forward && !_showFab) {
-        setState(() {
-          _showFab = true;
-        });
-      }
-    });
-    */
 
   @override
   Widget build(BuildContext context) {
@@ -103,24 +75,16 @@ class GridPageState extends State<GridPage> {
         appBar: AppBar(
           //backgroundColor: Color(0xFF121212),
           title: Text(
-            "${itemsToShow.length}件",
-            //style: TextStyle(color: Colors.white),
+            L10n.of(context)!.grid_page_item_count(itemsToShow.length),
           ),
           actions:
-          //widget.listName.isNotEmpty
           //  ?
-          [
-            IconButton(
-              //color: Colors.white,
-              onPressed: _showSortModal,
-              icon: Icon(Icons.sort),
-            ),
-          ],
+          [IconButton(onPressed: _showSortModal, icon: Icon(Icons.sort))],
           // : [],
         ),
         body:
             itemsToShow.isEmpty
-                ? const Center(child: Text('アイテムがありません'))
+                ? Center(child: Text(L10n.of(context)!.grid_page_no_item))
                 : _isGridView
                 ? GridView.builder(
                   controller: _scrollController,
@@ -215,7 +179,7 @@ class GridPageState extends State<GridPage> {
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
-                                            children: const [
+                                            children: [
                                               Icon(
                                                 Icons.broken_image,
                                                 size: 40,
@@ -223,7 +187,9 @@ class GridPageState extends State<GridPage> {
                                               ),
                                               SizedBox(height: 8),
                                               Text(
-                                                '画像を読み込めません',
+                                                L10n.of(
+                                                  context,
+                                                )!.grid_page_cant_load_image,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                 ),
@@ -248,7 +214,7 @@ class GridPageState extends State<GridPage> {
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
-                                            children: const [
+                                            children: [
                                               Icon(
                                                 Icons.broken_image,
                                                 size: 40,
@@ -256,7 +222,9 @@ class GridPageState extends State<GridPage> {
                                               ),
                                               SizedBox(height: 8),
                                               Text(
-                                                '画像を読み込めません',
+                                                L10n.of(
+                                                  context,
+                                                )!.grid_page_cant_load_image,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                 ),
@@ -270,7 +238,8 @@ class GridPageState extends State<GridPage> {
                                     horizontal: 8.0,
                                   ),
                                   child: Text(
-                                    item['title'] ?? '（タイトルなし）',
+                                    item['title'] ??
+                                        L10n.of(context)!.grid_page_no_title,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 14,
@@ -331,8 +300,12 @@ class GridPageState extends State<GridPage> {
                                     }
 
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('有効なURLではありません'),
+                                      SnackBar(
+                                        content: Text(
+                                          L10n.of(
+                                            context,
+                                          )!.grid_page_url_unable,
+                                        ),
                                       ),
                                     );
                                   },
@@ -424,7 +397,7 @@ class GridPageState extends State<GridPage> {
                                               child: Column(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
-                                                children: const [
+                                                children: [
                                                   Icon(
                                                     Icons.broken_image,
                                                     size: 30,
@@ -432,7 +405,9 @@ class GridPageState extends State<GridPage> {
                                                   ),
                                                   SizedBox(height: 8),
                                                   Text(
-                                                    '画像を読み込めません',
+                                                    L10n.of(
+                                                      context,
+                                                    )!.grid_page_cant_load_image,
                                                     style: TextStyle(
                                                       color: Colors.grey,
                                                       fontSize: 10,
@@ -451,7 +426,7 @@ class GridPageState extends State<GridPage> {
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
-                                            children: const [
+                                            children: [
                                               Icon(
                                                 Icons.broken_image,
                                                 size: 30,
@@ -459,7 +434,9 @@ class GridPageState extends State<GridPage> {
                                               ),
                                               SizedBox(height: 8),
                                               Text(
-                                                '画像を読み込めません',
+                                                L10n.of(
+                                                  context,
+                                                )!.grid_page_cant_load_image,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                   fontSize: 10,
@@ -482,7 +459,10 @@ class GridPageState extends State<GridPage> {
                                         left: 0,
                                         right: 0,
                                         child: Text(
-                                          item['title'] ?? '（タイトルなし）',
+                                          item['title'] ??
+                                              L10n.of(
+                                                context,
+                                              )!.grid_page_no_title,
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
@@ -544,8 +524,12 @@ class GridPageState extends State<GridPage> {
                                             ScaffoldMessenger.of(
                                               context,
                                             ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('有効なURLではありません'),
+                                              SnackBar(
+                                                content: Text(
+                                                  L10n.of(
+                                                    context,
+                                                  )!.grid_page_url_unable,
+                                                ),
                                               ),
                                             );
                                           },
@@ -785,7 +769,7 @@ class GridPageState extends State<GridPage> {
                   ),
                 ),
                 child: Text(
-                  'タイトル順',
+                  L10n.of(context)!.grid_page_sort_title,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onPrimary,
@@ -809,7 +793,7 @@ class GridPageState extends State<GridPage> {
                   ),
                 ),
                 child: Text(
-                  '追加が新しい順',
+                  L10n.of(context)!.grid_page_sort_new,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onPrimary,
@@ -833,7 +817,7 @@ class GridPageState extends State<GridPage> {
                   ),
                 ),
                 child: Text(
-                  '追加が古い順',
+                  L10n.of(context)!.grid_page_sort_old,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onPrimary,
@@ -858,7 +842,7 @@ class GridPageState extends State<GridPage> {
                   ),
                 ),
                 child: Text(
-                  '視聴数が多い順',
+                  L10n.of(context)!.grid_page_sort_count_asc,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onPrimary,
@@ -882,7 +866,7 @@ class GridPageState extends State<GridPage> {
                   ),
                 ),
                 child: Text(
-                  '視聴数が少ない順',
+                  L10n.of(context)!.grid_page_sort_count_desc,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onPrimary,
@@ -981,19 +965,14 @@ class GridPageState extends State<GridPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('保存数の上限に達しました。'),
+          title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
-            '現在の作品の保存枠は最大$limit 件です。\n\n'
-            '現在の作品数：$count 件\n\n'
-            '$limit 件以上保存するには、\n'
-            '・既存の作品を削除いただく\n'
-            '・プレミアムプランをご利用いただく\n'
-            '・設定ページから広告を視聴して保存枠を増やす',
+            L10n.of(context)!.save_limit_dialog_description(limit, count),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('戻る'),
+              child: Text(L10n.of(context)!.back),
             ),
             ElevatedButton.icon(
               onPressed: () async {
@@ -1003,13 +982,17 @@ class GridPageState extends State<GridPage> {
                   _isPremium = true;
                 });
 
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('既に購入済みです。')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      L10n.of(context)!.save_limit_dialog_already_purchased,
+                    ),
+                  ),
+                );
               },
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: const Text(
-                'プレミアムの詳細',
+              label: Text(
+                L10n.of(context)!.save_limit_dialog_premium_detail,
                 style: TextStyle(
                   color: Color(0xFFB8860B),
                   fontSize: 18,

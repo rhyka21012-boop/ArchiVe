@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'detail_page.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RankingPage extends StatefulWidget {
   @override
@@ -102,8 +103,10 @@ class _RankingPageState extends State<RankingPage> {
                         ), // ← 高さ分余白を追加
                         onReorderStart: (index) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('ドラッグして順番を変更できます'),
+                            SnackBar(
+                              content: Text(
+                                L10n.of(context)!.ranking_page_dragable,
+                              ),
                               duration: Duration(seconds: 2),
                             ),
                           );
@@ -224,7 +227,8 @@ class _RankingPageState extends State<RankingPage> {
                               },
                             ),
                             title: Text(
-                              item['title'] ?? '（タイトルなし）',
+                              item['title'] ??
+                                  L10n.of(context)!.ranking_page_no_title,
                               style: TextStyle(color: colorScheme.onPrimary),
                               maxLines: 2,
                             ),
@@ -315,7 +319,7 @@ class _RankingPageState extends State<RankingPage> {
               prefixIcon: const Icon(Icons.search, color: Colors.black),
 
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              hintText: 'タイトルを検索',
+              hintText: L10n.of(context)!.ranking_page_search_title,
               hintStyle: const TextStyle(color: Colors.black, fontSize: 16),
             ),
             //focusNode: _searchFocusNode,
@@ -330,7 +334,7 @@ class _RankingPageState extends State<RankingPage> {
   //==========
   Widget _ItemListGrid() {
     return itemsToShow.isEmpty
-        ? const Center(child: Text('保存されたアイテムがありません'))
+        ? Center(child: Text(L10n.of(context)!.ranking_page_no_grid_item))
         : Container(
           height: 75,
           child: GridView.builder(
@@ -349,13 +353,18 @@ class _RankingPageState extends State<RankingPage> {
                 onTap: () async {
                   if (_rankingItems.length >= 10) {
                     // SnackBarなどで通知しても良い
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('最大10個までしか追加できません')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          L10n.of(context)!.ranking_page_limit_error,
+                        ),
+                      ),
+                    );
                     return;
                   }
 
-                  final title = item['title'] ?? '(タイトルなし)';
+                  final title =
+                      item['title'] ?? L10n.of(context)!.ranking_page_no_title;
                   final image = item['image'] ?? '';
                   final exists = _rankingItems.any((e) => e['title'] == title);
 
@@ -565,11 +574,11 @@ class _RankingPageState extends State<RankingPage> {
         padding: const EdgeInsets.only(bottom: 80),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey),
             SizedBox(height: 12),
             Text(
-              'ランキングに作品がありません',
+              L10n.of(context)!.ranking_page_no_ranking_item,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -578,7 +587,7 @@ class _RankingPageState extends State<RankingPage> {
             ),
             SizedBox(height: 8),
             Text(
-              '下の一覧から追加してください',
+              L10n.of(context)!.ranking_page_no_ranking_item_description,
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ],

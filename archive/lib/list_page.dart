@@ -8,7 +8,7 @@ import 'floating_button.dart';
 import 'detail_page.dart';
 import 'ranking_page.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-//import 'my_native_ad_widget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ListPage extends StatefulWidget {
   const ListPage({super.key});
@@ -97,8 +97,14 @@ class ListPageState extends State<ListPage>
           bottom: TabBar(
             controller: _tabController,
             tabs: [
-              Tab(icon: Icon(Icons.folder), text: 'マイリスト'),
-              Tab(icon: Icon(Icons.emoji_events), text: 'マイランキング'),
+              Tab(
+                icon: Icon(Icons.folder),
+                text: L10n.of(context)!.list_page_my_list,
+              ),
+              Tab(
+                icon: Icon(Icons.emoji_events),
+                text: L10n.of(context)!.list_page_my_ranking,
+              ),
             ],
             indicator: UnderlineTabIndicator(
               borderSide: BorderSide(width: 3.0, color: colorScheme.primary),
@@ -138,7 +144,11 @@ class ListPageState extends State<ListPage>
                             ),
                         itemCount: 3,
                         itemBuilder: (context, index) {
-                          final listNames = ['クリティカル', 'ノーマル', 'マニアック'];
+                          final listNames = [
+                            L10n.of(context)!.critical,
+                            L10n.of(context)!.normal,
+                            L10n.of(context)!.maniac,
+                          ];
                           final colors =
                               colorScheme.brightness == Brightness.light
                                   ? [
@@ -268,7 +278,7 @@ class ListPageState extends State<ListPage>
                       color: colorScheme.surface,
                     ),
                     child: Text(
-                      'マイリスト',
+                      L10n.of(context)!.list_page_my_list,
                       style: TextStyle(
                         color: colorScheme.onPrimary,
                         fontSize: 20,
@@ -329,7 +339,7 @@ class ListPageState extends State<ListPage>
                               setState(() {});
                             },
                             child: RandomImageContainer(
-                              listName: '全てのアイテム',
+                              listName: L10n.of(context)!.all_item_list_name,
                               onDeleted: () async {
                                 await _loadLists();
                                 setState(() {});
@@ -403,7 +413,7 @@ class ListPageState extends State<ListPage>
                         Icons.playlist_add,
                         color: colorScheme.primary,
                       ),
-                      label: 'リストを作成',
+                      label: L10n.of(context)!.list_page_make_list,
                       labelBackgroundColor: colorScheme.secondary,
                       labelShadow: [],
                       labelStyle: TextStyle(
@@ -473,12 +483,15 @@ class ListPageState extends State<ListPage>
 
         return AlertDialog(
           backgroundColor: colorScheme.secondary,
-          title: Text('リストを追加', style: TextStyle(color: colorScheme.onPrimary)),
+          title: Text(
+            L10n.of(context)!.list_page_add_list,
+            style: TextStyle(color: colorScheme.onPrimary),
+          ),
           content: TextField(
             controller: _controller,
             style: TextStyle(color: colorScheme.onPrimary),
             decoration: InputDecoration(
-              hintText: 'リスト名を入力',
+              hintText: L10n.of(context)!.list_page_input_list_name,
               hintStyle: TextStyle(color: Colors.grey),
             ),
           ),
@@ -488,7 +501,7 @@ class ListPageState extends State<ListPage>
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
-              child: Text('キャンセル'),
+              child: Text(L10n.of(context)!.cancel),
               onPressed: () => Navigator.pop(context),
             ),
             TextButton(
@@ -511,7 +524,7 @@ class ListPageState extends State<ListPage>
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
-              child: Text('追加'),
+              child: Text(L10n.of(context)!.add),
             ),
           ],
         );
@@ -522,6 +535,7 @@ class ListPageState extends State<ListPage>
   //====================
   //作品の追加モーダル
   //====================
+  /*
   void _showAddItemModal() {
     final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
@@ -592,4 +606,5 @@ class ListPageState extends State<ListPage>
       },
     );
   }
+  */
 }

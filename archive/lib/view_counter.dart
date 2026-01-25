@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ViewingCounterWidget extends StatefulWidget {
   final String? url;
@@ -66,7 +67,7 @@ class _ViewingCounterWidgetState extends State<ViewingCounterWidget> {
             color: Colors.black,
           ),
           Text(
-            '視聴数: $viewingCount',
+            L10n.of(context)!.view_counter_view_count(viewingCount),
             style: TextStyle(fontSize: 16, color: Colors.black),
           ),
           IconButton(

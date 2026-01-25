@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart'; //AdMob用のライブラリをインポート
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,60 +72,23 @@ class _MyAppState extends State<MyApp> {
     return Consumer(
       builder: (context, ref, _) {
         final themeMode = ref.watch(themeModeProvider);
-        final colorName = ref.watch(themeColorProvider);
-
-        Color primaryColor;
-        switch (colorName) {
-          case 'グリーン':
-            primaryColor = Colors.lightGreen;
-            break;
-          case 'ブルー':
-            primaryColor = Colors.lightBlue;
-            break;
-          case 'ホワイト':
-            primaryColor = Colors.grey;
-            break;
-          case 'レッド':
-            primaryColor = Colors.red;
-            break;
-          case 'イエロー':
-            primaryColor = Colors.yellow[600]!;
-            break;
-          case 'オレンジ':
-          default:
-            primaryColor = Colors.orange[600]!;
-            break;
-        }
+        final themeColor = ref.watch(themeColorProvider);
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            fontFamily: 'NotoSansJP',
-            colorScheme: ColorScheme.light(
-              brightness: Brightness.light,
-              surface: Colors.white,
-              secondary: Colors.white,
-              primary: primaryColor,
-              onPrimary: Colors.black,
-            ),
-            appBarTheme: const AppBarTheme(
-              iconTheme: IconThemeData(color: Colors.black),
-            ),
-          ),
-          darkTheme: ThemeData(
-            fontFamily: 'NotoSansJP',
-            colorScheme: ColorScheme.dark(
-              brightness: Brightness.dark,
-              surface: Color(0xFF121212),
-              secondary: Color(0xFF2C2C2C),
-              //primary: Colors.orange[600]!,
-              primary: primaryColor,
-              onPrimary: Colors.white,
-            ),
-            //appBarTheme: const AppBarTheme(
-            //  iconTheme: IconThemeData(color: Colors.white),
-            //),
-          ),
+
+          localizationsDelegates: L10n.localizationsDelegates,
+          supportedLocales: L10n.supportedLocales,
+          localeResolutionCallback: (locale, supportedLocales) {
+            if (locale == null) return supportedLocales.first;
+            return supportedLocales.firstWhere(
+              (supported) => supported.languageCode == locale.languageCode,
+              orElse: () => supportedLocales.first,
+            );
+          },
+
+          theme: getThemeData(themeColor, false),
+          darkTheme: getThemeData(themeColor, true),
           themeMode: themeMode,
           home: const MainPage(),
         );
