@@ -11,7 +11,7 @@ import 'my_ad_widget.dart';
 import 'premium_detail.dart';
 import 'ad_badge_provider.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);

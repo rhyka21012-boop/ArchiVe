@@ -8,7 +8,7 @@ import 'floating_button.dart';
 import 'detail_page.dart';
 import 'ranking_page.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class ListPage extends StatefulWidget {
   const ListPage({super.key});

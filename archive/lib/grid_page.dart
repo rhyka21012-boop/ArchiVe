@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'premium_detail.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class GridPage extends StatefulWidget {
   final Map<String, List<String>> selectedItems;

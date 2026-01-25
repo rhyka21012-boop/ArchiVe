@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'detail_page.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class RankingPage extends StatefulWidget {
   @override

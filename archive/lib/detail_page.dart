@@ -16,7 +16,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
 import 'premium_detail.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class DetailPage extends StatefulWidget {
   final String? listName;
