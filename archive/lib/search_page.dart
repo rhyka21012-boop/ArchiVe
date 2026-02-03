@@ -120,7 +120,60 @@ class SearchPageState extends State<SearchPage> {
       child: Scaffold(
         //backgroundColor: Color(0xFF121212),
         appBar: AppBar(
-          //title: _searchTextField(),
+          title: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            //セグメントボタン
+            child: SegmentedButton<bool>(
+              style: ButtonStyle(
+                visualDensity: VisualDensity.standard,
+                padding: MaterialStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                side: MaterialStateProperty.resolveWith((states) {
+                  return BorderSide.none; // 枠線を消す
+                }),
+                backgroundColor: MaterialStateProperty.resolveWith((states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return colorScheme.primary;
+                  }
+                  return Colors.grey[300];
+                }),
+                foregroundColor: MaterialStateProperty.resolveWith((states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Colors.white;
+                  }
+                  return Colors.black;
+                }),
+              ),
+              segments: [
+                ButtonSegment(
+                  value: false,
+                  label: Text(
+                    L10n.of(context)!.search_page_segment_button_app, //アプリ内
+                  ), //アプリ内
+                  icon: Icon(Icons.apps),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text(
+                    L10n.of(context)!.search_page_segment_button_web, //Web
+                  ), //Web
+                  icon: Icon(Icons.public),
+                ),
+              ],
+              selected: {_isWebSearch},
+              onSelectionChanged: (value) {
+                setState(() {
+                  _isWebSearch = value.first;
+                });
+              },
+            ),
+          ),
           //backgroundColor: Color(0xFF121212),
         ),
         body: //Center(
@@ -136,66 +189,7 @@ class SearchPageState extends State<SearchPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: SegmentedButton<bool>(
-                        style: ButtonStyle(
-                          visualDensity: VisualDensity.standard,
-                          padding: MaterialStateProperty.all(
-                            const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                          ),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          side: MaterialStateProperty.resolveWith((states) {
-                            return BorderSide.none; // 枠線を消す
-                          }),
-                          backgroundColor: MaterialStateProperty.resolveWith((
-                            states,
-                          ) {
-                            if (states.contains(MaterialState.selected)) {
-                              return colorScheme.primary;
-                            }
-                            return Colors.grey[300];
-                          }),
-                          foregroundColor: MaterialStateProperty.resolveWith((
-                            states,
-                          ) {
-                            if (states.contains(MaterialState.selected)) {
-                              return Colors.white;
-                            }
-                            return Colors.black;
-                          }),
-                        ),
-                        segments: [
-                          ButtonSegment(
-                            value: false,
-                            label: Text(
-                              L10n.of(context)!.search_page_segment_button_app,
-                            ), //アプリ内
-                            icon: Icon(Icons.apps),
-                          ),
-                          ButtonSegment(
-                            value: true,
-                            label: Text(
-                              L10n.of(context)!.search_page_segment_button_web,
-                            ), //Web
-                            icon: Icon(Icons.public),
-                          ),
-                        ],
-                        selected: {_isWebSearch},
-                        onSelectionChanged: (value) {
-                          setState(() {
-                            _isWebSearch = value.first;
-                          });
-                        },
-                      ),
-                    ),
+                    //クリアボタン
                     ElevatedButton(
                       onPressed: _clearAllSelections,
                       style: ButtonStyle(
@@ -209,6 +203,7 @@ class SearchPageState extends State<SearchPage> {
                       child: Text(L10n.of(context)!.clear), //クリア
                     ),
                     SizedBox(width: 8),
+                    //検索ボタン
                     ElevatedButton(
                       onPressed: () async {
                         _ignoreNextFocus = true;
@@ -311,7 +306,6 @@ class SearchPageState extends State<SearchPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                //_buildFavoriteSitesBar(), //お気に入りサイトバー
                 const SizedBox(height: 16),
                 _isWebSearch
                     ? _buildWebSearchSection()
@@ -848,8 +842,8 @@ class SearchPageState extends State<SearchPage> {
               // favicon
               Image.network(
                 faviconUrl,
-                width: 32,
-                height: 32,
+                width: 35,
+                height: 35,
                 errorBuilder: (_, __, ___) {
                   return const Icon(Icons.public, size: 32);
                 },
