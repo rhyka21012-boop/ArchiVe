@@ -42,6 +42,12 @@ class L10nJa extends L10n {
   String get delete => '削除';
 
   @override
+  String get save => '保存';
+
+  @override
+  String get reload => '再読み込み';
+
+  @override
   String get all_item_list_name => '全てのアイテム';
 
   @override
@@ -52,6 +58,24 @@ class L10nJa extends L10n {
 
   @override
   String get clear => 'クリア';
+
+  @override
+  String get favorite => 'お気に入り';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get title => 'タイトル';
+
+  @override
+  String get no_select => '選択なし';
+
+  @override
+  String get modify => '編集';
+
+  @override
+  String get close => '閉じる';
 
   @override
   String get save_limit_dialog_title => '保存数の上限に達しました。';
@@ -299,6 +323,54 @@ class L10nJa extends L10n {
   @override
   String get search_page_premium_description =>
       '複数のカテゴリを組み合わせた検索は\nプレミアムプラン限定の機能です。';
+
+  @override
+  String get search_page_segment_button_app => 'アプリ内';
+
+  @override
+  String get search_page_segment_button_web => 'Web';
+
+  @override
+  String get search_page_text_empty => '検索ワードを入力してください';
+
+  @override
+  String get search_page_web_title => 'Web検索';
+
+  @override
+  String get search_page_search_word => '検索ワード';
+
+  @override
+  String get search_page_select_site => 'サイトを選択';
+
+  @override
+  String get search_page_open_site => 'サイトを開く';
+
+  @override
+  String get search_page_modify_favorite => 'お気に入りを編集';
+
+  @override
+  String get search_page_site_name => 'サイト名';
+
+  @override
+  String get search_page_input_all => 'すべて入力してください';
+
+  @override
+  String get search_page_add_favorite => 'お気に入りサイトを追加';
+
+  @override
+  String get search_result_page_save_as_item => '作品を保存しました';
+
+  @override
+  String get search_result_page_site_saved => 'サイトを保存しました';
+
+  @override
+  String get search_result_page_saving_as_item => '作品を保存';
+
+  @override
+  String get search_result_page_saving_list => '保存先リスト';
+
+  @override
+  String get search_result_page_url_already_saved => 'このURLはすでに保存されています';
 
   @override
   String get analytics => '統計';

@@ -89,10 +89,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           */
           ListTile(
+            //テーマカラー設定
             title: Text(
               L10n.of(context)!.settings_page_theme_color,
               style: TextStyle(color: Color(0xFFB8860B)),
             ),
+
             //デバッグ用切り替え箇所
             onTap: () async {
               if (!await PremiumGate.ensurePremium(context)) return;
@@ -101,6 +103,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 _isPremium = true;
               });
             },
+
             trailing: DropdownButton<ThemeColorType>(
               value: selectedColor,
               items:

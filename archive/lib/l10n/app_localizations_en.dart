@@ -42,6 +42,12 @@ class L10nEn extends L10n {
   String get delete => 'Delete';
 
   @override
+  String get save => 'Save';
+
+  @override
+  String get reload => 'Reload';
+
+  @override
   String get all_item_list_name => 'All Items';
 
   @override
@@ -52,6 +58,24 @@ class L10nEn extends L10n {
 
   @override
   String get clear => 'clear';
+
+  @override
+  String get favorite => 'Favorite';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get no_select => 'None';
+
+  @override
+  String get modify => 'Modify';
+
+  @override
+  String get close => 'Close';
 
   @override
   String get save_limit_dialog_title => 'Save limit reached';
@@ -302,6 +326,55 @@ class L10nEn extends L10n {
   @override
   String get search_page_premium_description =>
       'Searching with multiple categories\nis available for Premium users only.';
+
+  @override
+  String get search_page_segment_button_app => 'In App';
+
+  @override
+  String get search_page_segment_button_web => 'Web';
+
+  @override
+  String get search_page_text_empty => 'Please enter a search term';
+
+  @override
+  String get search_page_web_title => 'Web Search';
+
+  @override
+  String get search_page_search_word => 'Search term';
+
+  @override
+  String get search_page_select_site => 'Select a site';
+
+  @override
+  String get search_page_open_site => 'Open site';
+
+  @override
+  String get search_page_modify_favorite => 'Edit favorites';
+
+  @override
+  String get search_page_site_name => 'Site name';
+
+  @override
+  String get search_page_input_all => 'Please fill in all fields';
+
+  @override
+  String get search_page_add_favorite => 'Add favorite site';
+
+  @override
+  String get search_result_page_save_as_item => 'Item has been saved';
+
+  @override
+  String get search_result_page_site_saved => 'Site has been saved';
+
+  @override
+  String get search_result_page_saving_as_item => 'Save item';
+
+  @override
+  String get search_result_page_saving_list => 'Destination list';
+
+  @override
+  String get search_result_page_url_already_saved =>
+      'This URL has already been saved';
 
   @override
   String get analytics => 'Analytics';

@@ -163,6 +163,18 @@ abstract class L10n {
   /// **'削除'**
   String get delete;
 
+  /// No description provided for @save.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存'**
+  String get save;
+
+  /// No description provided for @reload.
+  ///
+  /// In ja, this message translates to:
+  /// **'再読み込み'**
+  String get reload;
+
   /// No description provided for @all_item_list_name.
   ///
   /// In ja, this message translates to:
@@ -186,6 +198,42 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'クリア'**
   String get clear;
+
+  /// No description provided for @favorite.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入り'**
+  String get favorite;
+
+  /// No description provided for @url.
+  ///
+  /// In ja, this message translates to:
+  /// **'URL'**
+  String get url;
+
+  /// No description provided for @title.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイトル'**
+  String get title;
+
+  /// No description provided for @no_select.
+  ///
+  /// In ja, this message translates to:
+  /// **'選択なし'**
+  String get no_select;
+
+  /// No description provided for @modify.
+  ///
+  /// In ja, this message translates to:
+  /// **'編集'**
+  String get modify;
+
+  /// No description provided for @close.
+  ///
+  /// In ja, this message translates to:
+  /// **'閉じる'**
+  String get close;
 
   /// No description provided for @save_limit_dialog_title.
   ///
@@ -666,6 +714,102 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'複数のカテゴリを組み合わせた検索は\nプレミアムプラン限定の機能です。'**
   String get search_page_premium_description;
+
+  /// No description provided for @search_page_segment_button_app.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ内'**
+  String get search_page_segment_button_app;
+
+  /// No description provided for @search_page_segment_button_web.
+  ///
+  /// In ja, this message translates to:
+  /// **'Web'**
+  String get search_page_segment_button_web;
+
+  /// No description provided for @search_page_text_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'検索ワードを入力してください'**
+  String get search_page_text_empty;
+
+  /// No description provided for @search_page_web_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'Web検索'**
+  String get search_page_web_title;
+
+  /// No description provided for @search_page_search_word.
+  ///
+  /// In ja, this message translates to:
+  /// **'検索ワード'**
+  String get search_page_search_word;
+
+  /// No description provided for @search_page_select_site.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイトを選択'**
+  String get search_page_select_site;
+
+  /// No description provided for @search_page_open_site.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイトを開く'**
+  String get search_page_open_site;
+
+  /// No description provided for @search_page_modify_favorite.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入りを編集'**
+  String get search_page_modify_favorite;
+
+  /// No description provided for @search_page_site_name.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイト名'**
+  String get search_page_site_name;
+
+  /// No description provided for @search_page_input_all.
+  ///
+  /// In ja, this message translates to:
+  /// **'すべて入力してください'**
+  String get search_page_input_all;
+
+  /// No description provided for @search_page_add_favorite.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入りサイトを追加'**
+  String get search_page_add_favorite;
+
+  /// No description provided for @search_result_page_save_as_item.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品を保存しました'**
+  String get search_result_page_save_as_item;
+
+  /// No description provided for @search_result_page_site_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイトを保存しました'**
+  String get search_result_page_site_saved;
+
+  /// No description provided for @search_result_page_saving_as_item.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品を保存'**
+  String get search_result_page_saving_as_item;
+
+  /// No description provided for @search_result_page_saving_list.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存先リスト'**
+  String get search_result_page_saving_list;
+
+  /// No description provided for @search_result_page_url_already_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'このURLはすでに保存されています'**
+  String get search_result_page_url_already_saved;
 
   /// No description provided for @analytics.
   ///

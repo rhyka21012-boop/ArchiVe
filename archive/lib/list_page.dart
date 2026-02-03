@@ -5,7 +5,6 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'grid_page.dart';
 import 'random_image.dart';
 import 'floating_button.dart';
-import 'detail_page.dart';
 import 'ranking_page.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'l10n/app_localizations.dart';
@@ -71,6 +70,10 @@ class ListPageState extends State<ListPage>
         extendBody: true,
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
+          elevation: 6,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.black.withOpacity(0.2),
           title: Text(
             'ArchiVe',
             style: TextStyle(
@@ -81,7 +84,7 @@ class ListPageState extends State<ListPage>
           ),
 
           centerTitle: true,
-          backgroundColor: colorScheme.surface,
+          //backgroundColor: colorScheme.surface,
           /*
           actions: [
             IconButton(
@@ -96,6 +99,7 @@ class ListPageState extends State<ListPage>
           */
           bottom: TabBar(
             controller: _tabController,
+            physics: const NeverScrollableScrollPhysics(),
             tabs: [
               Tab(
                 icon: Icon(Icons.folder),
@@ -106,19 +110,20 @@ class ListPageState extends State<ListPage>
                 text: L10n.of(context)!.list_page_my_ranking,
               ),
             ],
+            /*
             indicator: UnderlineTabIndicator(
               borderSide: BorderSide(width: 3.0, color: colorScheme.primary),
               insets: EdgeInsets.symmetric(horizontal: -95.0),
             ),
+            */
             indicatorColor: colorScheme.primary,
             labelColor: colorScheme.primary,
             //unselectedLabelColor: colorScheme.onPrimary,
             unselectedLabelColor:
                 colorScheme.brightness == Brightness.dark
                     ? Colors.white
-                    : Colors.black,
+                    : Colors.grey[800],
           ),
-          elevation: 0,
         ),
         body: TabBarView(
           controller: _tabController,

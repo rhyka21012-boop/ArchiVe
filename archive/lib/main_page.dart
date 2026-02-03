@@ -241,7 +241,7 @@ class _MainPageState extends ConsumerState<MainPage> {
               unselectedItemColor:
                   colorScheme.brightness == Brightness.dark
                       ? Colors.white
-                      : Colors.black,
+                      : Colors.grey[800],
               selectedItemColor: colorScheme.primary,
               onTap: _onItemTapped,
             ),

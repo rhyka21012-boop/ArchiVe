@@ -69,6 +69,8 @@ class _DetailPageState extends State<DetailPage> {
 
   //編集モードの有効無効
   bool isEditing = false;
+
+  //選択中の評価
   String? selectedRating;
 
   //背景の初期色
