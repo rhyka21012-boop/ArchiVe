@@ -113,6 +113,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   final GlobalKey _fetchTitleKey = GlobalKey();
   final GlobalKey _saveIconKey = GlobalKey();
 
+  //スクロールコントローラ
+  final ScrollController _scrollController = ScrollController();
+
   //タイトルフェチ中判定
   bool _isFetchingTitle = false;
 
@@ -893,9 +896,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           TutorialOverlayPseudoTap(
             holeRect: getRectFromKey(_urlFieldKey),
             onTap: () {
-              // URLは入力済みなので何もしない
-              ref.read(tutorialStepProvider.notifier).state =
-                  TutorialStep.fetchTitle;
+              //タイトル取得ボタンはスクロールのため、別途関数を呼び出す
+              startFetchTitleTutorial();
             },
           ),
           // 説明バルーン（任意）
@@ -1846,6 +1848,26 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       top: rect.top + offsetY,
       child: _TutorialBalloon(text: text),
     );
+  }
+
+  //チュートリアル - タイトル取得ボタンの表示処理
+  Future<void> startFetchTitleTutorial() async {
+    final context = _fetchTitleKey.currentContext;
+    if (context == null) return;
+
+    // ① スクロールして表示
+    await Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.5, // 画面中央寄せ
+    );
+
+    // ② レイアウトが安定するのを待つ
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // ③ チュートリアルステップへ
+    ref.read(tutorialStepProvider.notifier).state = TutorialStep.fetchTitle;
   }
 }
 

@@ -268,112 +268,86 @@ class GridPageState extends ConsumerState<GridPage> {
                                           fontSize: 14,
                                           //color: Colors.white,
                                         ),
-                                        maxLines: 3,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     SizedBox(height: 16),
-                                    // ★ 下：必ず確保される操作領域
-                                    const Spacer(),
+                                  ],
+                                ),
+                              ),
 
-                                    SizedBox(
-                                      height: 36, // ← この高さをUIとして保証する
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 8,
-                                            ),
-                                            child:
-                                                iconPath != null
-                                                    ? Image.asset(
-                                                      iconPath,
-                                                      width: 24,
-                                                      height: 24,
-                                                    )
-                                                    : const SizedBox(width: 24),
-                                          ),
-                                          IconButton(
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 32,
-                                              minHeight: 32,
-                                            ),
-                                            icon: const Icon(
-                                              Icons.open_in_new,
-                                              size: 20,
-                                            ),
-                                            onPressed: () {},
-                                          ),
-                                        ],
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child:
+                                          iconPath != null
+                                              ? Image.asset(
+                                                iconPath,
+                                                width: 24,
+                                                height: 24,
+                                              )
+                                              : const SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                              ),
+                                    ),
+                                    IconButton(
+                                      color: colorScheme.onPrimary,
+                                      icon: const Icon(
+                                        Icons.open_in_new,
+                                        size: 20,
                                       ),
+                                      onPressed: () async {
+                                        final url =
+                                            item['url'].toString().trim();
+                                        if (url.isNotEmpty &&
+                                            await canLaunchUrl(
+                                              Uri.parse(url),
+                                            )) {
+                                          await launchUrl(
+                                            Uri.parse(url),
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                          return;
+                                        }
+                                        final encodedUrl = Uri.encodeFull(url);
+                                        final _canLaunchAgain = await canLaunch(
+                                          encodedUrl,
+                                        );
+                                        if (!_canLaunchAgain) {
+                                          await launchUrl(
+                                            Uri.parse(url),
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                          return;
+                                        }
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              L10n.of(
+                                                context,
+                                              )!.grid_page_url_unable,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
-                              /*
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child:
-                                      iconPath != null
-                                          ? Image.asset(
-                                            iconPath,
-                                            width: 24,
-                                            height: 24,
-                                          )
-                                          : const SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                          ),
-                                ),
-                                IconButton(
-                                  color: colorScheme.onPrimary,
-                                  icon: const Icon(Icons.open_in_new, size: 20),
-                                  onPressed: () async {
-                                    final url = item['url'].toString().trim();
-                                    if (url.isNotEmpty &&
-                                        await canLaunchUrl(Uri.parse(url))) {
-                                      await launchUrl(
-                                        Uri.parse(url),
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                      return;
-                                    }
-                                    final encodedUrl = Uri.encodeFull(url);
-                                    final _canLaunchAgain = await canLaunch(
-                                      encodedUrl,
-                                    );
-                                    if (!_canLaunchAgain) {
-                                      await launchUrl(
-                                        Uri.parse(url),
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                      return;
-                                    }
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          L10n.of(
-                                            context,
-                                          )!.grid_page_url_unable,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),*/
                             ],
                           ),
                         );

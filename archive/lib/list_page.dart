@@ -531,7 +531,7 @@ class ListPageState extends ConsumerState<ListPage>
         //①FAB
         if (isTutorial && step == TutorialStep.createList)
           Positioned(
-            bottom: 100,
+            bottom: 250,
             right: 16,
             child: _TutorialBalloon(text: L10n.of(context)!.tutorial_01),
           ),

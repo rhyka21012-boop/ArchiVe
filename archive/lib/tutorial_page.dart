@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
+import 'main_page.dart';
 
 enum TutorialStep {
   createList, // ListPageでFABを押す
@@ -14,7 +15,7 @@ enum TutorialStep {
 }
 
 final tutorialStepProvider = StateProvider<TutorialStep>(
-  (ref) => TutorialStep.createList,
+  (ref) => TutorialStep.none,
 );
 
 final isTutorialModeProvider = StateProvider<bool>((ref) => false);
@@ -44,15 +45,20 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
   }
 
   @override
-  void dispose() {
-    // チュートリアル終了
-    ref.read(isTutorialModeProvider.notifier).state = false;
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return TutorialCompleteOverlay(onFinished: widget.onComplete);
+    final step = ref.watch(tutorialStepProvider);
+
+    if (step == TutorialStep.done) {
+      return TutorialCompleteOverlay(
+        onFinished: () {
+          ref.read(isTutorialModeProvider.notifier).state = false;
+          widget.onComplete();
+        },
+      );
+    }
+
+    // 通常は MainPage（上に Overlay が乗る）
+    return const MainPage();
   }
 }
 
