@@ -9,8 +9,10 @@ import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'premium_detail.dart';
 import 'l10n/app_localizations.dart';
+import 'tutorial_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class GridPage extends StatefulWidget {
+class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
   final String searchText;
   final String rating;
@@ -27,10 +29,10 @@ class GridPage extends StatefulWidget {
   });
 
   @override
-  State<GridPage> createState() => GridPageState();
+  ConsumerState<GridPage> createState() => GridPageState();
 }
 
-class GridPageState extends State<GridPage> {
+class GridPageState extends ConsumerState<GridPage> {
   //検索されたアイテムリスト
   List<Map<String, dynamic>> _searchedItems = [];
   //ソートされたアイテムリスト
@@ -49,17 +51,33 @@ class GridPageState extends State<GridPage> {
 
   bool _isPremium = false; //サブスク購入状態を保持
 
+  // FAB 用
+  final GlobalKey fabKey = GlobalKey();
+  Rect? fabRect;
+
   @override
   void initState() {
     super.initState();
     _searchMetadata();
     _loadLocalImages();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.watch(tutorialStepProvider) == TutorialStep.tapList) {
+        //次のフェーズに進める
+        ref.read(tutorialStepProvider.notifier).state = TutorialStep.createItem;
+      }
+
+      //FABの位置を取得
+      _updateFabRect();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     var itemsToShow = _searchedItems;
+
+    final tutorialStep = ref.watch(tutorialStepProvider);
 
     if (_sortedItems.isNotEmpty) {
       itemsToShow = _sortedItems;
@@ -70,189 +88,232 @@ class GridPageState extends State<GridPage> {
         FocusScope.of(context).unfocus();
       },
       behavior: HitTestBehavior.opaque,
-      child: Scaffold(
-        //backgroundColor: Color(0xFF121212),
-        appBar: AppBar(
-          //backgroundColor: Color(0xFF121212),
-          title: Text(
-            L10n.of(context)!.grid_page_item_count(itemsToShow.length),
-          ),
-          actions:
-          //  ?
-          [IconButton(onPressed: _showSortModal, icon: Icon(Icons.sort))],
-          // : [],
-        ),
-        body:
-            itemsToShow.isEmpty
-                ? Center(child: Text(L10n.of(context)!.grid_page_no_item))
-                : _isGridView
-                ? GridView.builder(
-                  controller: _scrollController,
-                  itemCount: itemsToShow.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 0.2,
-                    crossAxisSpacing: 0.2,
-                    childAspectRatio: 0.7,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = itemsToShow[index];
-
-                    final url = item['url'] ?? '';
-                    final localPaths = _localImagesMap[url] ?? [];
-
-                    String? rating = item['rating'];
-                    String? iconPath;
-                    switch (rating) {
-                      case 'critical':
-                        iconPath = 'assets/icons/critical.png';
-                        break;
-                      case 'normal':
-                        iconPath = 'assets/icons/normal.png';
-                        break;
-                      case 'maniac':
-                        iconPath = 'assets/icons/maniac.png';
-                        break;
-                    }
-
-                    return GestureDetector(
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => DetailPage(
-                                  listName: item['listName'],
-                                  url: item['url'],
-                                  title: item['title'],
-                                  image: item['image'],
-                                  cast: item['cast'] ?? '',
-                                  genre: item['genre'] ?? '',
-                                  series: item['series'] ?? '',
-                                  label: item['label'] ?? '',
-                                  maker: item['maker'] ?? '',
-                                  rating: item['rating'],
-                                  memo: item['memo'],
-                                  isReadOnly: true,
-                                ),
+      child: Stack(
+        children: [
+          Scaffold(
+            //backgroundColor: Color(0xFF121212),
+            appBar: AppBar(
+              //backgroundColor: Color(0xFF121212),
+              title: Text(
+                L10n.of(context)!.grid_page_item_count(itemsToShow.length),
+              ),
+              actions:
+              //  ?
+              [IconButton(onPressed: _showSortModal, icon: Icon(Icons.sort))],
+              // : [],
+            ),
+            body:
+                itemsToShow.isEmpty
+                    ? Center(child: Text(L10n.of(context)!.grid_page_no_item))
+                    : _isGridView
+                    ? GridView.builder(
+                      controller: _scrollController,
+                      itemCount: itemsToShow.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 0.2,
+                            crossAxisSpacing: 0.2,
+                            childAspectRatio: 0.7,
                           ),
-                        ).then((_) {
-                          setState(() {
-                            _searchMetadata();
-                          });
-                        });
-                        // 戻ってきたタイミングでフォーカスを外す
-                        FocusScope.of(context).unfocus();
-                        if (result == true) (await _searchMetadata());
-                      },
-                      child: Stack(
-                        children: [
-                          Card(
-                            /*
+                      itemBuilder: (context, index) {
+                        final item = itemsToShow[index];
+
+                        final url = item['url'] ?? '';
+                        final localPaths = _localImagesMap[url] ?? [];
+
+                        String? rating = item['rating'];
+                        String? iconPath;
+                        switch (rating) {
+                          case 'critical':
+                            iconPath = 'assets/icons/critical.png';
+                            break;
+                          case 'normal':
+                            iconPath = 'assets/icons/normal.png';
+                            break;
+                          case 'maniac':
+                            iconPath = 'assets/icons/maniac.png';
+                            break;
+                        }
+
+                        return GestureDetector(
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => DetailPage(
+                                      listName: item['listName'],
+                                      url: item['url'],
+                                      title: item['title'],
+                                      image: item['image'],
+                                      cast: item['cast'] ?? '',
+                                      genre: item['genre'] ?? '',
+                                      series: item['series'] ?? '',
+                                      label: item['label'] ?? '',
+                                      maker: item['maker'] ?? '',
+                                      rating: item['rating'],
+                                      memo: item['memo'],
+                                      isReadOnly: true,
+                                    ),
+                              ),
+                            ).then((_) {
+                              setState(() {
+                                _searchMetadata();
+                              });
+                            });
+                            // 戻ってきたタイミングでフォーカスを外す
+                            FocusScope.of(context).unfocus();
+                            if (result == true) (await _searchMetadata());
+                          },
+                          child: Stack(
+                            children: [
+                              Card(
+                                /*
                             margin: EdgeInsets.only(
                               top: 0.2,
                               left: 0,
                               right: 0,
                             ),*/
-                            color: colorScheme.secondary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
-                              children: [
-                                item['image'] != null
-                                    ? Image.network(
-                                      item['image'],
-                                      height: 100,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return Container(
-                                          height: 100,
-                                          color: Colors.grey[300],
-                                          alignment: Alignment.center,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.broken_image,
-                                                size: 40,
-                                                color: Colors.grey,
-                                              ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                L10n.of(
-                                                  context,
-                                                )!.grid_page_cant_load_image,
-                                                style: TextStyle(
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    )
-                                    //サムネイルがない場合、ローカル画像またはプレースホルダーを表示
-                                    : (localPaths.isNotEmpty
-                                        ? Image.file(
-                                          File(localPaths.first),
+                                color: colorScheme.secondary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  children: [
+                                    item['image'] != null
+                                        ? Image.network(
+                                          item['image'],
                                           height: 100,
                                           width: double.infinity,
                                           fit: BoxFit.cover,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Container(
+                                              height: 100,
+                                              color: Colors.grey[300],
+                                              alignment: Alignment.center,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    L10n.of(
+                                                      context,
+                                                    )!.grid_page_cant_load_image,
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
                                         )
-                                        : Container(
-                                          height: 100,
-                                          color: Colors.grey[300],
-                                          alignment: Alignment.center,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.broken_image,
-                                                size: 40,
-                                                color: Colors.grey,
+                                        //サムネイルがない場合、ローカル画像またはプレースホルダーを表示
+                                        : (localPaths.isNotEmpty
+                                            ? Image.file(
+                                              File(localPaths.first),
+                                              height: 100,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            )
+                                            : Container(
+                                              height: 100,
+                                              color: Colors.grey[300],
+                                              alignment: Alignment.center,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    L10n.of(
+                                                      context,
+                                                    )!.grid_page_cant_load_image,
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                L10n.of(
-                                                  context,
-                                                )!.grid_page_cant_load_image,
-                                                style: TextStyle(
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )),
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0,
-                                  ),
-                                  child: Text(
-                                    item['title'] ??
-                                        L10n.of(context)!.grid_page_no_title,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      //color: Colors.white,
+                                            )),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                      ),
+                                      child: Text(
+                                        item['title'] ??
+                                            L10n.of(
+                                              context,
+                                            )!.grid_page_no_title,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          //color: Colors.white,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                    SizedBox(height: 16),
+                                    // ★ 下：必ず確保される操作領域
+                                    const Spacer(),
+
+                                    SizedBox(
+                                      height: 36, // ← この高さをUIとして保証する
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8,
+                                            ),
+                                            child:
+                                                iconPath != null
+                                                    ? Image.asset(
+                                                      iconPath,
+                                                      width: 24,
+                                                      height: 24,
+                                                    )
+                                                    : const SizedBox(width: 24),
+                                          ),
+                                          IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 32,
+                                              minHeight: 32,
+                                            ),
+                                            icon: const Icon(
+                                              Icons.open_in_new,
+                                              size: 20,
+                                            ),
+                                            onPressed: () {},
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
+                              ),
+                              /*
                           Positioned(
                             bottom: 0,
                             left: 0,
@@ -312,84 +373,114 @@ class GridPageState extends State<GridPage> {
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                )
-                : ListView.builder(
-                  controller: _scrollController,
-                  itemCount: itemsToShow.length,
-                  itemBuilder: (context, index) {
-                    final item = itemsToShow[index];
-                    String? rating = item['rating'];
-                    String? iconPath;
-                    switch (rating) {
-                      case 'critical':
-                        iconPath = 'assets/icons/critical.png';
-                        break;
-                      case 'normal':
-                        iconPath = 'assets/icons/normal.png';
-                        break;
-                      case 'maniac':
-                        iconPath = 'assets/icons/maniac.png';
-                        break;
-                    }
-
-                    return GestureDetector(
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => DetailPage(
-                                  listName: item['listName'],
-                                  url: item['url'],
-                                  title: item['title'],
-                                  image: item['image'],
-                                  cast: item['cast'] ?? '',
-                                  genre: item['genre'] ?? '',
-                                  series: item['series'] ?? '',
-                                  label: item['label'] ?? '',
-                                  maker: item['maker'] ?? '',
-                                  rating: item['rating'],
-                                  memo: item['memo'],
-                                  isReadOnly: true,
-                                ),
+                          ),*/
+                            ],
                           ),
                         );
-                        FocusScope.of(context).unfocus();
-                        if (result == true) (await _searchMetadata());
                       },
-                      child: Card(
-                        color: colorScheme.secondary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 12,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child:
-                                    item['image'] != null
-                                        ? Image.network(
-                                          item['image'],
-                                          height: 80,
-                                          width: 90,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Container(
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: itemsToShow.length,
+                      itemBuilder: (context, index) {
+                        final item = itemsToShow[index];
+                        String? rating = item['rating'];
+                        String? iconPath;
+                        switch (rating) {
+                          case 'critical':
+                            iconPath = 'assets/icons/critical.png';
+                            break;
+                          case 'normal':
+                            iconPath = 'assets/icons/normal.png';
+                            break;
+                          case 'maniac':
+                            iconPath = 'assets/icons/maniac.png';
+                            break;
+                        }
+
+                        return GestureDetector(
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => DetailPage(
+                                      listName: item['listName'],
+                                      url: item['url'],
+                                      title: item['title'],
+                                      image: item['image'],
+                                      cast: item['cast'] ?? '',
+                                      genre: item['genre'] ?? '',
+                                      series: item['series'] ?? '',
+                                      label: item['label'] ?? '',
+                                      maker: item['maker'] ?? '',
+                                      rating: item['rating'],
+                                      memo: item['memo'],
+                                      isReadOnly: true,
+                                    ),
+                              ),
+                            );
+                            FocusScope.of(context).unfocus();
+                            if (result == true) (await _searchMetadata());
+                          },
+                          child: Card(
+                            color: colorScheme.secondary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 12,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child:
+                                        item['image'] != null
+                                            ? Image.network(
+                                              item['image'],
+                                              height: 80,
+                                              width: 90,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) {
+                                                return Container(
+                                                  height: 80,
+                                                  width: 90,
+                                                  color: Colors.grey[300],
+                                                  alignment: Alignment.center,
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.broken_image,
+                                                        size: 30,
+                                                        color: Colors.grey,
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        L10n.of(
+                                                          context,
+                                                        )!.grid_page_cant_load_image,
+                                                        style: TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                            : Container(
                                               height: 80,
                                               width: 90,
                                               color: Colors.grey[300],
@@ -415,170 +506,156 @@ class GridPageState extends State<GridPage> {
                                                   ),
                                                 ],
                                               ),
-                                            );
-                                          },
-                                        )
-                                        : Container(
-                                          height: 80,
-                                          width: 90,
-                                          color: Colors.grey[300],
-                                          alignment: Alignment.center,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.broken_image,
-                                                size: 30,
-                                                color: Colors.grey,
-                                              ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                L10n.of(
-                                                  context,
-                                                )!.grid_page_cant_load_image,
-                                                style: TextStyle(
-                                                  color: Colors.grey,
-                                                  fontSize: 10,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 80,
+                                            ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 80,
 
-                                  child: Stack(
-                                    children: [
-                                      // タイトル
-                                      Positioned(
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        child: Text(
-                                          item['title'] ??
-                                              L10n.of(
-                                                context,
-                                              )!.grid_page_no_title,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      // 評価アイコン（右下）
-                                      if (iconPath != null)
-                                        Positioned(
-                                          bottom: 0,
-                                          right: 70,
-                                          child: Image.asset(
-                                            iconPath,
-                                            width: 24,
-                                            height: 24,
-                                          ),
-                                        ),
-                                      Positioned(
-                                        bottom: -12,
-                                        right: 0,
-                                        child: IconButton(
-                                          color: colorScheme.onPrimary,
-                                          icon: const Icon(
-                                            Icons.open_in_new,
-                                            size: 20,
-                                          ),
-                                          onPressed: () async {
-                                            final url =
-                                                item['url'].toString().trim();
-                                            if (url.isNotEmpty &&
-                                                await canLaunchUrl(
-                                                  Uri.parse(url),
-                                                )) {
-                                              await launchUrl(
-                                                Uri.parse(url),
-                                                mode:
-                                                    LaunchMode
-                                                        .externalApplication,
-                                              );
-                                              return;
-                                            }
-                                            final encodedUrl = Uri.encodeFull(
-                                              url,
-                                            );
-                                            final _canLaunchAgain =
-                                                await canLaunch(encodedUrl);
-                                            if (!_canLaunchAgain) {
-                                              await launchUrl(
-                                                Uri.parse(url),
-                                                mode:
-                                                    LaunchMode
-                                                        .externalApplication,
-                                              );
-                                              return;
-                                            }
-
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
+                                      child: Stack(
+                                        children: [
+                                          // タイトル
+                                          Positioned(
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            child: Text(
+                                              item['title'] ??
                                                   L10n.of(
                                                     context,
-                                                  )!.grid_page_url_unable,
-                                                ),
+                                                  )!.grid_page_no_title,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                            );
-                                          },
-                                        ),
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          // 評価アイコン（右下）
+                                          if (iconPath != null)
+                                            Positioned(
+                                              bottom: 0,
+                                              right: 70,
+                                              child: Image.asset(
+                                                iconPath,
+                                                width: 24,
+                                                height: 24,
+                                              ),
+                                            ),
+                                          Positioned(
+                                            bottom: -12,
+                                            right: 0,
+                                            child: IconButton(
+                                              color: colorScheme.onPrimary,
+                                              icon: const Icon(
+                                                Icons.open_in_new,
+                                                size: 20,
+                                              ),
+                                              onPressed: () async {
+                                                final url =
+                                                    item['url']
+                                                        .toString()
+                                                        .trim();
+                                                if (url.isNotEmpty &&
+                                                    await canLaunchUrl(
+                                                      Uri.parse(url),
+                                                    )) {
+                                                  await launchUrl(
+                                                    Uri.parse(url),
+                                                    mode:
+                                                        LaunchMode
+                                                            .externalApplication,
+                                                  );
+                                                  return;
+                                                }
+                                                final encodedUrl =
+                                                    Uri.encodeFull(url);
+                                                final _canLaunchAgain =
+                                                    await canLaunch(encodedUrl);
+                                                if (!_canLaunchAgain) {
+                                                  await launchUrl(
+                                                    Uri.parse(url),
+                                                    mode:
+                                                        LaunchMode
+                                                            .externalApplication,
+                                                  );
+                                                  return;
+                                                }
+
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      L10n.of(
+                                                        context,
+                                                      )!.grid_page_url_unable,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: (() async {
-            //最大保存数
-            final limit = await _countSaveLimit();
+                        );
+                      },
+                    ),
+            floatingActionButton: FloatingActionButton(
+              key: fabKey,
+              onPressed: _onAddPressed,
+              backgroundColor: colorScheme.primary,
+              shape: CircleBorder(),
+              child: Icon(Icons.add, color: Colors.white),
+            ),
+          ),
 
-            //作品数
-            final savedCount = await _countSavedItems();
+          // ===== チュートリアル：createItem =====
+          if (tutorialStep == TutorialStep.createItem && fabRect != null)
+            TutorialOverlayPseudoTap(
+              holeRect: fabRect!,
+              onTap: () async {
+                // 擬似タップ → FAB 処理を呼ぶ
+                await _onAddPressed();
+              },
+            ),
 
-            //プレミアムプランか判定
-            _isPremium = await _checkPremium();
-
-            //作品数 > 最大数かつ、非プレミアムユーザーであれば、ポップアップ表示
-            if (!_isPremium && savedCount >= limit) {
-              //if (true) {
-              //デバッグ用切り替え箇所
-              await _showSaveLimitDialog(savedCount, limit);
-              return;
-            }
-
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => DetailPage(listName: widget.listName),
-              ),
-            );
-            _searchMetadata();
-          }),
-          backgroundColor: colorScheme.primary,
-          shape: CircleBorder(),
-          child: Icon(Icons.add, color: Colors.white),
-        ),
+          // 説明バルーン（任意）
+          if (tutorialStep == TutorialStep.createItem && fabRect != null)
+            Positioned(
+              right: 16,
+              bottom: fabRect!.height + 80,
+              child: _TutorialBalloon(text: L10n.of(context)!.tutorial_03),
+            ),
+        ],
       ),
     );
+  }
+
+  // ===== チュートリアル対応：追加ボタン押下 =====
+  Future<void> _onAddPressed() async {
+    final limit = await _countSaveLimit();
+    final savedCount = await _countSavedItems();
+    _isPremium = await _checkPremium();
+
+    if (!_isPremium && savedCount >= limit) {
+      await _showSaveLimitDialog(savedCount, limit);
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetailPage(listName: widget.listName)),
+    );
+    await _searchMetadata();
   }
 
   //ローカル画像リストを定義
@@ -1022,5 +1099,54 @@ class GridPageState extends State<GridPage> {
       debugPrint('Subscription check error: $e');
       return false;
     }
+  }
+
+  void _updateFabRect() {
+    final context = fabKey.currentContext;
+    if (context == null) return;
+
+    final box = context.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero);
+
+    setState(() {
+      fabRect = offset & box.size;
+    });
+  }
+}
+
+//チュートリアル - 案内コメント
+class _TutorialBalloon extends StatelessWidget {
+  final String text;
+
+  const _TutorialBalloon({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 260),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.black, height: 1.4),
+        ),
+      ),
+    );
   }
 }

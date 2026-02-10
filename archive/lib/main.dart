@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main_page.dart';
+import 'launch_gate.dart';
 //import 'grid_view_native_ad_factory.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> {
           theme: getThemeData(themeColor, false),
           darkTheme: getThemeData(themeColor, true),
           themeMode: themeMode,
-          home: const MainPage(),
+          home: const LaunchGate(),
         );
       },
     );

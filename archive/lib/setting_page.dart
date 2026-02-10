@@ -1,3 +1,5 @@
+import 'home_tab_index_provider.dart';
+import 'list_tab_index_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +12,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'tutorial_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -71,7 +74,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     //final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(L10n.of(context)!.settings)),
+      appBar: AppBar(
+        title: Text(L10n.of(context)!.settings),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.school),
+            tooltip: L10n.of(context)!.tutorial, // なければ 'チュートリアル'
+            onPressed: () async {
+              await _restartTutorial(context);
+            },
+          ),
+        ],
+      ),
       body: ListView(
         children: [
           SwitchListTile(
@@ -263,11 +277,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
+              icon: const Icon(Icons.star, color: Colors.white),
               label: Text(
                 L10n.of(context)!.settings_page_premium,
                 style: TextStyle(
-                  color: Color(0xFFB8860B),
+                  color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -278,7 +292,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   vertical: 12,
                 ),
 
-                backgroundColor: Colors.black,
+                backgroundColor: Color(0xFFB8860B),
               ),
             ),
           ),
@@ -408,95 +422,45 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     _countSavedItems();
   }
 
-  /*　premium_detail.dartに移植済み
-  void _showSubscriptionDialog() {
-    showDialog(
+  //チュートリアルをリセットする
+  Future<void> _restartTutorial(BuildContext context) async {
+    final result = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.star, color: Colors.amber),
-              Text(
-                'ArchiVe プレミアム',
-                style: TextStyle(
-                  color: Colors.amber,
-                  fontWeight: FontWeight.bold,
-                ),
+      builder:
+          (_) => AlertDialog(
+            title: Text(L10n.of(context)!.start_tutorial_dialog),
+            content: Text(L10n.of(context)!.start_tutorial_dialog_description),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(L10n.of(context)!.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(L10n.of(context)!.ok),
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Text('• 広告なし\n• 好みの傾向がわかる統計機能', style: TextStyle(fontSize: 18)),
-              SizedBox(height: 16),
-              Text(
-                '¥170/月',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル', style: TextStyle(color: Colors.black)),
-            ),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-              onPressed: () {
-                Navigator.pop(context);
-                _startPurchase();
-              },
-              child: const Text('購入する', style: TextStyle(color: Colors.black)),
-            ),
-          ],
-        );
-      },
     );
+
+    if (result != true) return;
+
+    // 1. 永続状態
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstLaunch', true);
+
+    // 2. チュートリアル状態
+    ref.read(isTutorialModeProvider.notifier).state = true;
+    ref.read(tutorialStepProvider.notifier).state = TutorialStep.createList;
+
+    // 3. 表示タブ
+    ref.read(homeTabIndexProvider.notifier).state = 0;
+    ref.read(listTabIndexProvider.notifier).state = 0; // ListPage 内 Tab
+
+    // 4. 画面戻す
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
-  
-
-  void _startPurchase() async {
-    try {
-      final offerings = await Purchases.getOfferings();
-      final offering = offerings.current;
-
-      if (offering != null && offering.availablePackages.isNotEmpty) {
-        final package = offering.availablePackages.first;
-
-        // 購入処理（PurchaseResultを受け取る）
-        final purchaseResult = await Purchases.purchasePackage(package);
-
-        // 最新のCustomerInfoを取得
-        final customerInfo = await Purchases.getCustomerInfo();
-
-        // RevenueCatのEntitlement IDを確認（例: "premium"）
-        if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('プレミアムを購入しました！')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('購入は完了しましたが、プレミアムが有効化されませんでした')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('購入可能なプランが見つかりません')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
-    }
-  }
-  */
 }
 
 class _AdBadge extends StatelessWidget {

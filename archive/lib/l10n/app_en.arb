@@ -198,5 +198,17 @@
   "premium_detail_premium_item05": "Unlimited save slots",
   "premium_detail_premium_item06": "Visualize data by genre and rating",
   "premium_detail_price": "Start for ¥170 / month",
-  "premium_detail_note": "Cancel anytime"
+  "premium_detail_note": "Cancel anytime",
+
+  "tutorial": "tutorial",
+  "tutorial_01": "First, let’s create a list.",
+  "tutorial_02": "Open the list you just created.",
+  "tutorial_03": "Tap the + button to add an item.",
+  "tutorial_04": "Enter the URL of the video or content.",
+  "tutorial_05": "Tap this button to automatically fetch the title.",
+  "tutorial_06": "Finally, save it to add it to the list.",
+  "start_tutorial_dialog": "Restart the tutorial?",
+  "start_tutorial_dialog_description": "This will show the steps from creating a list again.",
+  "completed_tutorial": "Tutorial complete!\nGreat job!",
+  "tutorial_list_name": "Watch Later"
 }

@@ -198,5 +198,18 @@
   "premium_detail_premium_item05": "保存数は無制限",
   "premium_detail_premium_item06": "ジャンル別・評価別にデータを可視化",
   "premium_detail_price": "¥170 / 月で始める",
-  "premium_detail_note": "いつでもキャンセル可能"
+  "premium_detail_note": "いつでもキャンセル可能",
+
+  "tutorial": "チュートリアル",
+  "tutorial_01": "まずはリストを作成しましょう。",
+  "tutorial_02": "作ったリストを開きましょう。",
+  "tutorial_03": "＋ボタンから作品を追加しましょう",
+  "tutorial_04": "まずは動画や作品のURLを入力します。",
+  "tutorial_05": "このボタンでタイトルを自動取得できます。",
+  "tutorial_06": "最後に保存してリストに追加しましょう。",
+  "start_tutorial_dialog": "チュートリアルを再表示しますか？",
+  "start_tutorial_dialog_description": "リスト作成からの手順をもう一度表示します。",
+  "completed_tutorial": "チュートリアル完了！\nお疲れ様でした。",
+  "tutorial_list_name": "あとで見る"
+
 }

@@ -17,8 +17,10 @@ import 'package:flutter/services.dart';
 import 'premium_detail.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'l10n/app_localizations.dart';
+import 'tutorial_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DetailPage extends StatefulWidget {
+class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
   final String? url;
   final String? title;
@@ -51,10 +53,10 @@ class DetailPage extends StatefulWidget {
   });
 
   @override
-  State<DetailPage> createState() => _DetailPageState();
+  ConsumerState<DetailPage> createState() => _DetailPageState();
 }
 
-class _DetailPageState extends State<DetailPage> {
+class _DetailPageState extends ConsumerState<DetailPage> {
   late TextEditingController _urlController;
   late TextEditingController _titleController;
   late TextEditingController _castController;
@@ -106,6 +108,14 @@ class _DetailPageState extends State<DetailPage> {
   //選択なし
   static const String noneListValue = '__none__';
 
+  //チュートリアル用
+  final GlobalKey _urlFieldKey = GlobalKey();
+  final GlobalKey _fetchTitleKey = GlobalKey();
+  final GlobalKey _saveIconKey = GlobalKey();
+
+  //タイトルフェチ中判定
+  bool _isFetchingTitle = false;
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +146,20 @@ class _DetailPageState extends State<DetailPage> {
     _loadLists();
 
     _loadLocalImages();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final step = ref.read(tutorialStepProvider);
+
+      if (step == TutorialStep.createItem) {
+        ref.read(tutorialStepProvider.notifier).state = TutorialStep.inputUrl;
+      }
+
+      if (ref.read(tutorialStepProvider.notifier).state ==
+          TutorialStep.inputUrl) {
+        _urlController.text =
+            'https://youtu.be/h_D3VFfhvs4?si=mn5UBLFS_Tv9FvJh';
+      }
+    });
   }
 
   void _initializeControllers() {
@@ -480,56 +504,60 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    //_dominantColor = colorScheme.secondary;
 
-    return Scaffold(
-      //backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF121212).withOpacity(0.3),
-        title: Text(
-          L10n.of(context)!.detail_page_item_detail,
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          _buildIconWithLabel(
-            Icons.delete,
-            L10n.of(context)!.detail_page_delete,
-            _confirmDelete,
-          ),
-          _buildIconWithLabel(
-            Icons.open_in_new,
-            L10n.of(context)!.detail_page_access,
-            _launchUrl,
-          ),
-          if (!isEditing)
-            _buildIconWithLabel(
-              Icons.edit,
-              L10n.of(context)!.detail_page_modify,
-              () => setState(() => isEditing = true),
+    final tutorialStep = ref.watch(tutorialStepProvider);
+
+    return Stack(
+      children: [
+        Scaffold(
+          //backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF121212).withOpacity(0.3),
+            title: Text(
+              L10n.of(context)!.detail_page_item_detail,
+              style: TextStyle(color: Colors.white),
             ),
-          if (isEditing)
-            _buildIconWithLabel(
-              Icons.save,
-              L10n.of(context)!.detail_page_save,
-              _saveChanges,
-            ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_dominantColor, colorScheme.secondary],
+            iconTheme: const IconThemeData(color: Colors.white),
+            actions: [
+              _buildIconWithLabel(
+                Icons.delete,
+                L10n.of(context)!.detail_page_delete,
+                _confirmDelete,
+              ),
+              _buildIconWithLabel(
+                Icons.open_in_new,
+                L10n.of(context)!.detail_page_access,
+                _launchUrl,
+              ),
+              if (!isEditing)
+                _buildIconWithLabel(
+                  Icons.edit,
+                  L10n.of(context)!.detail_page_modify,
+                  () => setState(() => isEditing = true),
+                ),
+              if (isEditing)
+                _buildIconWithLabel(
+                  Icons.save,
+                  L10n.of(context)!.detail_page_save,
+                  _saveChanges,
+                  key: _saveIconKey,
+                ),
+            ],
           ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              /*
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_dominantColor, colorScheme.secondary],
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  /*
               if ((widget.image ?? _thumbnailUrl) != null) ...[
                 SizedBox(height: 100),
                 ClipRRect(
@@ -561,83 +589,88 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                 ),
                 */
-              const SizedBox(height: 100),
-              //if (_localImagePaths.isNotEmpty) ...[
-              SizedBox(
-                height: 200,
-                child: PageView.builder(
-                  itemCount:
-                      _localImagePaths.length + 1, //1ページ目：サムネ、2ページ目以降：ローカル画像
-                  onPageChanged: (index) {
-                    setState(() {
-                      _localImageCorrentIndex = index + 1;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      //サムネ取得中
-                      if (_isLoadingThumbnail) {
-                        return Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            const SizedBox(
-                              height: 200,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ViewingCounterWidget(url: widget.url),
-                            ),
-                          ],
-                        );
-                      }
-
-                      //サムネ表示
-                      if ((widget.image ?? _thumbnailUrl) != null) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            alignment: Alignment.bottomRight,
-                            children: [
-                              Image.network(
-                                widget.image ?? _thumbnailUrl!,
-                                width: double.infinity,
-                                height: 200,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) =>
-                                        const SizedBox(),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ViewingCounterWidget(url: widget.url),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        //サムネ未取得
-                        return Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            SizedBox(
-                              height: 300,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: Text(
-                                  L10n.of(
-                                    context,
-                                  )!.detail_page_thumbnail_placeholder,
+                  const SizedBox(height: 100),
+                  //if (_localImagePaths.isNotEmpty) ...[
+                  SizedBox(
+                    height: 200,
+                    child: PageView.builder(
+                      itemCount:
+                          _localImagePaths.length +
+                          1, //1ページ目：サムネ、2ページ目以降：ローカル画像
+                      onPageChanged: (index) {
+                        setState(() {
+                          _localImageCorrentIndex = index + 1;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          //サムネ取得中
+                          if (_isLoadingThumbnail) {
+                            return Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                const SizedBox(
+                                  height: 200,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ViewingCounterWidget(url: widget.url),
+                                ),
+                              ],
+                            );
+                          }
+
+                          //サムネ表示
+                          if ((widget.image ?? _thumbnailUrl) != null) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Image.network(
+                                    widget.image ?? _thumbnailUrl!,
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const SizedBox(),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ViewingCounterWidget(
+                                      url: widget.url,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ViewingCounterWidget(url: widget.url),
-                            ),
-                          ],
-                        );
-                        /*
+                            );
+                          } else {
+                            //サムネ未取得
+                            return Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                SizedBox(
+                                  height: 300,
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      L10n.of(
+                                        context,
+                                      )!.detail_page_thumbnail_placeholder,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ViewingCounterWidget(url: widget.url),
+                                ),
+                              ],
+                            );
+                            /*
                         return SizedBox(
                           height: 300,
                           child: const Align(
@@ -646,209 +679,273 @@ class _DetailPageState extends State<DetailPage> {
                           ),
                         );
                         */
-                      }
-                    } else {
-                      final imageIndex = index - 1;
-                      final imageWidget = Image.file(
-                        File(_localImagePaths[imageIndex]),
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: imageWidget,
+                          }
+                        } else {
+                          final imageIndex = index - 1;
+                          final imageWidget = Image.file(
+                            File(_localImagePaths[imageIndex]),
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                          );
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
                             ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: GestureDetector(
-                                onTap: () => _removeLocalImage(imageIndex),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 20,
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: imageWidget,
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: GestureDetector(
+                                    onTap: () => _removeLocalImage(imageIndex),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: EdgeInsets.all(6),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            Positioned(
-                              width: 0,
-                              height: 0,
-                              child: InAppWebView(
-                                initialSettings: InAppWebViewSettings(
-                                  javaScriptEnabled: true,
-                                  transparentBackground: true,
+                                Positioned(
+                                  width: 0,
+                                  height: 0,
+                                  child: InAppWebView(
+                                    initialSettings: InAppWebViewSettings(
+                                      javaScriptEnabled: true,
+                                      transparentBackground: true,
+                                    ),
+                                    onWebViewCreated: (controller) {
+                                      _hiddenWebViewController = controller;
+                                    },
+                                  ),
                                 ),
-                                onWebViewCreated: (controller) {
-                                  _hiddenWebViewController = controller;
-                                },
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+
+                  //],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (isEditing) ...[
+                          SizedBox(
+                            height: 23,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                if (!await PremiumGate.ensurePremium(context))
+                                  return;
+
+                                setState(() {
+                                  _isPremium = true;
+                                });
+                                _isPremium ? _addLocalImage : null;
+                              },
+                              icon: const Icon(
+                                Icons.add_photo_alternate,
+                                color: Color(0xFFB8860B),
+                              ),
+                              label: Text(
+                                L10n.of(context)!.detail_page_add_image,
+                                style: TextStyle(
+                                  color: Color(0xFFB8860B),
+                                  fontSize: 12,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                //backgroundColor: Colors.black.withOpacity(0.5),
+                                backgroundColor: Color(0xFF121212),
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-
-              //],
-              Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (isEditing) ...[
-                      SizedBox(
-                        height: 23,
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            if (!await PremiumGate.ensurePremium(context))
-                              return;
-
-                            setState(() {
-                              _isPremium = true;
-                            });
-                            _isPremium ? _addLocalImage : null;
-                          },
-                          icon: const Icon(
-                            Icons.add_photo_alternate,
-                            color: Color(0xFFB8860B),
                           ),
-                          label: Text(
-                            L10n.of(context)!.detail_page_add_image,
-                            style: TextStyle(
-                              color: Color(0xFFB8860B),
-                              fontSize: 12,
-                            ),
+                        ],
+                        SizedBox(width: 8),
+                        Container(
+                          margin: EdgeInsets.only(top: 2.0),
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(5),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            //backgroundColor: Colors.black.withOpacity(0.5),
-                            backgroundColor: Color(0xFF121212),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.image_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              Text(
+                                '$_localImageCorrentIndex/$_localImageMaxIndex',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        L10n.of(context)!.detail_page_rate,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimary,
+                        ),
                       ),
-                    ],
-                    SizedBox(width: 8),
-                    Container(
-                      margin: EdgeInsets.only(top: 2.0),
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(
-                            Icons.image_outlined,
-                            color: Colors.white,
-                            size: 18,
+                          _ratingButton(
+                            'critical',
+                            L10n.of(context)!.critical,
+                            'assets/icons/critical.png',
+                            'assets/icons/critical_gray.png',
                           ),
-                          Text(
-                            '$_localImageCorrentIndex/$_localImageMaxIndex',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          _ratingButton(
+                            'normal',
+                            L10n.of(context)!.normal,
+                            'assets/icons/normal.png',
+                            'assets/icons/normal_gray.png',
+                          ),
+                          _ratingButton(
+                            'maniac',
+                            L10n.of(context)!.maniac,
+                            'assets/icons/maniac.png',
+                            'assets/icons/maniac_gray.png',
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    L10n.of(context)!.detail_page_rate,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimary,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _ratingButton(
-                        'critical',
-                        L10n.of(context)!.critical,
-                        'assets/icons/critical.png',
-                        'assets/icons/critical_gray.png',
-                      ),
-                      _ratingButton(
-                        'normal',
-                        L10n.of(context)!.normal,
-                        'assets/icons/normal.png',
-                        'assets/icons/normal_gray.png',
-                      ),
-                      _ratingButton(
-                        'maniac',
-                        L10n.of(context)!.maniac,
-                        'assets/icons/maniac.png',
-                        'assets/icons/maniac_gray.png',
-                      ),
+                      const SizedBox(height: 10),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  _buildListDropdownButton(),
+
+                  _buildTextField(_urlController, 'URL', 'https://...'),
+                  _buildTextField(
+                    _titleController,
+                    L10n.of(context)!.detail_page_title,
+                    L10n.of(context)!.detail_page_title_placeholder,
+                    withFetchTitle: true,
+                  ),
+                  _buildTextField(
+                    _castController,
+                    L10n.of(context)!.detail_page_cast,
+                    L10n.of(context)!.detail_page_cast_placeholder,
+                    autocompleteKey: 'cast',
+                  ),
+                  _buildTextField(
+                    _genreController,
+                    L10n.of(context)!.detail_page_genre,
+                    L10n.of(context)!.detail_page_genre_placeholder,
+                    autocompleteKey: 'genre',
+                  ),
+                  _buildTextField(
+                    _seriesController,
+                    L10n.of(context)!.detail_page_series,
+                    L10n.of(context)!.detail_page_series_placeholder,
+                    autocompleteKey: 'series',
+                  ),
+                  _buildTextField(
+                    _labelController,
+                    L10n.of(context)!.detail_page_label,
+                    L10n.of(context)!.detail_page_label_placeholder,
+                    autocompleteKey: 'label',
+                  ),
+                  _buildTextField(
+                    _makerController,
+                    L10n.of(context)!.detail_page_maker,
+                    L10n.of(context)!.detail_page_maker_placeholder,
+                    autocompleteKey: 'maker',
+                  ),
+                  _buildMemoTextField(),
+
+                  const SizedBox(height: 70),
                 ],
               ),
-              _buildListDropdownButton(),
-
-              _buildTextField(_urlController, 'URL', 'https://...'),
-              _buildTextField(
-                _titleController,
-                L10n.of(context)!.detail_page_title,
-                L10n.of(context)!.detail_page_title_placeholder,
-                withFetchTitle: true,
-              ),
-              _buildTextField(
-                _castController,
-                L10n.of(context)!.detail_page_cast,
-                L10n.of(context)!.detail_page_cast_placeholder,
-                autocompleteKey: 'cast',
-              ),
-              _buildTextField(
-                _genreController,
-                L10n.of(context)!.detail_page_genre,
-                L10n.of(context)!.detail_page_genre_placeholder,
-                autocompleteKey: 'genre',
-              ),
-              _buildTextField(
-                _seriesController,
-                L10n.of(context)!.detail_page_series,
-                L10n.of(context)!.detail_page_series_placeholder,
-                autocompleteKey: 'series',
-              ),
-              _buildTextField(
-                _labelController,
-                L10n.of(context)!.detail_page_label,
-                L10n.of(context)!.detail_page_label_placeholder,
-                autocompleteKey: 'label',
-              ),
-              _buildTextField(
-                _makerController,
-                L10n.of(context)!.detail_page_maker,
-                L10n.of(context)!.detail_page_maker_placeholder,
-                autocompleteKey: 'maker',
-              ),
-              _buildMemoTextField(),
-
-              const SizedBox(height: 70),
-            ],
+            ),
           ),
         ),
-      ),
+        // ===== チュートリアル：createItem =====
+        if (tutorialStep == TutorialStep.inputUrl) ...[
+          TutorialOverlayPseudoTap(
+            holeRect: getRectFromKey(_urlFieldKey),
+            onTap: () {
+              // URLは入力済みなので何もしない
+              ref.read(tutorialStepProvider.notifier).state =
+                  TutorialStep.fetchTitle;
+            },
+          ),
+          // 説明バルーン（任意）
+          _buildBalloonFromRect(
+            getRectFromKey(_urlFieldKey),
+            L10n.of(context)!.tutorial_04,
+            offsetY: -60,
+          ),
+        ],
+
+        if (tutorialStep == TutorialStep.fetchTitle) ...[
+          TutorialOverlayPseudoTap(
+            holeRect: getRectFromKey(_fetchTitleKey),
+            onTap: () async {
+              await _fetchTitleFromUrl();
+              ref.read(tutorialStepProvider.notifier).state =
+                  TutorialStep.saveItem;
+            },
+          ),
+          _buildBalloonFromRect(
+            getRectFromKey(_fetchTitleKey),
+            L10n.of(context)!.tutorial_05,
+            offsetX: -140,
+            offsetY: -60,
+          ),
+        ],
+
+        if (tutorialStep == TutorialStep.saveItem) ...[
+          TutorialOverlayPseudoTap(
+            holeRect: getRectFromKey(_saveIconKey),
+            onTap: () async {
+              await _saveChanges();
+              ref.read(tutorialStepProvider.notifier).state = TutorialStep.done;
+            },
+          ),
+          _buildBalloonFromRect(
+            getRectFromKey(_saveIconKey),
+            L10n.of(context)!.tutorial_06,
+            offsetX: -190,
+            offsetY: 70,
+          ),
+        ],
+        if (tutorialStep == TutorialStep.done)
+          TutorialCompleteOverlay(
+            onFinished: () {
+              ref.read(isTutorialModeProvider.notifier).state = false;
+              ref.read(tutorialStepProvider.notifier).state = TutorialStep.none;
+            },
+          ),
+      ],
     );
   }
 
@@ -909,12 +1006,20 @@ class _DetailPageState extends State<DetailPage> {
                 //URLからタイトル取得
                 if (isEditing && withFetchTitle)
                   TextButton.icon(
+                    key: _fetchTitleKey,
                     onPressed: _fetchTitleFromUrl,
-                    icon: Icon(
-                      Icons.download,
-                      size: 18,
-                      color: colorScheme.onPrimary,
-                    ),
+                    icon:
+                        _isFetchingTitle
+                            ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : Icon(
+                              Icons.download,
+                              size: 18,
+                              color: colorScheme.onPrimary,
+                            ),
                     label: Text(
                       L10n.of(context)!.detail_page_fetch_title,
                       style: TextStyle(color: colorScheme.onPrimary),
@@ -928,6 +1033,7 @@ class _DetailPageState extends State<DetailPage> {
         const SizedBox(height: 4),
 
         CompositedTransformTarget(
+          key: controller == _urlController ? _urlFieldKey : null,
           link:
               autocompleteKey != null
                   ? _layerLinks[autocompleteKey]!
@@ -1219,12 +1325,21 @@ class _DetailPageState extends State<DetailPage> {
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
 
+    if (_isFetchingTitle) return; // 二重押下防止
+
+    setState(() {
+      _isFetchingTitle = true;
+    });
+
     try {
       final response = await http.get(Uri.parse(url));
+
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final document = parse(response.body);
-
         final titleTag = document.getElementsByTagName('title').firstOrNull;
+
         if (titleTag != null) {
           setState(() {
             _titleController.text = titleTag.text.trim();
@@ -1236,7 +1351,15 @@ class _DetailPageState extends State<DetailPage> {
         _showMessage(L10n.of(context)!.detail_page_fetch_page_fail);
       }
     } catch (e) {
-      _showMessage(L10n.of(context)!.detail_page_ex);
+      if (mounted) {
+        _showMessage(L10n.of(context)!.detail_page_ex);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingTitle = false;
+        });
+      }
     }
   }
 
@@ -1348,9 +1471,11 @@ class _DetailPageState extends State<DetailPage> {
   Widget _buildIconWithLabel(
     IconData icon,
     String label,
-    VoidCallback onPressed,
-  ) {
+    VoidCallback onPressed, {
+    Key? key,
+  }) {
     return Padding(
+      key: key, // ← ここが重要
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: GestureDetector(
         onTap: onPressed,
@@ -1702,5 +1827,61 @@ class _DetailPageState extends State<DetailPage> {
       if (!mounted) return;
       await showReviewPrompt(context);
     }
+  }
+
+  Rect getRectFromKey(GlobalKey key) {
+    final box = key.currentContext!.findRenderObject() as RenderBox;
+    final pos = box.localToGlobal(Offset.zero);
+    return pos & box.size;
+  }
+
+  Positioned _buildBalloonFromRect(
+    Rect rect,
+    String text, {
+    double offsetX = 0,
+    double offsetY = -72,
+  }) {
+    return Positioned(
+      left: rect.left + offsetX,
+      top: rect.top + offsetY,
+      child: _TutorialBalloon(text: text),
+    );
+  }
+}
+
+//チュートリアル - 案内コメント
+class _TutorialBalloon extends StatelessWidget {
+  final String text;
+
+  const _TutorialBalloon({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 260),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.black, height: 1.4),
+        ),
+      ),
+    );
   }
 }

@@ -584,4 +584,38 @@ class L10nEn extends L10n {
 
   @override
   String get premium_detail_note => 'Cancel anytime';
+
+  @override
+  String get tutorial => 'tutorial';
+
+  @override
+  String get tutorial_01 => 'First, let’s create a list.';
+
+  @override
+  String get tutorial_02 => 'Open the list you just created.';
+
+  @override
+  String get tutorial_03 => 'Tap the + button to add an item.';
+
+  @override
+  String get tutorial_04 => 'Enter the URL of the video or content.';
+
+  @override
+  String get tutorial_05 => 'Tap this button to automatically fetch the title.';
+
+  @override
+  String get tutorial_06 => 'Finally, save it to add it to the list.';
+
+  @override
+  String get start_tutorial_dialog => 'Restart the tutorial?';
+
+  @override
+  String get start_tutorial_dialog_description =>
+      'This will show the steps from creating a list again.';
+
+  @override
+  String get completed_tutorial => 'Tutorial complete!\nGreat job!';
+
+  @override
+  String get tutorial_list_name => 'Watch Later';
 }

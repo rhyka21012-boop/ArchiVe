@@ -577,4 +577,37 @@ class L10nJa extends L10n {
 
   @override
   String get premium_detail_note => 'いつでもキャンセル可能';
+
+  @override
+  String get tutorial => 'チュートリアル';
+
+  @override
+  String get tutorial_01 => 'まずはリストを作成しましょう。';
+
+  @override
+  String get tutorial_02 => '作ったリストを開きましょう。';
+
+  @override
+  String get tutorial_03 => '＋ボタンから作品を追加しましょう';
+
+  @override
+  String get tutorial_04 => 'まずは動画や作品のURLを入力します。';
+
+  @override
+  String get tutorial_05 => 'このボタンでタイトルを自動取得できます。';
+
+  @override
+  String get tutorial_06 => '最後に保存してリストに追加しましょう。';
+
+  @override
+  String get start_tutorial_dialog => 'チュートリアルを再表示しますか？';
+
+  @override
+  String get start_tutorial_dialog_description => 'リスト作成からの手順をもう一度表示します。';
+
+  @override
+  String get completed_tutorial => 'チュートリアル完了！\nお疲れ様でした。';
+
+  @override
+  String get tutorial_list_name => 'あとで見る';
 }

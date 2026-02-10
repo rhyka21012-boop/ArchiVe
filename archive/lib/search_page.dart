@@ -65,6 +65,12 @@ class SearchPageState extends State<SearchPage> {
   //SharedPreferrence - お気に入りサイト保存キー
   static const String _favoriteSitesKey = 'favorite_sites';
 
+  //デフォルトのお気に入り
+  final List<Map<String, String>> defaultFavorites = [
+    {'title': 'Youtube', 'url': 'https://m.youtube.com/'},
+    {'title': 'TikTok', 'url': 'https://www.tiktok.com'},
+  ];
+
   bool _ignoreNextFocus = false;
 
   @override
@@ -72,6 +78,7 @@ class SearchPageState extends State<SearchPage> {
     super.initState();
     _loadSearchHistory();
     //_loadSavedMetadata();
+    initializeFavorites();
     _loadFavoriteSites();
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
@@ -869,7 +876,7 @@ class SearchPageState extends State<SearchPage> {
     );
   }
 
-  //お気に入りサイト - 長押し用のスピードダイアログ
+  //お気に入りサイト - 長押し用のメニュー
   void _showFavoriteActionSheet(Map<String, String> site, int index) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -1139,5 +1146,17 @@ class SearchPageState extends State<SearchPage> {
     final siteQuery = Uri.encodeComponent('site:$domain $keyword');
 
     return 'https://www.google.com/search?q=$siteQuery&tbm=vid&safe=off';
+  }
+
+  //お気に入りサイト - 初期化処理
+  Future<void> initializeFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final stored = prefs.getString('favorite_sites');
+
+    if (stored == null) {
+      // 初回起動：YouTubeを追加
+      await prefs.setString('favorite_sites', jsonEncode(defaultFavorites));
+    }
   }
 }

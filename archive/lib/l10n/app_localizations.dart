@@ -1194,6 +1194,72 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'いつでもキャンセル可能'**
   String get premium_detail_note;
+
+  /// No description provided for @tutorial.
+  ///
+  /// In ja, this message translates to:
+  /// **'チュートリアル'**
+  String get tutorial;
+
+  /// No description provided for @tutorial_01.
+  ///
+  /// In ja, this message translates to:
+  /// **'まずはリストを作成しましょう。'**
+  String get tutorial_01;
+
+  /// No description provided for @tutorial_02.
+  ///
+  /// In ja, this message translates to:
+  /// **'作ったリストを開きましょう。'**
+  String get tutorial_02;
+
+  /// No description provided for @tutorial_03.
+  ///
+  /// In ja, this message translates to:
+  /// **'＋ボタンから作品を追加しましょう'**
+  String get tutorial_03;
+
+  /// No description provided for @tutorial_04.
+  ///
+  /// In ja, this message translates to:
+  /// **'まずは動画や作品のURLを入力します。'**
+  String get tutorial_04;
+
+  /// No description provided for @tutorial_05.
+  ///
+  /// In ja, this message translates to:
+  /// **'このボタンでタイトルを自動取得できます。'**
+  String get tutorial_05;
+
+  /// No description provided for @tutorial_06.
+  ///
+  /// In ja, this message translates to:
+  /// **'最後に保存してリストに追加しましょう。'**
+  String get tutorial_06;
+
+  /// No description provided for @start_tutorial_dialog.
+  ///
+  /// In ja, this message translates to:
+  /// **'チュートリアルを再表示しますか？'**
+  String get start_tutorial_dialog;
+
+  /// No description provided for @start_tutorial_dialog_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'リスト作成からの手順をもう一度表示します。'**
+  String get start_tutorial_dialog_description;
+
+  /// No description provided for @completed_tutorial.
+  ///
+  /// In ja, this message translates to:
+  /// **'チュートリアル完了！\nお疲れ様でした。'**
+  String get completed_tutorial;
+
+  /// No description provided for @tutorial_list_name.
+  ///
+  /// In ja, this message translates to:
+  /// **'あとで見る'**
+  String get tutorial_list_name;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

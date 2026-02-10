@@ -12,6 +12,7 @@ import 'premium_detail.dart';
 import 'ad_badge_provider.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'l10n/app_localizations.dart';
+import 'home_tab_index_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -20,7 +21,9 @@ class MainPage extends ConsumerStatefulWidget {
   ConsumerState<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends ConsumerState<MainPage> {
+class _MainPageState extends ConsumerState<MainPage>
+    with SingleTickerProviderStateMixin {
+  //late TabController _tabController;
   int _selectedIndex = 0;
   bool _isPremium = false; //サブスク購入状態を保持
 
@@ -38,6 +41,12 @@ class _MainPageState extends ConsumerState<MainPage> {
       await AppTrackingTransparency.requestTrackingAuthorization();
     });
     _checkSubscriptionStatus();
+  }
+
+  @override
+  void dispose() {
+    //_tabController.dispose();
+    super.dispose();
   }
 
   // BottomNavigationBarのタップイベント
@@ -75,6 +84,9 @@ class _MainPageState extends ConsumerState<MainPage> {
         _selectedIndex = index; // 0→0, 1→1
       }
     });
+
+    // 👇 Providerにも反映
+    ref.read(homeTabIndexProvider.notifier).state = _selectedIndex;
   }
 
   //保存数の上限をカウント
@@ -158,9 +170,18 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(homeTabIndexProvider, (previous, next) {
+      if (_selectedIndex != next) {
+        setState(() {
+          _selectedIndex = next;
+        });
+      }
+    });
+
     final watchedAdToday = ref.watch(adBadgeProvider);
     final showAdBadge = watchedAdToday < 3;
     final colorScheme = Theme.of(context).colorScheme;
+
     final List<Widget> _pages = [
       ListPage(key: _listPageKey),
       SearchPage(key: _SearchPageKey),
