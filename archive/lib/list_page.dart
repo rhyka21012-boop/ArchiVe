@@ -11,6 +11,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'list_tab_index_provider.dart';
+import 'random_image_reload_provider.dart';
 
 class ListPage extends ConsumerStatefulWidget {
   const ListPage({super.key});
@@ -99,8 +100,12 @@ class ListPageState extends ConsumerState<ListPage>
 
   @override
   Widget build(BuildContext context) {
+    //チュートリアル管理
     final isTutorial = ref.watch(isTutorialModeProvider);
     final step = ref.watch(tutorialStepProvider);
+
+    //ランダム画像更新管理
+    final reloadSeed = ref.watch(randomImageReloadProvider);
 
     final colorScheme = Theme.of(context).colorScheme;
     return Stack(
@@ -399,6 +404,7 @@ class ListPageState extends ConsumerState<ListPage>
                                 setState(() {});
                               },
                               child: RandomImageContainer(
+                                key: ValueKey('all_$reloadSeed'),
                                 listName: L10n.of(context)!.all_item_list_name,
                                 onDeleted: () async {
                                   await _loadLists();
@@ -446,6 +452,7 @@ class ListPageState extends ConsumerState<ListPage>
                               setState(() {});
                             },
                             child: RandomImageContainer(
+                              key: ValueKey('${listName}_$reloadSeed'),
                               listName: listName,
                               onDeleted: () async {
                                 await _loadLists();

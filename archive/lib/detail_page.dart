@@ -19,6 +19,7 @@ import 'package:in_app_review/in_app_review.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'random_image_reload_provider.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -436,7 +437,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       setState(() => isEditing = false);
       _initializeThumbnail(_urlController.text);
     }
+
+    //保存完了時
     if (success) {
+      //RandomImageを更新
+      ref.read(randomImageReloadProvider.notifier).state++;
+
       widget.onCreated?.call(); //作成処理の最後に親に通知
 
       // 保存完了後にレビュー促進
