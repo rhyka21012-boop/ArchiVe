@@ -44,7 +44,11 @@ class GridPageState extends ConsumerState<GridPage> {
   //スクロール管理
   final ScrollController _scrollController = ScrollController();
 
+  //グリッドビューかリストビューか
   bool _isGridView = true;
+
+  //グリッドの列数
+  int _gridCount = 2;
 
   //ローカル画像のパスを URL ごとに保存
   Map<String, List<String>> _localImagesMap = {};
@@ -60,6 +64,7 @@ class GridPageState extends ConsumerState<GridPage> {
     super.initState();
     _searchMetadata();
     _loadLocalImages();
+    _loadViewSettings();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ref.watch(tutorialStepProvider) == TutorialStep.tapList) {
@@ -109,13 +114,12 @@ class GridPageState extends ConsumerState<GridPage> {
                     ? GridView.builder(
                       controller: _scrollController,
                       itemCount: itemsToShow.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 0.2,
-                            crossAxisSpacing: 0.2,
-                            childAspectRatio: 0.7,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _gridCount,
+                        mainAxisSpacing: 0.2,
+                        crossAxisSpacing: 0.2,
+                        childAspectRatio: 1.4,
+                      ),
                       itemBuilder: (context, index) {
                         final item = itemsToShow[index];
 
@@ -169,114 +173,57 @@ class GridPageState extends ConsumerState<GridPage> {
                           child: Stack(
                             children: [
                               Card(
-                                /*
-                            margin: EdgeInsets.only(
-                              top: 0.2,
-                              left: 0,
-                              right: 0,
-                            ),*/
-                                color: colorScheme.secondary,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 clipBehavior: Clip.antiAlias,
-                                child: Column(
+                                child: Stack(
                                   children: [
-                                    item['image'] != null
-                                        ? Image.network(
-                                          item['image'],
-                                          height: 100,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Container(
-                                              height: 100,
-                                              color: Colors.grey[300],
-                                              alignment: Alignment.center,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.broken_image,
-                                                    size: 40,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    L10n.of(
-                                                      context,
-                                                    )!.grid_page_cant_load_image,
-                                                    style: TextStyle(
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        )
-                                        //サムネイルがない場合、ローカル画像またはプレースホルダーを表示
-                                        : (localPaths.isNotEmpty
-                                            ? Image.file(
-                                              File(localPaths.first),
-                                              height: 100,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                            )
-                                            : Container(
-                                              height: 100,
-                                              color: Colors.grey[300],
-                                              alignment: Alignment.center,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.broken_image,
-                                                    size: 40,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    L10n.of(
-                                                      context,
-                                                    )!.grid_page_cant_load_image,
-                                                    style: TextStyle(
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            )),
-                                    const SizedBox(height: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                      ),
-                                      child: Text(
-                                        item['title'] ??
-                                            L10n.of(
-                                              context,
-                                            )!.grid_page_no_title,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          //color: Colors.white,
+                                    Positioned.fill(
+                                      child:
+                                          item['image'] != null
+                                              ? Image.network(
+                                                item['image'],
+                                                fit: BoxFit.cover,
+                                              )
+                                              : placeholderWidget(context),
+                                    ),
+
+                                    // 下グラデーション（タイトル可読性）
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.7),
+                                            ],
+                                          ),
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                        child: Text(
+                                          item['title'] ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    SizedBox(height: 16),
                                   ],
                                 ),
                               ),
 
+                              //評価アイコンとリンクボタン
+                              /*
                               Positioned(
                                 bottom: 0,
                                 left: 0,
@@ -299,6 +246,9 @@ class GridPageState extends ConsumerState<GridPage> {
                                                 height: 24,
                                               ),
                                     ),
+
+                                    
+                                    //リンクボタン
                                     IconButton(
                                       color: colorScheme.onPrimary,
                                       icon: const Icon(
@@ -345,9 +295,11 @@ class GridPageState extends ConsumerState<GridPage> {
                                         );
                                       },
                                     ),
+                                    
                                   ],
                                 ),
                               ),
+                              */
                             ],
                           ),
                         );
@@ -766,44 +718,65 @@ class GridPageState extends ConsumerState<GridPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // 2列グリッド
                   IconButton(
-                    icon: Icon(
-                      Icons.grid_view,
-                      size: 32,
-                      //color: Colors.white
-                    ),
+                    icon: const Icon(Icons.grid_view, size: 32),
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all(
-                        _isGridView ? colorScheme.primary : Colors.transparent,
+                        _isGridView && _gridCount == 2
+                            ? colorScheme.primary
+                            : Colors.transparent,
                       ),
                     ),
                     onPressed: () {
                       setState(() {
-                        _isGridView = true; // 表示モードを切り替える
+                        _isGridView = true;
+                        _gridCount = 2;
                       });
+                      _saveViewSettings();
                       Navigator.pop(context);
                     },
                   ),
+
+                  // 3列グリッド
                   IconButton(
-                    icon: Icon(
-                      Icons.view_list,
-                      size: 32,
-                      //color: Colors.white
-                    ),
+                    icon: const Icon(Icons.grid_on, size: 32),
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all(
-                        _isGridView ? Colors.transparent : colorScheme.primary,
+                        _isGridView && _gridCount == 3
+                            ? colorScheme.primary
+                            : Colors.transparent,
                       ),
                     ),
                     onPressed: () {
                       setState(() {
-                        _isGridView = false; // 表示モードを切り替える
+                        _isGridView = true;
+                        _gridCount = 3;
                       });
+                      _saveViewSettings();
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // リスト表示
+                  IconButton(
+                    icon: const Icon(Icons.view_list, size: 32),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(
+                        !_isGridView ? colorScheme.primary : Colors.transparent,
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isGridView = false;
+                      });
+                      _saveViewSettings();
                       Navigator.pop(context);
                     },
                   ),
                 ],
               ),
+
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -931,6 +904,22 @@ class GridPageState extends ConsumerState<GridPage> {
         );
       },
     );
+  }
+
+  //ビュー設定を保存する
+  Future<void> _saveViewSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isGridView', _isGridView);
+    await prefs.setInt('gridCount', _gridCount);
+  }
+
+  //ビュー設定を読み込む
+  Future<void> _loadViewSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isGridView = prefs.getBool('isGridView') ?? true;
+      _gridCount = prefs.getInt('gridCount') ?? 2;
+    });
   }
 
   //ソートされたリストを返す
@@ -1085,6 +1074,52 @@ class GridPageState extends ConsumerState<GridPage> {
     setState(() {
       fabRect = offset & box.size;
     });
+  }
+
+  Widget placeholderWidget(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      color: colorScheme.surfaceVariant,
+      child: Stack(
+        children: [
+          // 背景パターン（うっすら）
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.08,
+              child: Icon(
+                Icons.video_library,
+                size: 120,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+
+          // 中央アイコン
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.movie_outlined,
+                  size: 40,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  L10n.of(context)!.grid_page_cant_load_image,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

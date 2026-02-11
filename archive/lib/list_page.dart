@@ -143,26 +143,20 @@ class ListPageState extends ConsumerState<ListPage>
           */
             bottom: TabBar(
               controller: _tabController,
+              isScrollable: true,
               physics: const NeverScrollableScrollPhysics(),
               tabs: [
                 Tab(
-                  icon: Icon(Icons.folder),
+                  //icon: Icon(Icons.folder),
                   text: L10n.of(context)!.list_page_my_list,
                 ),
                 Tab(
-                  icon: Icon(Icons.emoji_events),
+                  //icon: Icon(Icons.emoji_events),
                   text: L10n.of(context)!.list_page_my_ranking,
                 ),
               ],
-              /*
-            indicator: UnderlineTabIndicator(
-              borderSide: BorderSide(width: 3.0, color: colorScheme.primary),
-              insets: EdgeInsets.symmetric(horizontal: -95.0),
-            ),
-            */
               indicatorColor: colorScheme.primary,
               labelColor: colorScheme.primary,
-              //unselectedLabelColor: colorScheme.onPrimary,
               unselectedLabelColor:
                   colorScheme.brightness == Brightness.dark
                       ? Colors.white
@@ -177,6 +171,7 @@ class ListPageState extends ConsumerState<ListPage>
                   //mainAxisAlignment: MainAxisAlignment.center,
                   //crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    SizedBox(height: 2),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SizedBox(
@@ -318,8 +313,9 @@ class ListPageState extends ConsumerState<ListPage>
                         ),
                       ),
                     ),
+                    //中心部分の広告を廃止
                     //プレミアムじゃなければ広告を表示
-                    if (!_isPremium) MyAdWidgetRect(),
+                    //if (!_isPremium) MyAdWidgetRect(),
                     Container(
                       padding: EdgeInsets.all(8.0),
                       alignment: Alignment.bottomCenter,
@@ -370,20 +366,38 @@ class ListPageState extends ConsumerState<ListPage>
                             _listNames.length + 1, //+1することで、先頭に「全アイテム」分を追加
 
                         itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return GestureDetector(
-                              onTap: () async {
-                                final isTutorial = ref.read(
-                                  isTutorialModeProvider,
-                                );
-                                final step = ref.read(tutorialStepProvider);
+                          final isAllItem = index == 0;
+                          final listName =
+                              isAllItem ? '' : _listNames[index - 1];
 
-                                if (isTutorial &&
-                                    step != TutorialStep.tapList) {
-                                  return; // 今はタップさせない
+                          final lastListName = ref.read(
+                            tutorialTargetListNameProvider,
+                          );
+
+                          final keyToUse =
+                              isAllItem
+                                  ? ValueKey('all_$reloadSeed')
+                                  : (listName == lastListName
+                                      ? firstListKey
+                                      : ValueKey(listName));
+
+                          return AnimatedDelay(
+                            delay: Duration(milliseconds: index * 100),
+                            child: GestureDetector(
+                              key: keyToUse,
+                              onTap: () async {
+                                if (isAllItem) {
+                                  final isTutorial = ref.read(
+                                    isTutorialModeProvider,
+                                  );
+                                  final step = ref.read(tutorialStepProvider);
+
+                                  if (isTutorial &&
+                                      step != TutorialStep.tapList) {
+                                    return;
+                                  }
                                 }
 
-                                // ここで「全てのアイテム」をタップしたときの処理
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -393,19 +407,25 @@ class ListPageState extends ConsumerState<ListPage>
                                               <String, List<String>>{},
                                           searchText: '',
                                           rating: '',
-                                          listName: '', // ← 特別な値を渡す
+                                          listName: listName,
                                           onDeleted: () async {
                                             await _loadLists();
                                           },
                                         ),
                                   ),
                                 );
+
                                 await _loadLists();
                                 setState(() {});
                               },
                               child: RandomImageContainer(
-                                key: ValueKey('all_$reloadSeed'),
-                                listName: L10n.of(context)!.all_item_list_name,
+                                key: ValueKey(
+                                  '${isAllItem ? "all" : listName}_$reloadSeed',
+                                ),
+                                listName:
+                                    isAllItem
+                                        ? L10n.of(context)!.all_item_list_name
+                                        : listName,
                                 onDeleted: () async {
                                   await _loadLists();
                                   setState(() {});
@@ -415,53 +435,6 @@ class ListPageState extends ConsumerState<ListPage>
                                   setState(() {});
                                 },
                               ),
-                            );
-                          }
-                          // 1番目以降は通常のリスト表示
-                          final listName = _listNames[index - 1]; // -1 でずらす
-                          final lastListName = ref.read(
-                            tutorialTargetListNameProvider,
-                          );
-
-                          // チュートリアル対象なら firstListKey を付与
-                          final keyToUse =
-                              (listName == lastListName)
-                                  ? firstListKey
-                                  : ValueKey(listName);
-
-                          return GestureDetector(
-                            key: keyToUse,
-                            onTap: () async {
-                              // GridPageから戻ってきたら続きが実行される
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => GridPage(
-                                        selectedItems: <String, List<String>>{},
-                                        searchText: '',
-                                        rating: '',
-                                        listName: listName,
-                                        onDeleted: () async {
-                                          await _loadLists();
-                                        },
-                                      ),
-                                ),
-                              );
-                              await _loadLists();
-                              setState(() {});
-                            },
-                            child: RandomImageContainer(
-                              key: ValueKey('${listName}_$reloadSeed'),
-                              listName: listName,
-                              onDeleted: () async {
-                                await _loadLists();
-                                setState(() {});
-                              },
-                              onChanged: () async {
-                                await _loadLists();
-                                setState(() {});
-                              },
                             ),
                           );
                         },
@@ -790,4 +763,62 @@ class _HolePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+//グリッドアニメーション
+class AnimatedDelay extends StatefulWidget {
+  final Duration delay;
+  final Widget child;
+
+  const AnimatedDelay({super.key, required this.delay, required this.child});
+
+  @override
+  State<AnimatedDelay> createState() => _AnimatedDelayState();
+}
+
+class _AnimatedDelayState extends State<AnimatedDelay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    Future.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.2),
+          end: Offset.zero,
+        ).animate(_animation),
+        child: widget.child,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
