@@ -211,6 +211,26 @@
   "start_tutorial_dialog": "チュートリアルを\n再表示しますか？",
   "start_tutorial_dialog_description": "リスト作成からの手順をもう一度表示します。",
   "completed_tutorial": "チュートリアル完了！\nお疲れ様でした。",
-  "tutorial_list_name": "あとで見る"
+  "tutorial_list_name": "あとで見る",
 
+  "tutorial_slide_title_01": "ダウンロード不要の\n動画管理アプリ",
+  "tutorial_slide_dict_01": "容量を使わず好きなだけ動画を収集",
+  "tutorial_slide_image_01": "assets/tutorial/Japanese01.png",
+  "tutorial_slide_title_02": "【簡単2ステップ】\n①URLをコピー",
+  "tutorial_slide_dict_02": "動画サイトの共有リンクやブラウザのURLをコピー",
+  "tutorial_slide_image_02": "assets/tutorial/Japanese02.png",
+  "tutorial_slide_title_03": "【簡単2ステップ】\n②コピーしたURLを保存",
+  "tutorial_slide_dict_03": "貼るだけで登録\n評価・タグ・メモも追加可能",
+  "tutorial_slide_image_03": "assets/tutorial/Japanese03.png",
+  "tutorial_slide_title_04": "アプリ内検索",
+  "tutorial_slide_dict_04": "保存した動画がタイトル・タグですぐ見つかる。",
+  "tutorial_slide_image_04": "assets/tutorial/Japanese04.png",
+  "tutorial_slide_title_05": "ウェブ検索",
+  "tutorial_slide_dict_05": "アプリ内ブラウザで、探してすぐに保存",
+  "tutorial_slide_image_05": "assets/tutorial/Japanese05.png",
+  "tutorial_slide_title_06": "可能性は無限大",
+  "tutorial_slide_dict_06": "自分だけの動画コレクションを作ろう！",
+  "tutorial_slide_image_06": "assets/tutorial/Japanese06.png",
+  "tutorial_slide_next": "次へ",
+  "tutorial_slide_start": "開始する"
 }

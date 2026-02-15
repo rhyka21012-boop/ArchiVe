@@ -211,5 +211,27 @@
   "start_tutorial_dialog": "Restart the tutorial?",
   "start_tutorial_dialog_description": "This will show the steps from creating a list again.",
   "completed_tutorial": "Tutorial complete!\nGreat job!",
-  "tutorial_list_name": "Watch Later"
+  "tutorial_list_name": "Watch Later",
+
+  "tutorial_slide_title_01": "A Video Manager\nNo Downloads Needed",
+  "tutorial_slide_dict_01": "Collect unlimited videos without using storage",
+  "tutorial_slide_image_01": "assets/tutorial/Japanese01.png",
+  "tutorial_slide_title_02": "[2 Easy Steps]\n1. Copy the URL",
+  "tutorial_slide_dict_02": "Copy the share link or browser URL from any video site",
+  "tutorial_slide_image_02": "assets/tutorial/Japanese02.png",
+  "tutorial_slide_title_03": "[2 Easy Steps]\n2. Save the URL",
+  "tutorial_slide_dict_03": "Just paste to save\nAdd ratings, tags, and notes",
+  "tutorial_slide_image_03": "assets/tutorial/Japanese03.png",
+  "tutorial_slide_title_04": "Search Inside the App",
+  "tutorial_slide_dict_04": "Find saved videos instantly by title or tags",
+  "tutorial_slide_image_04": "assets/tutorial/Japanese04.png",
+  "tutorial_slide_title_05": "Web Search",
+  "tutorial_slide_dict_05": "Browse and save videos instantly with the in-app browser",
+  "tutorial_slide_image_05": "assets/tutorial/Japanese05.png",
+  "tutorial_slide_title_06": "Unlimited Possibilities",
+  "tutorial_slide_dict_06": "Build your own personal video collection!",
+  "tutorial_slide_image_06": "assets/tutorial/Japanese06.png",
+  "tutorial_slide_next": "Next",
+  "tutorial_slide_start": "Get Started"
+
 }

@@ -615,4 +615,64 @@ class L10nJa extends L10n {
 
   @override
   String get tutorial_list_name => 'あとで見る';
+
+  @override
+  String get tutorial_slide_title_01 => 'ダウンロード不要の\n動画管理アプリ';
+
+  @override
+  String get tutorial_slide_dict_01 => '容量を使わず好きなだけ動画を収集';
+
+  @override
+  String get tutorial_slide_image_01 => 'assets/tutorial/Japanese01.png';
+
+  @override
+  String get tutorial_slide_title_02 => '【簡単2ステップ】\n①URLをコピー';
+
+  @override
+  String get tutorial_slide_dict_02 => '動画サイトの共有リンクやブラウザのURLをコピー';
+
+  @override
+  String get tutorial_slide_image_02 => 'assets/tutorial/Japanese02.png';
+
+  @override
+  String get tutorial_slide_title_03 => '【簡単2ステップ】\n②コピーしたURLを保存';
+
+  @override
+  String get tutorial_slide_dict_03 => '貼るだけで登録\n評価・タグ・メモも追加可能';
+
+  @override
+  String get tutorial_slide_image_03 => 'assets/tutorial/Japanese03.png';
+
+  @override
+  String get tutorial_slide_title_04 => 'アプリ内検索';
+
+  @override
+  String get tutorial_slide_dict_04 => '保存した動画がタイトル・タグですぐ見つかる。';
+
+  @override
+  String get tutorial_slide_image_04 => 'assets/tutorial/Japanese04.png';
+
+  @override
+  String get tutorial_slide_title_05 => 'ウェブ検索';
+
+  @override
+  String get tutorial_slide_dict_05 => 'アプリ内ブラウザで、探してすぐに保存';
+
+  @override
+  String get tutorial_slide_image_05 => 'assets/tutorial/Japanese05.png';
+
+  @override
+  String get tutorial_slide_title_06 => '可能性は無限大';
+
+  @override
+  String get tutorial_slide_dict_06 => '自分だけの動画コレクションを作ろう！';
+
+  @override
+  String get tutorial_slide_image_06 => 'assets/tutorial/Japanese06.png';
+
+  @override
+  String get tutorial_slide_next => '次へ';
+
+  @override
+  String get tutorial_slide_start => '開始する';
 }

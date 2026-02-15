@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/app_localizations.dart';
 
 class IntroSlide {
   final String title;
@@ -20,41 +21,47 @@ class _TutorialScreenState extends State<TutorialScreen> {
   final PageController controller = PageController();
   int index = 0;
 
-  final slides = [
-    IntroSlide(
-      title: "ダウンロード不要の\n動画管理アプリ",
-      desc: "容量を使わず好きなだけ動画を収集",
-      image: "assets/tutorial/Japanese01.png",
-    ),
-    IntroSlide(
-      title: "【簡単2ステップ】\n①URLをコピー",
-      desc: "動画サイトの共有リンクやブラウザのURLをコピー",
-      image: "assets/tutorial/Japanese02.png",
-    ),
-    IntroSlide(
-      title: "【簡単2ステップ】\n②コピーしたURLを保存",
-      desc: "貼るだけで登録\n評価・タグ・メモも追加可能",
-      image: "assets/tutorial/Japanese03.png",
-    ),
-    IntroSlide(
-      title: "アプリ内検索",
-      desc: "保存した動画がタイトル・タグですぐ見つかる。",
-      image: "assets/tutorial/Japanese04.png",
-    ),
-    IntroSlide(
-      title: "ウェブ検索",
-      desc: "アプリ内ブラウザで、探してすぐに保存",
-      image: "assets/tutorial/Japanese05.png",
-    ),
-    IntroSlide(
-      title: "可能性は無限大",
-      desc: "自分だけの動画コレクションを作ろう！",
-      image: "assets/tutorial/Japanese06.png",
-    ),
-  ];
+  List<IntroSlide> slides(BuildContext context) {
+    final l10n = L10n.of(context)!;
+
+    return [
+      IntroSlide(
+        title: l10n.tutorial_slide_title_01,
+        desc: l10n.tutorial_slide_dict_01,
+        image: l10n.tutorial_slide_image_01,
+      ),
+      IntroSlide(
+        title: l10n.tutorial_slide_title_02,
+        desc: l10n.tutorial_slide_dict_02,
+        image: l10n.tutorial_slide_image_02,
+      ),
+      IntroSlide(
+        title: l10n.tutorial_slide_title_03,
+        desc: l10n.tutorial_slide_dict_03,
+        image: l10n.tutorial_slide_image_03,
+      ),
+      IntroSlide(
+        title: l10n.tutorial_slide_title_04,
+        desc: l10n.tutorial_slide_dict_04,
+        image: l10n.tutorial_slide_image_04,
+      ),
+      IntroSlide(
+        title: l10n.tutorial_slide_title_05,
+        desc: l10n.tutorial_slide_dict_05,
+        image: l10n.tutorial_slide_image_05,
+      ),
+      IntroSlide(
+        title: l10n.tutorial_slide_title_06,
+        desc: l10n.tutorial_slide_dict_06,
+        image: l10n.tutorial_slide_image_06,
+      ),
+    ];
+  }
 
   void next() {
-    if (index == slides.length - 1) {
+    final total = slides(context).length;
+
+    if (index == total - 1) {
       widget.onFinished();
     } else {
       controller.nextPage(
@@ -68,6 +75,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final l10n = L10n.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -77,17 +86,17 @@ class _TutorialScreenState extends State<TutorialScreen> {
             Expanded(
               child: PageView.builder(
                 controller: controller,
-                itemCount: slides.length,
+                itemCount: slides(context).length,
                 onPageChanged: (i) => setState(() => index = i),
                 itemBuilder: (_, i) {
-                  final slide = slides[i];
+                  final slide = slides(context)[i];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "STEP ${i + 1}/${slides.length}",
+                          "STEP ${i + 1}/${slides(context).length}",
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -98,7 +107,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
                           slide.title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: i == slides.length - 1 ? 30 : 26,
+                            fontSize: i == slides(context).length - 1 ? 30 : 26,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -128,7 +137,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                slides.length,
+                slides(context).length,
                 (i) => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.all(4),
@@ -160,7 +169,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   ),
                   onPressed: next,
                   child: Text(
-                    index == slides.length - 1 ? "開始する" : "次へ",
+                    index == slides(context).length - 1
+                        ? l10n.tutorial_slide_start
+                        : l10n.tutorial_slide_next,
                     style: const TextStyle(fontSize: 18),
                   ),
                 ),

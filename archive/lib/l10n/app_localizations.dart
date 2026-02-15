@@ -1266,6 +1266,126 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'あとで見る'**
   String get tutorial_list_name;
+
+  /// No description provided for @tutorial_slide_title_01.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロード不要の\n動画管理アプリ'**
+  String get tutorial_slide_title_01;
+
+  /// No description provided for @tutorial_slide_dict_01.
+  ///
+  /// In ja, this message translates to:
+  /// **'容量を使わず好きなだけ動画を収集'**
+  String get tutorial_slide_dict_01;
+
+  /// No description provided for @tutorial_slide_image_01.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese01.png'**
+  String get tutorial_slide_image_01;
+
+  /// No description provided for @tutorial_slide_title_02.
+  ///
+  /// In ja, this message translates to:
+  /// **'【簡単2ステップ】\n①URLをコピー'**
+  String get tutorial_slide_title_02;
+
+  /// No description provided for @tutorial_slide_dict_02.
+  ///
+  /// In ja, this message translates to:
+  /// **'動画サイトの共有リンクやブラウザのURLをコピー'**
+  String get tutorial_slide_dict_02;
+
+  /// No description provided for @tutorial_slide_image_02.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese02.png'**
+  String get tutorial_slide_image_02;
+
+  /// No description provided for @tutorial_slide_title_03.
+  ///
+  /// In ja, this message translates to:
+  /// **'【簡単2ステップ】\n②コピーしたURLを保存'**
+  String get tutorial_slide_title_03;
+
+  /// No description provided for @tutorial_slide_dict_03.
+  ///
+  /// In ja, this message translates to:
+  /// **'貼るだけで登録\n評価・タグ・メモも追加可能'**
+  String get tutorial_slide_dict_03;
+
+  /// No description provided for @tutorial_slide_image_03.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese03.png'**
+  String get tutorial_slide_image_03;
+
+  /// No description provided for @tutorial_slide_title_04.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ内検索'**
+  String get tutorial_slide_title_04;
+
+  /// No description provided for @tutorial_slide_dict_04.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存した動画がタイトル・タグですぐ見つかる。'**
+  String get tutorial_slide_dict_04;
+
+  /// No description provided for @tutorial_slide_image_04.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese04.png'**
+  String get tutorial_slide_image_04;
+
+  /// No description provided for @tutorial_slide_title_05.
+  ///
+  /// In ja, this message translates to:
+  /// **'ウェブ検索'**
+  String get tutorial_slide_title_05;
+
+  /// No description provided for @tutorial_slide_dict_05.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ内ブラウザで、探してすぐに保存'**
+  String get tutorial_slide_dict_05;
+
+  /// No description provided for @tutorial_slide_image_05.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese05.png'**
+  String get tutorial_slide_image_05;
+
+  /// No description provided for @tutorial_slide_title_06.
+  ///
+  /// In ja, this message translates to:
+  /// **'可能性は無限大'**
+  String get tutorial_slide_title_06;
+
+  /// No description provided for @tutorial_slide_dict_06.
+  ///
+  /// In ja, this message translates to:
+  /// **'自分だけの動画コレクションを作ろう！'**
+  String get tutorial_slide_dict_06;
+
+  /// No description provided for @tutorial_slide_image_06.
+  ///
+  /// In ja, this message translates to:
+  /// **'assets/tutorial/Japanese06.png'**
+  String get tutorial_slide_image_06;
+
+  /// No description provided for @tutorial_slide_next.
+  ///
+  /// In ja, this message translates to:
+  /// **'次へ'**
+  String get tutorial_slide_next;
+
+  /// No description provided for @tutorial_slide_start.
+  ///
+  /// In ja, this message translates to:
+  /// **'開始する'**
+  String get tutorial_slide_start;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

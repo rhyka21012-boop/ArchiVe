@@ -623,4 +623,70 @@ class L10nEn extends L10n {
 
   @override
   String get tutorial_list_name => 'Watch Later';
+
+  @override
+  String get tutorial_slide_title_01 => 'A Video Manager\nNo Downloads Needed';
+
+  @override
+  String get tutorial_slide_dict_01 =>
+      'Collect unlimited videos without using storage';
+
+  @override
+  String get tutorial_slide_image_01 => 'assets/tutorial/Japanese01.png';
+
+  @override
+  String get tutorial_slide_title_02 => '[2 Easy Steps]\n1. Copy the URL';
+
+  @override
+  String get tutorial_slide_dict_02 =>
+      'Copy the share link or browser URL from any video site';
+
+  @override
+  String get tutorial_slide_image_02 => 'assets/tutorial/Japanese02.png';
+
+  @override
+  String get tutorial_slide_title_03 => '[2 Easy Steps]\n2. Save the URL';
+
+  @override
+  String get tutorial_slide_dict_03 =>
+      'Just paste to save\nAdd ratings, tags, and notes';
+
+  @override
+  String get tutorial_slide_image_03 => 'assets/tutorial/Japanese03.png';
+
+  @override
+  String get tutorial_slide_title_04 => 'Search Inside the App';
+
+  @override
+  String get tutorial_slide_dict_04 =>
+      'Find saved videos instantly by title or tags';
+
+  @override
+  String get tutorial_slide_image_04 => 'assets/tutorial/Japanese04.png';
+
+  @override
+  String get tutorial_slide_title_05 => 'Web Search';
+
+  @override
+  String get tutorial_slide_dict_05 =>
+      'Browse and save videos instantly with the in-app browser';
+
+  @override
+  String get tutorial_slide_image_05 => 'assets/tutorial/Japanese05.png';
+
+  @override
+  String get tutorial_slide_title_06 => 'Unlimited Possibilities';
+
+  @override
+  String get tutorial_slide_dict_06 =>
+      'Build your own personal video collection!';
+
+  @override
+  String get tutorial_slide_image_06 => 'assets/tutorial/Japanese06.png';
+
+  @override
+  String get tutorial_slide_next => 'Next';
+
+  @override
+  String get tutorial_slide_start => 'Get Started';
 }

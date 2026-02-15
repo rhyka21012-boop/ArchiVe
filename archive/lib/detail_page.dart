@@ -865,31 +865,33 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           ),
                         ],
                         SizedBox(width: 8),
-                        Container(
-                          margin: EdgeInsets.only(top: 2.0),
-                          padding: EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.image_outlined,
-                                color: Colors.white,
-                                size: 18,
+                        _localImageMaxIndex > 1
+                            ? Container(
+                              margin: EdgeInsets.only(top: 2.0),
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(5),
                               ),
-                              Text(
-                                '$_localImageCorrentIndex/$_localImageMaxIndex',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  Text(
+                                    '$_localImageCorrentIndex/$_localImageMaxIndex',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            )
+                            : SizedBox(),
                       ],
                     ),
                   ),
