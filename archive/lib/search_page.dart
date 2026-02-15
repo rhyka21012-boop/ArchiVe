@@ -5,15 +5,17 @@ import 'search_result_page.dart';
 import 'grid_page.dart';
 import 'l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'favorite_site_provider.dart';
 
-class SearchPage extends StatefulWidget {
+class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
 
   @override
-  State<SearchPage> createState() => SearchPageState();
+  ConsumerState<SearchPage> createState() => SearchPageState();
 }
 
-class SearchPageState extends State<SearchPage> {
+class SearchPageState extends ConsumerState<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   OverlayEntry? _overlayEntry;
@@ -47,29 +49,11 @@ class SearchPageState extends State<SearchPage> {
 
   final GlobalKey _searchBarKey = GlobalKey();
 
-  /*お気に入りサイトリスト
-  /中身のイメージ
-  / {
-  /   "title": "DMM",
-  /   "url": "https://www.dmm.co.jp",
-  / }
-  */
-  List<Map<String, String>> _favoriteSites = [];
-
   //検索UI切り替え状態
   var _isWebSearch = false;
 
   //お気に入りサイトの選択状態
   int? _selectedFavoriteIndex;
-
-  //SharedPreferrence - お気に入りサイト保存キー
-  static const String _favoriteSitesKey = 'favorite_sites';
-
-  //デフォルトのお気に入り
-  final List<Map<String, String>> defaultFavorites = [
-    {'title': 'Youtube', 'url': 'https://m.youtube.com/'},
-    {'title': 'TikTok', 'url': 'https://www.tiktok.com'},
-  ];
 
   bool _ignoreNextFocus = false;
 
@@ -77,9 +61,6 @@ class SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _loadSearchHistory();
-    //_loadSavedMetadata();
-    initializeFavorites();
-    _loadFavoriteSites();
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         if (_ignoreNextFocus) {
@@ -132,6 +113,7 @@ class SearchPageState extends State<SearchPage> {
             //セグメントボタン
             child: SegmentedButton<bool>(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 visualDensity: VisualDensity.standard,
                 padding: MaterialStateProperty.all(
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -200,6 +182,7 @@ class SearchPageState extends State<SearchPage> {
                     ElevatedButton(
                       onPressed: _clearAllSelections,
                       style: ButtonStyle(
+                        elevation: MaterialStateProperty.all(0),
                         backgroundColor: MaterialStateProperty.all(
                           Colors.grey[300],
                         ),
@@ -251,9 +234,11 @@ class SearchPageState extends State<SearchPage> {
                         }
 
                         // 選択中のお気に入りURL（なければ null）
+                        final favorites = ref.read(favoriteSitesProvider);
+
                         final String? selectedFavoriteUrl =
                             _selectedFavoriteIndex != null
-                                ? _favoriteSites[_selectedFavoriteIndex!]['url']
+                                ? favorites[_selectedFavoriteIndex!]['url']
                                 : null;
 
                         _addSearchHistory(text);
@@ -290,17 +275,13 @@ class SearchPageState extends State<SearchPage> {
                                   ),
                                 );
 
-                        //お気に入りサイトリストの変更を検知
-                        if (updated == true) {
-                          await _loadFavoriteSites();
-                        }
-
                         //戻ってきたフレームでunFocusを解除
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _ignoreNextFocus = false;
                         });
                       },
                       style: ButtonStyle(
+                        elevation: MaterialStateProperty.all(0),
                         backgroundColor: MaterialStateProperty.all(
                           colorScheme.primary,
                         ),
@@ -347,9 +328,11 @@ class SearchPageState extends State<SearchPage> {
                 FocusScope.of(context).unfocus();
                 _removeOverlay();
 
+                final favorites = ref.read(favoriteSitesProvider);
+
                 final String? selectedFavoriteUrl =
                     _selectedFavoriteIndex != null
-                        ? _favoriteSites[_selectedFavoriteIndex!]['url']
+                        ? favorites[_selectedFavoriteIndex!]['url']
                         : null;
 
                 _addSearchHistory(text);
@@ -382,10 +365,6 @@ class SearchPageState extends State<SearchPage> {
                                 ),
                           ),
                         );
-
-                if (updated == true) {
-                  await _loadFavoriteSites();
-                }
 
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _ignoreNextFocus = false;
@@ -747,6 +726,7 @@ class SearchPageState extends State<SearchPage> {
   //*****************
   //Web検索機能
   //*****************
+  /*
   Future<void> _loadFavoriteSites() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList(_favoriteSitesKey) ?? [];
@@ -762,6 +742,7 @@ class SearchPageState extends State<SearchPage> {
     final jsonList = _favoriteSites.map((e) => jsonEncode(e)).toList();
     await prefs.setStringList(_favoriteSitesKey, jsonList);
   }
+  */
 
   //Web検索のUI
   Widget _buildWebSearchSection() {
@@ -770,6 +751,8 @@ class SearchPageState extends State<SearchPage> {
       return const Center(child: Text('お気に入りサイトがありません'));
     }
     */
+
+    final favorites = ref.watch(favoriteSitesProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,12 +771,12 @@ class SearchPageState extends State<SearchPage> {
             mainAxisSpacing: 12,
             childAspectRatio: 1.2,
           ),
-          itemCount: _favoriteSites.length + 1,
+          itemCount: favorites.length + 1,
           itemBuilder: (context, index) {
-            if (index == _favoriteSites.length) {
+            if (index == favorites.length) {
               return _buildAddFavoriteGridItem(); // 追加「+」ボタン
             }
-            return _buildFavoriteSiteCard(_favoriteSites[index], index);
+            return _buildFavoriteSiteCard(favorites[index], index);
           },
         ),
       ],
@@ -829,7 +812,7 @@ class SearchPageState extends State<SearchPage> {
         _showFavoriteActionSheet(site, index);
       },
       child: Card(
-        elevation: isSelected ? 6 : 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side:
@@ -990,6 +973,7 @@ class SearchPageState extends State<SearchPage> {
           actions: [
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
@@ -998,6 +982,7 @@ class SearchPageState extends State<SearchPage> {
             ),
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
@@ -1014,11 +999,10 @@ class SearchPageState extends State<SearchPage> {
                   return;
                 }
 
-                setState(() {
-                  _favoriteSites[index] = {'title': title, 'url': url};
-                });
+                ref
+                    .read(favoriteSitesProvider.notifier)
+                    .update(index, title, url);
 
-                await _saveFavoriteSites();
                 Navigator.pop(context);
               },
               child: Text(L10n.of(context)!.save),
@@ -1031,11 +1015,7 @@ class SearchPageState extends State<SearchPage> {
 
   //お気に入りサイト - 削除処理
   Future<void> _deleteFavorite(int index) async {
-    setState(() {
-      _favoriteSites.removeAt(index);
-      _selectedFavoriteIndex = null;
-    });
-    await _saveFavoriteSites();
+    ref.read(favoriteSitesProvider.notifier).remove(index);
   }
 
   // お気に入りサイト - 追加ダイアログ本体
@@ -1081,6 +1061,7 @@ class SearchPageState extends State<SearchPage> {
           actions: [
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
@@ -1089,6 +1070,7 @@ class SearchPageState extends State<SearchPage> {
             ),
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
@@ -1105,11 +1087,8 @@ class SearchPageState extends State<SearchPage> {
                   return;
                 }
 
-                setState(() {
-                  _favoriteSites.add({'title': title, 'url': url});
-                });
+                ref.read(favoriteSitesProvider.notifier).add(title, url);
 
-                await _saveFavoriteSites();
                 Navigator.of(context).pop();
               },
               child: Text(L10n.of(context)!.add),
@@ -1148,6 +1127,7 @@ class SearchPageState extends State<SearchPage> {
     return 'https://www.google.com/search?q=$siteQuery&tbm=vid&safe=off';
   }
 
+  /*
   //お気に入りサイト - 初期化処理
   Future<void> initializeFavorites() async {
     final prefs = await SharedPreferences.getInstance();
@@ -1159,4 +1139,5 @@ class SearchPageState extends State<SearchPage> {
       await prefs.setString('favorite_sites', jsonEncode(defaultFavorites));
     }
   }
+  */
 }

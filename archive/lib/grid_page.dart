@@ -722,6 +722,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   IconButton(
                     icon: const Icon(Icons.grid_view, size: 32),
                     style: ButtonStyle(
+                      elevation: MaterialStateProperty.all(0),
                       backgroundColor: MaterialStateProperty.all(
                         _isGridView && _gridCount == 2
                             ? colorScheme.primary
@@ -742,6 +743,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   IconButton(
                     icon: const Icon(Icons.grid_on, size: 32),
                     style: ButtonStyle(
+                      elevation: MaterialStateProperty.all(0),
                       backgroundColor: MaterialStateProperty.all(
                         _isGridView && _gridCount == 3
                             ? colorScheme.primary
@@ -762,6 +764,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   IconButton(
                     icon: const Icon(Icons.view_list, size: 32),
                     style: ButtonStyle(
+                      elevation: MaterialStateProperty.all(0),
                       backgroundColor: MaterialStateProperty.all(
                         !_isGridView ? colorScheme.primary : Colors.transparent,
                       ),
@@ -786,6 +789,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     _sortedMenuSelected[0]
                         ? colorScheme.primary
@@ -810,6 +814,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     _sortedMenuSelected[1]
                         ? colorScheme.primary
@@ -834,6 +839,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     _sortedMenuSelected[2]
                         ? colorScheme.primary
@@ -859,6 +865,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     _sortedMenuSelected[3]
                         ? colorScheme.primary
@@ -883,6 +890,7 @@ class GridPageState extends ConsumerState<GridPage> {
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     _sortedMenuSelected[4]
                         ? colorScheme.primary

@@ -79,7 +79,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.school),
-            tooltip: L10n.of(context)!.tutorial, // なければ 'チュートリアル'
+            tooltip: L10n.of(context)!.tutorial,
             onPressed: () async {
               await _restartTutorial(context);
             },
@@ -88,64 +88,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: Text(L10n.of(context)!.settings_page_dark_mode),
-            value: isDarkMode,
-            onChanged: (value) {
-              ref.read(themeModeProvider.notifier).updateTheme(value);
-            },
-          ),
-          /*
-          SwitchListTile(
-            title: const Text('通知を有効にする'),
-            value: _notificationsEnabled,
-            onChanged: (value) => setState(() => _notificationsEnabled = value),
-          ),
-          */
-          ListTile(
-            //テーマカラー設定
-            title: Text(
-              L10n.of(context)!.settings_page_theme_color,
-              style: TextStyle(color: Color(0xFFB8860B)),
-            ),
-
-            //デバッグ用切り替え箇所
-            onTap: () async {
-              if (!await PremiumGate.ensurePremium(context)) return;
-
-              setState(() {
-                _isPremium = true;
-              });
-            },
-
-            trailing: DropdownButton<ThemeColorType>(
-              value: selectedColor,
-              items:
-                  ThemeColorType.values.map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Text(themeColorLabel(context, type)),
-                    );
-                  }).toList(),
-              onChanged:
-                  _isPremium
-                      //true //デバッグ用切り替え箇所
-                      ? (value) {
-                        if (value != null) {
-                          ref.read(themeColorProvider.notifier).setColor(value);
-                        }
-                      }
-                      : null,
-            ),
-          ),
-          SwitchListTile(
-            title: Text(L10n.of(context)!.settings_page_thumbnail_visibility),
-            value: ref.watch(showThumbnailProvider),
-            onChanged: (value) {
-              ref.read(showThumbnailProvider.notifier).set(value);
-            },
-          ),
           const SizedBox(height: 16),
+          //カード（作品保存数の状態）
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
@@ -155,7 +99,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 colorScheme.brightness == Brightness.light
                     ? Colors.grey[200]
                     : Color(0xFF2C2C2C),
-            elevation: 2,
+            elevation: 0,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -259,6 +203,65 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ),
           ),
+          //ダークモード
+          SwitchListTile(
+            title: Text(L10n.of(context)!.settings_page_dark_mode),
+            value: isDarkMode,
+            onChanged: (value) {
+              ref.read(themeModeProvider.notifier).updateTheme(value);
+            },
+          ),
+          /*
+          SwitchListTile(
+            title: const Text('通知を有効にする'),
+            value: _notificationsEnabled,
+            onChanged: (value) => setState(() => _notificationsEnabled = value),
+          ),
+          */
+          //テーマカラー設定
+          ListTile(
+            title: Text(
+              L10n.of(context)!.settings_page_theme_color,
+              style: TextStyle(color: Color(0xFFB8860B)),
+            ),
+
+            //デバッグ用切り替え箇所
+            onTap: () async {
+              if (!await PremiumGate.ensurePremium(context)) return;
+
+              setState(() {
+                _isPremium = true;
+              });
+            },
+
+            trailing: DropdownButton<ThemeColorType>(
+              value: selectedColor,
+              items:
+                  ThemeColorType.values.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(themeColorLabel(context, type)),
+                    );
+                  }).toList(),
+              onChanged:
+                  _isPremium
+                      //true //デバッグ用切り替え箇所
+                      ? (value) {
+                        if (value != null) {
+                          ref.read(themeColorProvider.notifier).setColor(value);
+                        }
+                      }
+                      : null,
+            ),
+          ),
+          //リスト画像の表示/非表示
+          SwitchListTile(
+            title: Text(L10n.of(context)!.settings_page_thumbnail_visibility),
+            value: ref.watch(showThumbnailProvider),
+            onChanged: (value) {
+              ref.read(showThumbnailProvider.notifier).set(value);
+            },
+          ),
 
           Center(
             child: ElevatedButton.icon(
@@ -296,11 +299,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ),
           ),
-          const Divider(),
-          ListTile(
-            title: Text(L10n.of(context)!.settings_page_app_version),
-            subtitle: Text(L10n.of(context)!.version),
-          ),
+          //const Divider(),
           ListTile(
             title: Text(L10n.of(context)!.settings_page_plivacy_policy),
             trailing: const Icon(Icons.open_in_new),
@@ -335,6 +334,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 );
               }
             },
+          ),
+          ListTile(
+            title: Text(L10n.of(context)!.settings_page_app_version),
+            subtitle: Text(L10n.of(context)!.version),
           ),
         ],
       ),
@@ -424,18 +427,33 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   //チュートリアルをリセットする
   Future<void> _restartTutorial(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final result = await showDialog<bool>(
       context: context,
       builder:
           (_) => AlertDialog(
+            backgroundColor: colorScheme.secondary,
             title: Text(L10n.of(context)!.start_tutorial_dialog),
             content: Text(L10n.of(context)!.start_tutorial_dialog_description),
             actions: [
               TextButton(
+                style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
+                  backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+                  foregroundColor: MaterialStateProperty.all(Colors.black),
+                ),
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(L10n.of(context)!.cancel),
               ),
               TextButton(
+                style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
+                  backgroundColor: MaterialStateProperty.all(
+                    colorScheme.primary,
+                  ),
+                  foregroundColor: MaterialStateProperty.all(Colors.white),
+                ),
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(L10n.of(context)!.ok),
               ),

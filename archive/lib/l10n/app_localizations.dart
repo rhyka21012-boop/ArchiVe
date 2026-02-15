@@ -268,7 +268,7 @@ abstract class L10n {
   /// No description provided for @main_page_search.
   ///
   /// In ja, this message translates to:
-  /// **'検索'**
+  /// **'検索・収集'**
   String get main_page_search;
 
   /// No description provided for @main_page_analytics.
@@ -460,7 +460,7 @@ abstract class L10n {
   /// No description provided for @detail_page_access.
   ///
   /// In ja, this message translates to:
-  /// **'サイトへ'**
+  /// **'ブラウザ'**
   String get detail_page_access;
 
   /// No description provided for @detail_page_modify.
@@ -748,7 +748,7 @@ abstract class L10n {
   /// No description provided for @search_page_select_site.
   ///
   /// In ja, this message translates to:
-  /// **'サイトを選択'**
+  /// **'サイトで絞る'**
   String get search_page_select_site;
 
   /// No description provided for @search_page_open_site.
@@ -810,6 +810,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'このURLはすでに保存されています'**
   String get search_result_page_url_already_saved;
+
+  /// No description provided for @search_result_page_delete_site.
+  ///
+  /// In ja, this message translates to:
+  /// **'「{siteName}」をお気に入りから削除しますか？'**
+  String search_result_page_delete_site(Object siteName);
 
   /// No description provided for @analytics.
   ///
@@ -1240,7 +1246,7 @@ abstract class L10n {
   /// No description provided for @start_tutorial_dialog.
   ///
   /// In ja, this message translates to:
-  /// **'チュートリアルを再表示しますか？'**
+  /// **'チュートリアルを\n再表示しますか？'**
   String get start_tutorial_dialog;
 
   /// No description provided for @start_tutorial_dialog_description.

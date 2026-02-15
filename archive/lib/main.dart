@@ -56,7 +56,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _waitForInitialization() async {
     // ここではあえてディレイを入れることで、初期描画前の安定化を図ります。
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(const Duration(milliseconds: 20));
     setState(() => _initialized = true);
   }
 

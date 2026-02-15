@@ -213,6 +213,10 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                           actions: <Widget>[
                                             TextButton(
                                               style: ButtonStyle(
+                                                elevation:
+                                                    MaterialStateProperty.all(
+                                                      0,
+                                                    ),
                                                 backgroundColor:
                                                     MaterialStateProperty.all(
                                                       Colors.grey[300],
@@ -233,6 +237,10 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                             ),
                                             TextButton(
                                               style: ButtonStyle(
+                                                elevation:
+                                                    MaterialStateProperty.all(
+                                                      0,
+                                                    ),
                                                 backgroundColor:
                                                     MaterialStateProperty.all(
                                                       colorScheme.primary,
@@ -351,6 +359,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
           actions: [
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
@@ -359,6 +368,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
             ),
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),

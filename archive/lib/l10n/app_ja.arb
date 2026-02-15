@@ -32,7 +32,7 @@
   "save_limit_dialog_premium_detail": "プレミアムの詳細",
 
   "main_page_lists": "リスト",
-  "main_page_search": "検索",
+  "main_page_search": "検索・収集",
   "main_page_analytics": "統計",
   "main_page_settings": "設定",
 
@@ -68,7 +68,7 @@
   "detail_page_no_selected": "選択なし",
   "detail_page_item_detail": "作品詳細",
   "detail_page_delete": "削除",
-  "detail_page_access": "サイトへ",
+  "detail_page_access": "ブラウザ",
   "detail_page_modify": "編集",
   "detail_page_save": "保存",
   "detail_page_thumbnail_placeholder": "保存するとサムネイルが表示されます",
@@ -117,7 +117,7 @@
   "search_page_text_empty": "検索ワードを入力してください",
   "search_page_web_title": "Web検索",
   "search_page_search_word": "検索ワード",
-  "search_page_select_site": "サイトを選択",
+  "search_page_select_site": "サイトで絞る",
   "search_page_open_site": "サイトを開く",
   "search_page_modify_favorite": "お気に入りを編集",
   "search_page_site_name": "サイト名",
@@ -130,6 +130,7 @@
   "search_result_page_saving_list": "保存先リスト",
   "search_result_page_url_already_saved": "このURLはすでに保存されています",
   "search_result_page_save_as_item": "作品を保存しました",
+  "search_result_page_delete_site": "「{siteName}」をお気に入りから削除しますか？",
 
   "analytics": "統計",
   "analytics_page_piechart_others": "その他\n{percent}%",
@@ -207,7 +208,7 @@
   "tutorial_04": "まずは動画や作品のURLを入力します。",
   "tutorial_05": "このボタンでタイトルを自動取得できます。",
   "tutorial_06": "最後に保存してリストに追加しましょう。",
-  "start_tutorial_dialog": "チュートリアルを再表示しますか？",
+  "start_tutorial_dialog": "チュートリアルを\n再表示しますか？",
   "start_tutorial_dialog_description": "リスト作成からの手順をもう一度表示します。",
   "completed_tutorial": "チュートリアル完了！\nお疲れ様でした。",
   "tutorial_list_name": "あとで見る"

@@ -20,6 +20,7 @@ import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'random_image_reload_provider.dart';
+import 'smart_player_page.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -84,6 +85,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   //新旧比較用のURL
   late String _originalUrl;
+
+  //サムネ押下時のアニメーション
+  bool _isPressed = false;
 
   //メモ欄
   // {'type': 'text'|'image', 'content': String}
@@ -323,6 +327,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
                     backgroundColor: MaterialStateProperty.all(
                       colorScheme.primary,
                     ),
@@ -367,6 +372,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, false),
                   style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
                     backgroundColor: MaterialStateProperty.all(
                       Colors.grey[300],
                     ),
@@ -377,6 +383,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
                     backgroundColor: MaterialStateProperty.all(
                       colorScheme.primary,
                     ),
@@ -531,24 +538,24 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             actions: [
               _buildIconWithLabel(
                 Icons.delete,
-                L10n.of(context)!.detail_page_delete,
+                L10n.of(context)!.detail_page_delete, //削除アイコン
                 _confirmDelete,
               ),
               _buildIconWithLabel(
                 Icons.open_in_new,
-                L10n.of(context)!.detail_page_access,
+                L10n.of(context)!.detail_page_access, //ブラウザアイコン
                 _launchUrl,
               ),
               if (!isEditing)
                 _buildIconWithLabel(
                   Icons.edit,
-                  L10n.of(context)!.detail_page_modify,
+                  L10n.of(context)!.detail_page_modify, //編集アイコン
                   () => setState(() => isEditing = true),
                 ),
               if (isEditing)
                 _buildIconWithLabel(
                   Icons.save,
-                  L10n.of(context)!.detail_page_save,
+                  L10n.of(context)!.detail_page_save, //保存アイコン
                   _saveChanges,
                   key: _saveIconKey,
                 ),
@@ -634,19 +641,130 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
                           //サムネ表示
                           if ((widget.image ?? _thumbnailUrl) != null) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                            return AnimatedScale(
+                              scale: _isPressed ? 0.94 : 1.0,
+                              duration: const Duration(milliseconds: 120),
+                              curve: Curves.easeOut,
+                              child: GestureDetector(
+                                onTapDown:
+                                    (_) => setState(() => _isPressed = true),
+                                onTapUp:
+                                    (_) => setState(() => _isPressed = false),
+                                onTapCancel:
+                                    () => setState(() => _isPressed = false),
+                                onTap: () => openPlayer(widget.url!),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      /// 背景画像
+                                      Image.network(
+                                        widget.image ?? _thumbnailUrl!,
+                                        width: double.infinity,
+                                        height: 200,
+                                        fit: BoxFit.cover,
+                                      ),
+
+                                      /// グラデーション（視認性UP）
+                                      Container(
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.black.withOpacity(0.6),
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.6),
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ),
+                                        ),
+                                      ),
+
+                                      /// 再生ボタン
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 150,
+                                        ),
+                                        padding: const EdgeInsets.all(18),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.play_arrow,
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+
+                                      /// 下部情報バー
+                                      Positioned(
+                                        bottom: 8,
+                                        left: 8,
+                                        right: 8,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            /// 再生時間（後程実装する）
+                                            /*
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black87,
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: const Text(
+                                                "00:32",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ), */
+                                            SizedBox(),
+
+                                            /// 閲覧数
+                                            ViewingCounterWidget(
+                                              url: widget.url,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else {
+                            //サムネ未取得
+                            return GestureDetector(
+                              onTap: () {
+                                if (widget.url != null &&
+                                    widget.url!.isNotEmpty) {
+                                  openPlayer(widget.url!);
+                                }
+                              },
                               child: Stack(
                                 alignment: Alignment.bottomRight,
                                 children: [
-                                  Image.network(
-                                    widget.image ?? _thumbnailUrl!,
-                                    width: double.infinity,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const SizedBox(),
+                                  SizedBox(
+                                    height: 300,
+                                    child: Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        L10n.of(
+                                          context,
+                                        )!.detail_page_thumbnail_placeholder,
+                                      ),
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
@@ -657,37 +775,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                 ],
                               ),
                             );
-                          } else {
-                            //サムネ未取得
-                            return Stack(
-                              alignment: Alignment.bottomRight,
-                              children: [
-                                SizedBox(
-                                  height: 300,
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      L10n.of(
-                                        context,
-                                      )!.detail_page_thumbnail_placeholder,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ViewingCounterWidget(url: widget.url),
-                                ),
-                              ],
-                            );
-                            /*
-                        return SizedBox(
-                          height: 300,
-                          child: const Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Text('保存するとサムネイルが表示されます'),
-                          ),
-                        );
-                        */
                           }
                         } else {
                           final imageIndex = index - 1;
@@ -747,38 +834,32 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   ),
 
                   //],
+                  SizedBox(height: 4),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         if (isEditing) ...[
-                          SizedBox(
-                            height: 23,
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                if (!await PremiumGate.ensurePremium(context))
-                                  return;
+                          TextButton.icon(
+                            onPressed: () async {
+                              if (!await PremiumGate.ensurePremium(context))
+                                return;
 
-                                setState(() {
-                                  _isPremium = true;
-                                });
-                                _isPremium ? _addLocalImage : null;
-                              },
-                              icon: const Icon(
-                                Icons.add_photo_alternate,
+                              setState(() {
+                                _isPremium = true;
+                              });
+                              _isPremium ? _addLocalImage : null;
+                            },
+                            icon: const Icon(
+                              Icons.add_photo_alternate,
+                              color: Color(0xFFB8860B),
+                            ),
+                            label: Text(
+                              L10n.of(context)!.detail_page_add_image, //画像を追加
+                              style: TextStyle(
                                 color: Color(0xFFB8860B),
-                              ),
-                              label: Text(
-                                L10n.of(context)!.detail_page_add_image,
-                                style: TextStyle(
-                                  color: Color(0xFFB8860B),
-                                  fontSize: 12,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                //backgroundColor: Colors.black.withOpacity(0.5),
-                                backgroundColor: Color(0xFF121212),
+                                fontSize: 12,
                               ),
                             ),
                           ),
@@ -898,25 +979,27 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           ),
         ),
         // ===== チュートリアル：createItem =====
+        //チュートリアル：URLを入力
         if (tutorialStep == TutorialStep.inputUrl) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_urlFieldKey),
+            holeRect: getRectFromKey(_urlFieldKey, context),
             onTap: () {
               //タイトル取得ボタンはスクロールのため、別途関数を呼び出す
               startFetchTitleTutorial();
             },
           ),
-          // 説明バルーン（任意）
+          // 説明バルーン
           _buildBalloonFromRect(
-            getRectFromKey(_urlFieldKey),
+            getRectFromKey(_urlFieldKey, context),
             L10n.of(context)!.tutorial_04,
             offsetY: -60,
           ),
         ],
 
+        //チュートリアル：タイトルを取得
         if (tutorialStep == TutorialStep.fetchTitle) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_fetchTitleKey),
+            holeRect: getRectFromKey(_fetchTitleKey, context),
             onTap: () async {
               await _fetchTitleFromUrl();
               ref.read(tutorialStepProvider.notifier).state =
@@ -924,23 +1007,24 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             },
           ),
           _buildBalloonFromRect(
-            getRectFromKey(_fetchTitleKey),
+            getRectFromKey(_fetchTitleKey, context),
             L10n.of(context)!.tutorial_05,
             offsetX: -140,
             offsetY: -60,
           ),
         ],
 
+        //チュートリアル：アイテムを保存
         if (tutorialStep == TutorialStep.saveItem) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_saveIconKey),
+            holeRect: getRectFromKey(_saveIconKey, context),
             onTap: () async {
               await _saveChanges();
               ref.read(tutorialStepProvider.notifier).state = TutorialStep.done;
             },
           ),
           _buildBalloonFromRect(
-            getRectFromKey(_saveIconKey),
+            getRectFromKey(_saveIconKey, context),
             L10n.of(context)!.tutorial_06,
             offsetX: -190,
             offsetY: 70,
@@ -1394,6 +1478,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                   foregroundColor: MaterialStateProperty.all(Colors.black),
                 ),
@@ -1402,6 +1487,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(
                     colorScheme.primary,
                   ),
@@ -1436,6 +1522,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       await prefs.setStringList('saved_ranking', updatedRanking);
       //final confirm = prefs.getStringList('saved_metadata');
       //print('saved: $confirm');
+
+      ref.read(randomImageReloadProvider.notifier).state++;
 
       Navigator.pop(context, true);
     }
@@ -1837,9 +1925,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
   }
 
-  Rect getRectFromKey(GlobalKey key) {
+  Rect getRectFromKey(GlobalKey key, BuildContext context) {
     final box = key.currentContext!.findRenderObject() as RenderBox;
-    final pos = box.localToGlobal(Offset.zero);
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
     return pos & box.size;
   }
 
@@ -1874,6 +1964,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     // ③ チュートリアルステップへ
     ref.read(tutorialStepProvider.notifier).state = TutorialStep.fetchTitle;
+  }
+
+  //サムネクリック時の処理
+  void openPlayer(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => SmartPlayerPage(url: url)),
+    );
   }
 }
 

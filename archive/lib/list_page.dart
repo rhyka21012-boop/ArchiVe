@@ -104,6 +104,9 @@ class ListPageState extends ConsumerState<ListPage>
     final isTutorial = ref.watch(isTutorialModeProvider);
     final step = ref.watch(tutorialStepProvider);
 
+    //FABの表示管理
+    final tabIndex = ref.watch(listTabIndexProvider);
+
     //ランダム画像更新管理
     final reloadSeed = ref.watch(randomImageReloadProvider);
 
@@ -114,10 +117,10 @@ class ListPageState extends ConsumerState<ListPage>
           extendBody: true,
           backgroundColor: colorScheme.surface,
           appBar: AppBar(
-            elevation: 6,
+            elevation: 0,
             backgroundColor: Theme.of(context).colorScheme.surface,
             surfaceTintColor: Colors.transparent,
-            shadowColor: Colors.black.withOpacity(0.2),
+            shadowColor: Colors.transparent,
             title: Text(
               'ArchiVe',
               style: TextStyle(
@@ -128,6 +131,7 @@ class ListPageState extends ConsumerState<ListPage>
             ),
 
             centerTitle: true,
+
             //backgroundColor: colorScheme.surface,
             /*
           actions: [
@@ -142,6 +146,7 @@ class ListPageState extends ConsumerState<ListPage>
           ],
           */
             bottom: TabBar(
+              dividerColor: Colors.transparent,
               controller: _tabController,
               isScrollable: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -447,21 +452,11 @@ class ListPageState extends ConsumerState<ListPage>
               Center(child: RankingPage()),
             ],
           ),
-          floatingActionButton:
-              _tabController.index == 0
-                  ? FloatingActionButton(
-                    key: fabKey,
-                    child: const Icon(Icons.playlist_add, color: Colors.white),
-                    /*Text(
-                      L10n.of(context)!.list_page_make_list,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    */
-                    onPressed: () {
-                      _showAddListModal();
-                    },
-                  )
-                  : null,
+          floatingActionButton: ListPageFAB(
+            fabKey: fabKey,
+            onPressed: _showAddListModal,
+          ),
+
           floatingActionButtonLocation: CustomFABLocation(),
         ),
         // ===== チュートリアル用オーバーレイ =====
@@ -576,6 +571,7 @@ class ListPageState extends ConsumerState<ListPage>
           actions: [
             TextButton(
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
@@ -611,6 +607,7 @@ class ListPageState extends ConsumerState<ListPage>
                 }
               },
               style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
@@ -820,5 +817,30 @@ class _AnimatedDelayState extends State<AnimatedDelay>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+}
+
+//FAB専用クラス
+class ListPageFAB extends ConsumerWidget {
+  final VoidCallback onPressed;
+  final GlobalKey fabKey;
+
+  const ListPageFAB({super.key, required this.onPressed, required this.fabKey});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tabIndex = ref.watch(listTabIndexProvider);
+
+    return Visibility(
+      visible: tabIndex == 0,
+      maintainState: true,
+      maintainAnimation: true,
+      maintainSize: true,
+      child: FloatingActionButton(
+        key: fabKey,
+        onPressed: onPressed,
+        child: const Icon(Icons.playlist_add, color: Colors.white),
+      ),
+    );
   }
 }

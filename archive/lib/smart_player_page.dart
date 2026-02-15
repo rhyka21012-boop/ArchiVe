@@ -1,33 +1,40 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:video_player/video_player.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'l10n/app_localizations.dart';
-import 'premium_detail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'premium_detail.dart';
 import 'favorite_site_provider.dart';
 
-class SearchResultPage extends ConsumerStatefulWidget {
-  final String initialUrl;
-  final String title;
-
-  const SearchResultPage({
-    super.key,
-    required this.initialUrl,
-    required this.title,
-  });
+class SmartPlayerPage extends ConsumerStatefulWidget {
+  final String url;
+  const SmartPlayerPage({super.key, required this.url});
 
   @override
-  ConsumerState<SearchResultPage> createState() => _SearchResultPageState();
+  ConsumerState<SmartPlayerPage> createState() => _SmartPlayerPageState();
 }
 
-class _SearchResultPageState extends ConsumerState<SearchResultPage> {
-  late final WebViewController _controller;
+class _SmartPlayerPageState extends ConsumerState<SmartPlayerPage> {
+  VideoPlayerController? _videoController;
+  YoutubePlayerController? _ytController;
+
+  bool get isYoutube =>
+      widget.url.contains("youtube.com") || widget.url.contains("youtu.be");
+
+  bool get isMp4 => widget.url.toLowerCase().endsWith(".mp4");
+
+  InAppWebViewController? _webController;
   bool _canGoBack = false;
 
   String? _currentUrl;
   String _pageTitle = '';
+
+  //お気に入りサイトの保存キー
+  static const String _favoriteSitesKey = 'favorite_sites';
 
   //プレミアム判定
   bool _isPremium = false;
@@ -38,6 +45,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   //ダイアログ専用の評価状態
   String? dialogSelectedRating;
 
+  final List<Map<String, String>> _favoriteSites = [];
+
   String? _host(String? url) {
     if (url == null) return null;
     return Uri.tryParse(url)?.host;
@@ -47,32 +56,49 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   void initState() {
     super.initState();
 
-    final initialUrl = _resolveInitialUrl(widget.initialUrl);
+    _loadFavoriteSites();
 
-    _controller =
-        WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onPageFinished: (url) async {
-                final canBack = await _controller.canGoBack();
-                final title = await _getPageTitle();
+    /// MP4
+    if (isMp4) {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+        ..initialize().then((_) {
+          if (!mounted) return;
+          setState(() {});
+          _videoController!.play();
+        });
+    }
 
-                setState(() {
-                  _canGoBack = canBack;
-                  _currentUrl = url;
-                  _pageTitle = title;
-                });
-              },
-            ),
-          )
-          ..loadRequest(Uri.parse(initialUrl));
+    /// YouTube
+    if (isYoutube) {
+      final id = YoutubePlayerController.convertUrlToId(widget.url);
+
+      if (id != null) {
+        _ytController = YoutubePlayerController.fromVideoId(
+          videoId: id,
+          autoPlay: true,
+          params: const YoutubePlayerParams(showFullscreenButton: true),
+        );
+      }
+    }
+
+    _ytController?.stream.listen((event) {
+      if (event.playerState == PlayerState.unknown) {
+        _openExternal();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    _ytController?.close();
+    _webController = null;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     final isFav = ref.watch(
       favoriteSitesProvider.select(
         (list) => list.any((e) => _host(e["url"]) == _host(_currentUrl)),
@@ -80,6 +106,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         elevation: 6,
         backgroundColor: colorScheme.surface,
@@ -88,8 +115,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {
-            if (_canGoBack) {
-              _controller.goBack();
+            if (_canGoBack && _webController != null) {
+              _webController!.goBack();
             } else {
               Navigator.pop(context);
             }
@@ -97,16 +124,22 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         ),
 
         title: Text(
-          _pageTitle.isNotEmpty ? _pageTitle : widget.title,
+          _pageTitle.isNotEmpty ? _pageTitle : widget.url,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
 
         actions: [
+          IconButton(
+            tooltip: L10n.of(context)!.reload,
+            icon: const Icon(Icons.refresh),
+            onPressed:
+                _webController == null ? null : () => _webController!.reload(),
+          ),
           _buildIconWithLabel(
             Icons.refresh,
             L10n.of(context)!.reload,
-            () => _controller.reload(),
+            _webController == null ? null : () => _webController!.reload(),
           ),
           _buildIconWithLabel(
             isFav ? Icons.star : Icons.star_border,
@@ -128,103 +161,47 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         ],
       ),
 
-      body: WebViewWidget(controller: _controller),
+      body: Center(child: _buildPlayer()),
     );
   }
 
-  // =========================
-  // アクション
-  // =========================
-
-  Future<String> _getPageTitle() async {
-    final result = await _controller.runJavaScriptReturningResult(
-      'document.title',
-    );
-    return result.toString().replaceAll('"', '');
-  }
-
-  /*
-  Future<String> _getFaviconUrl(String pageUrl) async {
-    final uri = Uri.parse(pageUrl);
-    return '${uri.scheme}://${uri.host}/favicon.ico';
-  }
-  */
-
-  //お気にいりボタン押下時処理
-  void _toggleFavorite() {
-    final url = _currentUrl;
-    if (url == null) return;
-
-    final favorites = ref.read(favoriteSitesProvider);
-    final index = favorites.indexWhere((e) => _host(e["url"]) == _host(url));
-
-    if (index != -1) {
-      _showDeleteFavoriteDialog(index);
-    } else {
-      _showAddFavoriteDialog(initialUrl: url);
+  Widget _buildPlayer() {
+    /// YouTube
+    if (isYoutube && _ytController != null) {
+      return YoutubePlayer(controller: _ytController!);
     }
-  }
 
-  //お気に入りサイト削除ダイアログ
-  Future<void> _showDeleteFavoriteDialog(int index) async {
-    final colorScheme = Theme.of(context).colorScheme;
-    final favorites = ref.read(favoriteSitesProvider);
-    final siteName = favorites[index]["title"] ?? "";
+    /// MP4
+    if (isMp4 &&
+        _videoController != null &&
+        _videoController!.value.isInitialized) {
+      return AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
+      );
+    }
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: colorScheme.secondary,
-          title: Text(
-            L10n.of(context)!.favorite,
-            style: TextStyle(color: colorScheme.onPrimary),
-          ),
-          content: Text(
-            L10n.of(context)!.search_result_page_delete_site(siteName),
-            style: TextStyle(color: colorScheme.onPrimary),
-          ),
-          actions: [
-            TextButton(
-              style: ButtonStyle(
-                elevation: MaterialStateProperty.all(0),
-                backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
-                foregroundColor: MaterialStateProperty.all(Colors.black),
-              ),
-              child: Text(L10n.of(context)!.cancel),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              style: ButtonStyle(
-                elevation: MaterialStateProperty.all(0),
-                backgroundColor: MaterialStateProperty.all(colorScheme.primary),
-                foregroundColor: MaterialStateProperty.all(Colors.white),
-              ),
-              child: Text(L10n.of(context)!.delete),
-              onPressed: () {
-                ref.read(favoriteSitesProvider.notifier).remove(index);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
+    /// fallback
+    return InAppWebView(
+      initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+      onWebViewCreated: (controller) {
+        _webController = controller;
+      },
+      onLoadStop: (controller, url) async {
+        _currentUrl = url.toString();
+        _canGoBack = await controller.canGoBack();
+        _pageTitle = await controller.getTitle() ?? "";
+        //_isFavoritePage = _favoriteSites.any((e) => e["url"] == _currentUrl);
+
+        setState(() {});
       },
     );
   }
 
-  //URL生成メソッド
-  //初期表示時にGoogl動画タブを開く
-  String _buildGoogleVideoSearchUrl(String query) {
-    final encoded = Uri.encodeComponent(query);
-    return 'https://www.google.com/search?q=$encoded&tbm=vid&safe=off';
-  }
+  void _openExternal() async {
+    await InAppBrowser.openWithSystemBrowser(url: WebUri(widget.url));
 
-  //initialUrlがURLの場合に分岐
-  String _resolveInitialUrl(String input) {
-    if (input.startsWith('http')) {
-      return input; // そのまま表示
-    }
-    return _buildGoogleVideoSearchUrl(input); // 検索語 → 動画検索
+    if (mounted) Navigator.pop(context);
   }
 
   //作品として保存するダイアログ
@@ -232,7 +209,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     //評価をリセット
     selectedRating = null;
 
-    final url = await _controller.currentUrl();
+    final url = _currentUrl ?? widget.url;
+
     if (url == null) return;
 
     final title = await _getPageTitle();
@@ -435,20 +413,20 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   //サムネイルの取得
   Future<String?> _getThumbnailFromPage() async {
     final js = '''
-    (function() {
-      const og = document.querySelector('meta[property="og:image"]');
-      if (og && og.content) return og.content;
+  (function() {
+    const og = document.querySelector('meta[property="og:image"]');
+    if (og && og.content) return og.content;
 
-      const tw = document.querySelector('meta[name="twitter:image"]');
-      if (tw && tw.content) return tw.content;
+    const tw = document.querySelector('meta[name="twitter:image"]');
+    if (tw && tw.content) return tw.content;
 
-      return null;
-    })();
+    return null;
+  })();
   ''';
 
-    final result = await _controller.runJavaScriptReturningResult(js);
+    final result = await _webController!.evaluateJavascript(source: js);
 
-    if (result == null || result == 'null') return null;
+    if (result == null || result.toString() == 'null') return null;
 
     return result.toString().replaceAll('"', '');
   }
@@ -596,11 +574,53 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     }
   }
 
+  //=====================
+  //SharedPreferrence処理
+  //=====================
+  Future<void> _saveFavoriteSites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = _favoriteSites.map((e) => jsonEncode(e)).toList();
+    await prefs.setStringList(_favoriteSitesKey, jsonList);
+  }
+
+  Future<void> _loadFavoriteSites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = prefs.getStringList(_favoriteSitesKey) ?? [];
+
+    setState(() {
+      _favoriteSites
+        ..clear()
+        ..addAll(jsonList.map((e) => Map<String, String>.from(jsonDecode(e))));
+    });
+  }
+
+  void _toggleFavorite() {
+    final url = _currentUrl ?? widget.url;
+    if (url == null) return;
+
+    final favorites = ref.read(favoriteSitesProvider);
+    final index = favorites.indexWhere((e) => _host(e["url"]) == _host(url));
+
+    // すでに登録済み → 削除確認
+    if (index != -1) {
+      _showDeleteFavoriteDialog(index);
+    } else {
+      _showAddFavoriteDialog(initialUrl: url);
+    }
+  }
+
+  Future<String> _getPageTitle() async {
+    if (_webController == null) return widget.url;
+
+    final result = await _webController!.getTitle();
+    return result ?? widget.url;
+  }
+
   //テキスト付きアイコン生成
   Widget _buildIconWithLabel(
     IconData icon,
     String label,
-    VoidCallback onPressed, {
+    VoidCallback? onPressed, {
     Key? key,
   }) {
     return Padding(
@@ -620,7 +640,59 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
   }
 
-  //お気に入りサイト追加ダイアログ
+  //お気に入りサイト削除ダイアログ
+  Future<void> _showDeleteFavoriteDialog(int index) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final favorites = ref.read(favoriteSitesProvider);
+    final siteName = favorites[index]["title"] ?? "";
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: colorScheme.secondary,
+          title: Text(
+            L10n.of(context)!.favorite,
+            style: TextStyle(color: colorScheme.onPrimary),
+          ),
+          content: Text(
+            L10n.of(context)!.search_result_page_delete_site(siteName),
+            style: TextStyle(color: colorScheme.onPrimary),
+          ),
+          actions: [
+            TextButton(
+              style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+                foregroundColor: MaterialStateProperty.all(Colors.black),
+              ),
+              child: Text(L10n.of(context)!.cancel),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(colorScheme.primary),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+              ),
+              child: Text(L10n.of(context)!.delete),
+              onPressed: () {
+                ref.read(favoriteSitesProvider.notifier).remove(index);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //お気に入りサイト - 削除処理
+  Future<void> _deleteFavorite(int index) async {
+    ref.read(favoriteSitesProvider.notifier).remove(index);
+  }
+
+  // お気に入りサイト - 追加ダイアログ本体
   Future<void> _showAddFavoriteDialog({required String initialUrl}) async {
     final titleController = TextEditingController(
       text: getBaseDomain(initialUrl),
@@ -643,15 +715,23 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
             children: [
               TextField(
                 controller: titleController,
+                style: TextStyle(color: colorScheme.onPrimary),
                 decoration: InputDecoration(
                   labelText: L10n.of(context)!.search_page_site_name,
+                  hintStyle: TextStyle(color: Colors.grey),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: urlController,
                 readOnly: true,
-                decoration: InputDecoration(labelText: L10n.of(context)!.url),
+                style: TextStyle(color: colorScheme.onPrimary),
+                decoration: InputDecoration(
+                  labelText: L10n.of(context)!.url,
+                  hintText: 'https://example.com',
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                keyboardType: TextInputType.url,
               ),
             ],
           ),
@@ -662,7 +742,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
               ),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(L10n.of(context)!.cancel),
             ),
             TextButton(
@@ -671,14 +751,22 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
               ),
-              onPressed: () {
-                ref
-                    .read(favoriteSitesProvider.notifier)
-                    .add(
-                      titleController.text.trim(),
-                      urlController.text.trim(),
-                    );
-                Navigator.pop(context);
+              onPressed: () async {
+                final title = titleController.text.trim();
+                final url = urlController.text.trim();
+
+                if (title.isEmpty || url.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(L10n.of(context)!.search_page_input_all),
+                    ),
+                  );
+                  return;
+                }
+
+                ref.read(favoriteSitesProvider.notifier).add(title, url);
+
+                Navigator.of(context).pop();
               },
               child: Text(L10n.of(context)!.add),
             ),

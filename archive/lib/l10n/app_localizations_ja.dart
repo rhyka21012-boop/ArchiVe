@@ -95,7 +95,7 @@ class L10nJa extends L10n {
   String get main_page_lists => 'リスト';
 
   @override
-  String get main_page_search => '検索';
+  String get main_page_search => '検索・収集';
 
   @override
   String get main_page_analytics => '統計';
@@ -194,7 +194,7 @@ class L10nJa extends L10n {
   String get detail_page_delete => '削除';
 
   @override
-  String get detail_page_access => 'サイトへ';
+  String get detail_page_access => 'ブラウザ';
 
   @override
   String get detail_page_modify => '編集';
@@ -340,7 +340,7 @@ class L10nJa extends L10n {
   String get search_page_search_word => '検索ワード';
 
   @override
-  String get search_page_select_site => 'サイトを選択';
+  String get search_page_select_site => 'サイトで絞る';
 
   @override
   String get search_page_open_site => 'サイトを開く';
@@ -371,6 +371,11 @@ class L10nJa extends L10n {
 
   @override
   String get search_result_page_url_already_saved => 'このURLはすでに保存されています';
+
+  @override
+  String search_result_page_delete_site(Object siteName) {
+    return '「$siteName」をお気に入りから削除しますか？';
+  }
 
   @override
   String get analytics => '統計';
@@ -600,7 +605,7 @@ class L10nJa extends L10n {
   String get tutorial_06 => '最後に保存してリストに追加しましょう。';
 
   @override
-  String get start_tutorial_dialog => 'チュートリアルを再表示しますか？';
+  String get start_tutorial_dialog => 'チュートリアルを\n再表示しますか？';
 
   @override
   String get start_tutorial_dialog_description => 'リスト作成からの手順をもう一度表示します。';

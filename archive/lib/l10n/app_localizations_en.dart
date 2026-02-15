@@ -95,7 +95,7 @@ class L10nEn extends L10n {
   String get main_page_lists => 'Lists';
 
   @override
-  String get main_page_search => 'Search';
+  String get main_page_search => 'Search & Collect';
 
   @override
   String get main_page_analytics => 'Analytics';
@@ -195,7 +195,7 @@ class L10nEn extends L10n {
   String get detail_page_delete => 'Delete';
 
   @override
-  String get detail_page_access => 'Open site';
+  String get detail_page_access => 'Browser';
 
   @override
   String get detail_page_modify => 'Edit';
@@ -343,7 +343,7 @@ class L10nEn extends L10n {
   String get search_page_search_word => 'Search term';
 
   @override
-  String get search_page_select_site => 'Select a site';
+  String get search_page_select_site => 'Filter by Site';
 
   @override
   String get search_page_open_site => 'Open site';
@@ -375,6 +375,11 @@ class L10nEn extends L10n {
   @override
   String get search_result_page_url_already_saved =>
       'This URL has already been saved';
+
+  @override
+  String search_result_page_delete_site(Object siteName) {
+    return 'Remove \"$siteName\" from favorites?';
+  }
 
   @override
   String get analytics => 'Analytics';

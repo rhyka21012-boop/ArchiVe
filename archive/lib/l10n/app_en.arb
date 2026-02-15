@@ -32,7 +32,7 @@
   "save_limit_dialog_premium_detail": "View Premium details",
 
   "main_page_lists": "Lists",
-  "main_page_search": "Search",
+  "main_page_search": "Search & Collect",
   "main_page_analytics": "Analytics",
   "main_page_settings": "Settings",
 
@@ -68,7 +68,7 @@
   "detail_page_no_selected": "Not selected",
   "detail_page_item_detail": "Item details",
   "detail_page_delete": "Delete",
-  "detail_page_access": "Open site",
+  "detail_page_access": "Browser",
   "detail_page_modify": "Edit",
   "detail_page_save": "Save",
   "detail_page_thumbnail_placeholder": "Thumbnail will appear after saving",
@@ -117,7 +117,7 @@
   "search_page_text_empty": "Please enter a search term",
   "search_page_web_title": "Web Search",
   "search_page_search_word": "Search term",
-  "search_page_select_site": "Select a site",
+  "search_page_select_site": "Filter by Site",
   "search_page_open_site": "Open site",
   "search_page_modify_favorite": "Edit favorites",
   "search_page_site_name": "Site name",
@@ -130,6 +130,7 @@
   "search_result_page_saving_list": "Destination list",
   "search_result_page_url_already_saved": "This URL has already been saved",
   "search_result_page_save_as_item": "Item has been saved",
+    "search_result_page_delete_site": "Remove \"{siteName}\" from favorites?",
 
   "analytics": "Analytics",
   "analytics_page_piechart_others": "Others\n{percent}%",
