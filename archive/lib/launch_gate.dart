@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'tutorial_slide.dart';
 import 'main_page.dart';
 import 'tutorial_page.dart';
 
@@ -33,8 +33,21 @@ class _LaunchGateState extends State<LaunchGate> {
       return const SizedBox(); // Splash
     }
 
+    //if (_isFirst!) {
+    //  return TutorialPage(onComplete: () => completeTutorial(context));
+    //}
     if (_isFirst!) {
-      return TutorialPage(onComplete: () => completeTutorial(context));
+      return IntroScreen(
+        onFinished: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder:
+                  (_) =>
+                      TutorialPage(onComplete: () => completeTutorial(context)),
+            ),
+          );
+        },
+      );
     }
 
     return const MainPage();

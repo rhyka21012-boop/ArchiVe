@@ -13,6 +13,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
+import 'tutorial_slide.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -88,6 +89,31 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       body: ListView(
         children: [
+          /// チュートリアル表示テストボタン
+          /*
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.slideshow),
+              label: const Text("チュートリアル表示（テスト）"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TutorialScreen()),
+                );
+              },
+              
+            ),
+          ),
+*/
           const SizedBox(height: 16),
           //カード（作品保存数の状態）
           Card(

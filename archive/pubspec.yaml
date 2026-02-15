@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.7.12+7
+version: 1.7.12+8
 
 environment:
   sdk: ^3.7.2
@@ -60,7 +60,12 @@ flutter:
     - assets/icons/critical_gray.png
     - assets/icons/normal_gray.png
     - assets/icons/maniac_gray.png
-    - assets/tutorial/setting_page.png
+    - assets/tutorial/Japanese01.png
+    - assets/tutorial/Japanese02.png
+    - assets/tutorial/Japanese03.png
+    - assets/tutorial/Japanese04.png
+    - assets/tutorial/Japanese05.png
+    - assets/tutorial/Japanese06.png
 
   fonts:
     - family: NotoSerifJP
