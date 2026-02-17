@@ -1012,7 +1012,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         //チュートリアル：タイトルを取得
         if (tutorialStep == TutorialStep.fetchTitle) ...[
           TutorialOverlayPseudoTap(
-            holeRect: _fetchRect ?? Rect.zero,
+            holeRect: getRectFromKey(_fetchTitleKey, context),
             onTap: () async {
               await _fetchTitleFromUrl();
               ref.read(tutorialStepProvider.notifier).state =
@@ -1020,7 +1020,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             },
           ),
           _buildBalloonFromRect(
-            _fetchRect ?? Rect.zero,
+            getRectFromKey(_fetchTitleKey, context),
             L10n.of(context)!.tutorial_05,
             offsetX: -140,
             offsetY: -60,
@@ -1030,14 +1030,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         //チュートリアル：アイテムを保存
         if (tutorialStep == TutorialStep.saveItem) ...[
           TutorialOverlayPseudoTap(
-            holeRect: _saveRect ?? Rect.zero,
+            holeRect: getRectFromKey(_saveIconKey, context),
             onTap: () async {
               await _saveChanges();
               ref.read(tutorialStepProvider.notifier).state = TutorialStep.done;
             },
           ),
           _buildBalloonFromRect(
-            _saveRect ?? Rect.zero,
+            getRectFromKey(_saveIconKey, context),
             L10n.of(context)!.tutorial_06,
             offsetX: -190,
             offsetY: 70,
