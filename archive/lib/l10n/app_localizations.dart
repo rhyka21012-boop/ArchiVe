@@ -415,6 +415,12 @@ abstract class L10n {
   /// **'視聴回数が少ない順'**
   String get grid_page_sort_count_desc;
 
+  /// No description provided for @grid_page_items_selected_delete.
+  ///
+  /// In ja, this message translates to:
+  /// **'選択した{count}件を削除しますか？'**
+  String grid_page_items_selected_delete(Object count);
+
   /// No description provided for @detail_page_url_empty.
   ///
   /// In ja, this message translates to:
@@ -1156,7 +1162,7 @@ abstract class L10n {
   /// No description provided for @premium_detail_premium_item01.
   ///
   /// In ja, this message translates to:
-  /// **'広告なしで快適に利用'**
+  /// **'無制限の保存数'**
   String get premium_detail_premium_item01;
 
   /// No description provided for @premium_detail_premium_item02.
@@ -1180,14 +1186,8 @@ abstract class L10n {
   /// No description provided for @premium_detail_premium_item05.
   ///
   /// In ja, this message translates to:
-  /// **'保存数は無制限'**
+  /// **'ジャンル別・評価別にデータを可視化する統計機能'**
   String get premium_detail_premium_item05;
-
-  /// No description provided for @premium_detail_premium_item06.
-  ///
-  /// In ja, this message translates to:
-  /// **'ジャンル別・評価別にデータを可視化'**
-  String get premium_detail_premium_item06;
 
   /// No description provided for @premium_detail_price.
   ///
@@ -1282,7 +1282,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_01.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese01.png'**
+  /// **'assets/tutorial/japanese01.png'**
   String get tutorial_slide_image_01;
 
   /// No description provided for @tutorial_slide_title_02.
@@ -1300,7 +1300,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_02.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese02.png'**
+  /// **'assets/tutorial/japanese02.png'**
   String get tutorial_slide_image_02;
 
   /// No description provided for @tutorial_slide_title_03.
@@ -1318,7 +1318,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_03.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese03.png'**
+  /// **'assets/tutorial/japanese03.png'**
   String get tutorial_slide_image_03;
 
   /// No description provided for @tutorial_slide_title_04.
@@ -1336,7 +1336,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_04.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese04.png'**
+  /// **'assets/tutorial/japanese04.png'**
   String get tutorial_slide_image_04;
 
   /// No description provided for @tutorial_slide_title_05.
@@ -1354,7 +1354,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_05.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese05.png'**
+  /// **'assets/tutorial/japanese05.png'**
   String get tutorial_slide_image_05;
 
   /// No description provided for @tutorial_slide_title_06.
@@ -1372,7 +1372,7 @@ abstract class L10n {
   /// No description provided for @tutorial_slide_image_06.
   ///
   /// In ja, this message translates to:
-  /// **'assets/tutorial/Japanese06.png'**
+  /// **'assets/tutorial/japanese06.png'**
   String get tutorial_slide_image_06;
 
   /// No description provided for @tutorial_slide_next.

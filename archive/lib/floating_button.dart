@@ -12,7 +12,7 @@ class CustomFABLocation extends FloatingActionButtonLocation {
 
     final double dx = scaffoldSize.width - fabSize.width - 16;
     final double dy =
-        scaffoldSize.height - bottomNavBarHeight - fabSize.height - 16 - 150;
+        scaffoldSize.height - bottomNavBarHeight - fabSize.height - 120;
 
     return Offset(dx, dy);
   }

@@ -120,12 +120,26 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
             const SizedBox(height: 32),
 
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item01),
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item02),
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item03),
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item04),
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item05),
-            _FeatureItem(text: L10n.of(context)!.premium_detail_premium_item06),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item01,
+              index: 0,
+            ),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item02,
+              index: 1,
+            ),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item03,
+              index: 2,
+            ),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item04,
+              index: 3,
+            ),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item05,
+              index: 4,
+            ),
 
             const Spacer(),
 
@@ -175,6 +189,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
   }
 }
 
+//プレミアム説明アイテム
 class _FeatureItem extends StatelessWidget {
   final String text;
   const _FeatureItem({required this.text});
@@ -189,6 +204,66 @@ class _FeatureItem extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 16))),
         ],
+      ),
+    );
+  }
+}
+
+//アニメーション
+class _AnimatedFeatureItem extends StatefulWidget {
+  final String text;
+  final int index;
+
+  const _AnimatedFeatureItem({required this.text, required this.index});
+
+  @override
+  State<_AnimatedFeatureItem> createState() => _AnimatedFeatureItemState();
+}
+
+class _AnimatedFeatureItemState extends State<_AnimatedFeatureItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+  late Animation<Offset> _offset;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _opacity = Tween(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _offset = Tween(
+      begin: const Offset(0, 0.4),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    //スピード調整はここで
+    Future.delayed(Duration(milliseconds: 250 * widget.index), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(
+        position: _offset,
+        child: _FeatureItem(text: widget.text),
       ),
     );
   }

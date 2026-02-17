@@ -434,23 +434,49 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   //サムネイルの取得
   Future<String?> _getThumbnailFromPage() async {
-    final js = '''
-    (function() {
-      const og = document.querySelector('meta[property="og:image"]');
-      if (og && og.content) return og.content;
+    final url = await _controller.currentUrl();
+    if (url == null) return null;
 
-      const tw = document.querySelector('meta[name="twitter:image"]');
-      if (tw && tw.content) return tw.content;
+    // ⭐ YouTube専用処理
+    final ytThumb = _extractYoutubeThumbnail(url);
+    if (ytThumb != null) return ytThumb;
 
-      return null;
-    })();
-  ''';
-
-    final result = await _controller.runJavaScriptReturningResult(js);
+    // ⭐ 通常サイト用
+    final result = await _controller.runJavaScriptReturningResult("""
+  (() => {
+    const metas = document.getElementsByTagName('meta');
+    for (let m of metas) {
+      if (m.property === 'og:image' || m.name === 'twitter:image') {
+        return m.content;
+      }
+    }
+    return null;
+  })();
+  """);
 
     if (result == null || result == 'null') return null;
-
     return result.toString().replaceAll('"', '');
+  }
+
+  String? _extractYoutubeThumbnail(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+
+    if (uri.host.contains('youtube.com')) {
+      final id = uri.queryParameters['v'];
+      if (id != null) {
+        return "https://img.youtube.com/vi/$id/hqdefault.jpg";
+      }
+    }
+
+    if (uri.host.contains('youtu.be')) {
+      final id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+      if (id != null) {
+        return "https://img.youtube.com/vi/$id/hqdefault.jpg";
+      }
+    }
+
+    return null;
   }
 
   //追加作品の保存

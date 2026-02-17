@@ -11,6 +11,7 @@ import 'premium_detail.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'random_image_reload_provider.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -54,6 +55,13 @@ class GridPageState extends ConsumerState<GridPage> {
   Map<String, List<String>> _localImagesMap = {};
 
   bool _isPremium = false; //サブスク購入状態を保持
+
+  //選択中アイテム管理
+  Set<int> _selectedIndexes = {};
+  bool _isSelectionMode = false;
+  bool _selectionAnimating = false;
+
+  Set<int> _removingIndexes = {};
 
   // FAB 用
   final GlobalKey fabKey = GlobalKey();
@@ -100,12 +108,38 @@ class GridPageState extends ConsumerState<GridPage> {
             appBar: AppBar(
               //backgroundColor: Color(0xFF121212),
               title: Text(
-                L10n.of(context)!.grid_page_item_count(itemsToShow.length),
+                _isSelectionMode
+                    ? "${_selectedIndexes.length} seleted" //選択モード中は選択数を表示
+                    : L10n.of(
+                      context,
+                    )!.grid_page_item_count(itemsToShow.length),
               ),
+              leading:
+                  _isSelectionMode
+                      ? IconButton(
+                        icon: const Icon(Icons.close), //選択モード中は閉じるアイコンを表示
+                        onPressed: () {
+                          setState(() {
+                            _isSelectionMode = false;
+                            _selectedIndexes.clear();
+                          });
+                        },
+                      )
+                      : null,
               actions:
-              //  ?
-              [IconButton(onPressed: _showSortModal, icon: Icon(Icons.sort))],
-              // : [],
+                  _isSelectionMode
+                      ? [
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: _confirmDeleteSelected,
+                        ),
+                      ]
+                      : [
+                        IconButton(
+                          onPressed: _showSortModal,
+                          icon: Icon(Icons.sort),
+                        ),
+                      ],
             ),
             body:
                 itemsToShow.isEmpty
@@ -141,165 +175,150 @@ class GridPageState extends ConsumerState<GridPage> {
                         }
 
                         return GestureDetector(
+                          onLongPress: () {
+                            setState(() {
+                              _isSelectionMode = true;
+                              _selectedIndexes.add(index);
+                            });
+                          },
                           onTap: () async {
+                            if (_isSelectionMode) {
+                              setState(() {
+                                if (_selectedIndexes.contains(index)) {
+                                  _selectedIndexes.remove(index);
+                                  if (_selectedIndexes.isEmpty) {
+                                    _isSelectionMode = false;
+                                  }
+                                } else {
+                                  _selectedIndexes.add(index);
+                                }
+                              });
+                              return;
+                            }
                             final result = await Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => DetailPage(
-                                      listName: item['listName'],
-                                      url: item['url'],
-                                      title: item['title'],
-                                      image: item['image'],
-                                      cast: item['cast'] ?? '',
-                                      genre: item['genre'] ?? '',
-                                      series: item['series'] ?? '',
-                                      label: item['label'] ?? '',
-                                      maker: item['maker'] ?? '',
-                                      rating: item['rating'],
-                                      memo: item['memo'],
-                                      isReadOnly: true,
-                                    ),
+                              fadeScaleRoute(
+                                DetailPage(
+                                  listName: item['listName'],
+                                  url: item['url'],
+                                  title: item['title'],
+                                  image: item['image'],
+                                  cast: item['cast'] ?? '',
+                                  genre: item['genre'] ?? '',
+                                  series: item['series'] ?? '',
+                                  label: item['label'] ?? '',
+                                  maker: item['maker'] ?? '',
+                                  rating: item['rating'],
+                                  memo: item['memo'],
+                                  isReadOnly: true,
+                                ),
                               ),
                             ).then((_) {
                               setState(() {
                                 _searchMetadata();
                               });
                             });
+
                             // 戻ってきたタイミングでフォーカスを外す
                             FocusScope.of(context).unfocus();
                             if (result == true) (await _searchMetadata());
                           },
                           child: Stack(
                             children: [
-                              Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child:
-                                          item['image'] != null
-                                              ? Image.network(
-                                                item['image'],
-                                                fit: BoxFit.cover,
-                                              )
-                                              : placeholderWidget(context),
+                              AnimatedScale(
+                                duration: const Duration(milliseconds: 200),
+                                scale:
+                                    _removingIndexes.contains(index) ? 0.8 : 1,
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity:
+                                      _removingIndexes.contains(index) ? 0 : 1,
+                                  child: Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
-
-                                    // 下グラデーション（タイトル可読性）
-                                    Positioned(
-                                      bottom: 0,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Colors.transparent,
-                                              Colors.black.withOpacity(0.7),
-                                            ],
-                                          ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Stack(
+                                      children: [
+                                        Positioned.fill(
+                                          child:
+                                              item['image'] != null
+                                                  ? Image.network(
+                                                    item['image'],
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                  : placeholderWidget(context),
                                         ),
-                                        child: Text(
-                                          item['title'] ?? '',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
 
-                              //評価アイコンとリンクボタン
-                              /*
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child:
-                                          iconPath != null
-                                              ? Image.asset(
-                                                iconPath,
-                                                width: 24,
-                                                height: 24,
-                                              )
-                                              : const SizedBox(
-                                                width: 24,
-                                                height: 24,
+                                        // 下グラデーション（タイトル可読性）
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.transparent,
+                                                  Colors.black.withOpacity(0.7),
+                                                ],
                                               ),
-                                    ),
-
-                                    
-                                    //リンクボタン
-                                    IconButton(
-                                      color: colorScheme.onPrimary,
-                                      icon: const Icon(
-                                        Icons.open_in_new,
-                                        size: 20,
-                                      ),
-                                      onPressed: () async {
-                                        final url =
-                                            item['url'].toString().trim();
-                                        if (url.isNotEmpty &&
-                                            await canLaunchUrl(
-                                              Uri.parse(url),
-                                            )) {
-                                          await launchUrl(
-                                            Uri.parse(url),
-                                            mode:
-                                                LaunchMode.externalApplication,
-                                          );
-                                          return;
-                                        }
-                                        final encodedUrl = Uri.encodeFull(url);
-                                        final _canLaunchAgain = await canLaunch(
-                                          encodedUrl,
-                                        );
-                                        if (!_canLaunchAgain) {
-                                          await launchUrl(
-                                            Uri.parse(url),
-                                            mode:
-                                                LaunchMode.externalApplication,
-                                          );
-                                          return;
-                                        }
-
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              L10n.of(
-                                                context,
-                                              )!.grid_page_url_unable,
+                                            ),
+                                            child: Text(
+                                              item['title'] ?? '',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      ],
                                     ),
-                                    
-                                  ],
+                                  ),
                                 ),
                               ),
-                              */
+
+                              // 選択モード中の表示
+                              if (_isSelectionMode)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border:
+                                          _selectedIndexes.contains(index)
+                                              ? Border.all(
+                                                color: colorScheme.primary,
+                                                width: 4,
+                                              )
+                                              : null,
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8),
+                                        child:
+                                            _selectedIndexes.contains(index)
+                                                ? Icon(
+                                                  Icons.check_circle,
+                                                  color: colorScheme.primary,
+                                                  size: 28,
+                                                )
+                                                : Icon(
+                                                  Icons.radio_button_unchecked,
+                                                  color: Colors.white,
+                                                  key: ValueKey(false),
+                                                ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         );
@@ -328,24 +347,24 @@ class GridPageState extends ConsumerState<GridPage> {
                           onTap: () async {
                             final result = await Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => DetailPage(
-                                      listName: item['listName'],
-                                      url: item['url'],
-                                      title: item['title'],
-                                      image: item['image'],
-                                      cast: item['cast'] ?? '',
-                                      genre: item['genre'] ?? '',
-                                      series: item['series'] ?? '',
-                                      label: item['label'] ?? '',
-                                      maker: item['maker'] ?? '',
-                                      rating: item['rating'],
-                                      memo: item['memo'],
-                                      isReadOnly: true,
-                                    ),
+                              fadeScaleRoute(
+                                DetailPage(
+                                  listName: item['listName'],
+                                  url: item['url'],
+                                  title: item['title'],
+                                  image: item['image'],
+                                  cast: item['cast'] ?? '',
+                                  genre: item['genre'] ?? '',
+                                  series: item['series'] ?? '',
+                                  label: item['label'] ?? '',
+                                  maker: item['maker'] ?? '',
+                                  rating: item['rating'],
+                                  memo: item['memo'],
+                                  isReadOnly: true,
+                                ),
                               ),
                             );
+
                             FocusScope.of(context).unfocus();
                             if (result == true) (await _searchMetadata());
                           },
@@ -579,7 +598,7 @@ class GridPageState extends ConsumerState<GridPage> {
 
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => DetailPage(listName: widget.listName)),
+      fadeScaleRoute(DetailPage(listName: widget.listName)),
     );
     await _searchMetadata();
   }
@@ -688,6 +707,105 @@ class GridPageState extends ConsumerState<GridPage> {
       if (!hasMatch) return false;
     }
     return true;
+  }
+
+  //******** */
+  //削除処理
+  //******** */
+  Future<void> _confirmDeleteSelected() async {
+    if (_selectedIndexes.isEmpty) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: colorScheme.secondary,
+            title: Center(
+              child: Text(
+                L10n.of(context)!.detail_page_delete_confirm01,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            content: Text(
+              L10n.of(
+                context,
+              )!.grid_page_items_selected_delete(_selectedIndexes.length),
+              textAlign: TextAlign.center,
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+                  foregroundColor: MaterialStateProperty.all(Colors.black),
+                ),
+                child: Text(L10n.of(context)!.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(
+                    colorScheme.primary,
+                  ),
+                  foregroundColor: MaterialStateProperty.all(Colors.white),
+                ),
+                child: Text(L10n.of(context)!.delete),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldDelete != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final rankingList = prefs.getStringList('saved_ranking') ?? [];
+
+    /// 選択中URL一覧取得
+    final itemsToShow = _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
+
+    final selectedUrls =
+        _selectedIndexes.map((i) => itemsToShow[i]['url']).toSet();
+
+    /// metadata削除
+    final updatedList =
+        savedList.where((item) {
+          final map = jsonDecode(item) as Map<String, dynamic>;
+          return !selectedUrls.contains(map['url']);
+        }).toList();
+
+    /// ranking削除
+    final updatedRanking =
+        rankingList
+            .map((jsonStr) => jsonDecode(jsonStr) as Map<String, dynamic>)
+            .where((item) => !selectedUrls.contains(item['url']))
+            .map((item) => jsonEncode(item))
+            .toList();
+
+    await prefs.setStringList('saved_metadata', updatedList);
+    await prefs.setStringList('saved_ranking', updatedRanking);
+
+    /// 削除対象保存
+    final removing = Set<int>.from(_selectedIndexes);
+
+    setState(() {
+      _removingIndexes.addAll(removing);
+    });
+
+    await Future.delayed(const Duration(milliseconds: 250));
+
+    await _searchMetadata();
+
+    setState(() {
+      _sortedItems.clear();
+      _removingIndexes.clear();
+      _selectedIndexes.clear();
+      _isSelectionMode = false;
+    });
   }
 
   //====================
@@ -1127,6 +1245,26 @@ class GridPageState extends ConsumerState<GridPage> {
           ),
         ],
       ),
+    );
+  }
+
+  //画面遷移のアニメーション
+  Route fadeScaleRoute(Widget page) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, __, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.95, end: 1.0).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

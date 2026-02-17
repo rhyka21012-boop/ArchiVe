@@ -117,6 +117,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   final GlobalKey _urlFieldKey = GlobalKey();
   final GlobalKey _fetchTitleKey = GlobalKey();
   final GlobalKey _saveIconKey = GlobalKey();
+  Rect? _urlRect;
+  Rect? _fetchRect;
+  Rect? _saveRect;
 
   //スクロールコントローラ
   final ScrollController _scrollController = ScrollController();
@@ -166,6 +169,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           TutorialStep.inputUrl) {
         _urlController.text =
             'https://youtu.be/h_D3VFfhvs4?si=mn5UBLFS_Tv9FvJh';
+      }
+
+      final ctx = _urlFieldKey.currentContext;
+      if (ctx != null) {
+        _urlRect = getRectFromKey(_urlFieldKey, context);
+        _fetchRect = getRectFromKey(_fetchTitleKey, context);
+        _saveRect = getRectFromKey(_saveIconKey, context);
+        setState(() {});
       }
     });
   }
@@ -961,16 +972,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     autocompleteKey: 'series',
                   ),
                   _buildTextField(
-                    _labelController,
-                    L10n.of(context)!.detail_page_label,
-                    L10n.of(context)!.detail_page_label_placeholder,
-                    autocompleteKey: 'label',
-                  ),
-                  _buildTextField(
                     _makerController,
                     L10n.of(context)!.detail_page_maker,
                     L10n.of(context)!.detail_page_maker_placeholder,
                     autocompleteKey: 'maker',
+                  ),
+                  _buildTextField(
+                    _labelController,
+                    L10n.of(context)!.detail_page_label,
+                    L10n.of(context)!.detail_page_label_placeholder,
+                    autocompleteKey: 'label',
                   ),
                   _buildMemoTextField(),
 
@@ -984,7 +995,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         //チュートリアル：URLを入力
         if (tutorialStep == TutorialStep.inputUrl) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_urlFieldKey, context),
+            holeRect: _urlRect ?? Rect.zero,
             onTap: () {
               //タイトル取得ボタンはスクロールのため、別途関数を呼び出す
               startFetchTitleTutorial();
@@ -992,7 +1003,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           ),
           // 説明バルーン
           _buildBalloonFromRect(
-            getRectFromKey(_urlFieldKey, context),
+            _urlRect ?? Rect.zero,
             L10n.of(context)!.tutorial_04,
             offsetY: -60,
           ),
@@ -1001,7 +1012,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         //チュートリアル：タイトルを取得
         if (tutorialStep == TutorialStep.fetchTitle) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_fetchTitleKey, context),
+            holeRect: _fetchRect ?? Rect.zero,
             onTap: () async {
               await _fetchTitleFromUrl();
               ref.read(tutorialStepProvider.notifier).state =
@@ -1009,7 +1020,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             },
           ),
           _buildBalloonFromRect(
-            getRectFromKey(_fetchTitleKey, context),
+            _fetchRect ?? Rect.zero,
             L10n.of(context)!.tutorial_05,
             offsetX: -140,
             offsetY: -60,
@@ -1019,14 +1030,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         //チュートリアル：アイテムを保存
         if (tutorialStep == TutorialStep.saveItem) ...[
           TutorialOverlayPseudoTap(
-            holeRect: getRectFromKey(_saveIconKey, context),
+            holeRect: _saveRect ?? Rect.zero,
             onTap: () async {
               await _saveChanges();
               ref.read(tutorialStepProvider.notifier).state = TutorialStep.done;
             },
           ),
           _buildBalloonFromRect(
-            getRectFromKey(_saveIconKey, context),
+            _saveRect ?? Rect.zero,
             L10n.of(context)!.tutorial_06,
             offsetX: -190,
             offsetY: 70,
@@ -1929,7 +1940,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   Rect getRectFromKey(GlobalKey key, BuildContext context) {
     final box = key.currentContext!.findRenderObject() as RenderBox;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay =
+        Overlay.of(context, rootOverlay: true).context.findRenderObject()
+            as RenderBox;
 
     final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
     return pos & box.size;

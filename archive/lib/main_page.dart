@@ -267,7 +267,7 @@ class _MainPageState extends ConsumerState<MainPage>
               onTap: _onItemTapped,
             ),
             // ← プレミアムじゃなければ広告を表示
-            if (!_isPremium) const MyAdWidget(),
+            //if (!_isPremium) const MyAdWidget(),
           ],
         ),
       ),

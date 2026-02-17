@@ -173,6 +173,11 @@ class L10nEn extends L10n {
   String get grid_page_sort_count_desc => 'Least viewed';
 
   @override
+  String grid_page_items_selected_delete(Object count) {
+    return 'Delete $count selected items?';
+  }
+
+  @override
   String get detail_page_url_empty => 'URL is empty.';
 
   @override
@@ -566,7 +571,7 @@ class L10nEn extends L10n {
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => 'Enjoy the app without ads';
+  String get premium_detail_premium_item01 => 'Unlimited save slots';
 
   @override
   String get premium_detail_premium_item02 => 'Freely change theme colors';
@@ -578,11 +583,8 @@ class L10nEn extends L10n {
   String get premium_detail_premium_item04 => 'Quick search with multiple tags';
 
   @override
-  String get premium_detail_premium_item05 => 'Unlimited save slots';
-
-  @override
-  String get premium_detail_premium_item06 =>
-      'Visualize data by genre and rating';
+  String get premium_detail_premium_item05 =>
+      'Visualize statistics by genre and rating';
 
   @override
   String get premium_detail_price => 'Start for ¥170 / month';
@@ -632,7 +634,7 @@ class L10nEn extends L10n {
       'Collect unlimited videos without using storage';
 
   @override
-  String get tutorial_slide_image_01 => 'assets/tutorial/Japanese01.png';
+  String get tutorial_slide_image_01 => 'assets/tutorial/english01.png';
 
   @override
   String get tutorial_slide_title_02 => '[2 Easy Steps]\n1. Copy the URL';
@@ -642,7 +644,7 @@ class L10nEn extends L10n {
       'Copy the share link or browser URL from any video site';
 
   @override
-  String get tutorial_slide_image_02 => 'assets/tutorial/Japanese02.png';
+  String get tutorial_slide_image_02 => 'assets/tutorial/english02.png';
 
   @override
   String get tutorial_slide_title_03 => '[2 Easy Steps]\n2. Save the URL';
@@ -652,7 +654,7 @@ class L10nEn extends L10n {
       'Just paste to save\nAdd ratings, tags, and notes';
 
   @override
-  String get tutorial_slide_image_03 => 'assets/tutorial/Japanese03.png';
+  String get tutorial_slide_image_03 => 'assets/tutorial/english03.png';
 
   @override
   String get tutorial_slide_title_04 => 'Search Inside the App';
@@ -662,7 +664,7 @@ class L10nEn extends L10n {
       'Find saved videos instantly by title or tags';
 
   @override
-  String get tutorial_slide_image_04 => 'assets/tutorial/Japanese04.png';
+  String get tutorial_slide_image_04 => 'assets/tutorial/english04.png';
 
   @override
   String get tutorial_slide_title_05 => 'Web Search';
@@ -672,7 +674,7 @@ class L10nEn extends L10n {
       'Browse and save videos instantly with the in-app browser';
 
   @override
-  String get tutorial_slide_image_05 => 'assets/tutorial/Japanese05.png';
+  String get tutorial_slide_image_05 => 'assets/tutorial/english05.png';
 
   @override
   String get tutorial_slide_title_06 => 'Unlimited Possibilities';
@@ -682,7 +684,7 @@ class L10nEn extends L10n {
       'Build your own personal video collection!';
 
   @override
-  String get tutorial_slide_image_06 => 'assets/tutorial/Japanese06.png';
+  String get tutorial_slide_image_06 => 'assets/tutorial/english06.png';
 
   @override
   String get tutorial_slide_next => 'Next';

@@ -93,24 +93,21 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           /*
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.slideshow),
-              label: const Text("チュートリアル表示（テスト）"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueGrey,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              
+            child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const TutorialScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (_) => IntroScreen(
+                          onFinished: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                  ),
                 );
               },
-              
+              child: const Text("チュートリアル表示"),
             ),
           ),
 */
