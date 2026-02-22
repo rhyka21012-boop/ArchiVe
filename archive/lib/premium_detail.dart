@@ -246,7 +246,7 @@ class _AnimatedFeatureItemState extends State<_AnimatedFeatureItem>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     //スピード調整はここで
-    Future.delayed(Duration(milliseconds: 250 * widget.index), () {
+    Future.delayed(Duration(milliseconds: 150 * widget.index), () {
       if (mounted) _controller.forward();
     });
   }

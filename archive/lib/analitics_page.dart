@@ -219,19 +219,6 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         }
       }
 
-      // レーベル
-      final label = map['label']?.toString().trim();
-      if (label != null && label.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final labelList = label
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in labelList) {
-          labelCounts[name] = (labelCounts[name] ?? 0) + 1;
-        }
-      }
-
       // メーカー
       final maker = map['maker']?.toString().trim();
       if (maker != null && maker.isNotEmpty) {
@@ -242,6 +229,19 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             .where((e) => e.isNotEmpty);
         for (final name in makerList) {
           makerCounts[name] = (makerCounts[name] ?? 0) + 1;
+        }
+      }
+
+      // レーベル
+      final label = map['label']?.toString().trim();
+      if (label != null && label.isNotEmpty) {
+        // #で分割してからでない文字列だけを対象にする
+        final labelList = label
+            .split('#')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty);
+        for (final name in labelList) {
+          labelCounts[name] = (labelCounts[name] ?? 0) + 1;
         }
       }
     }
@@ -316,14 +316,14 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                 top5List: buildTop5SeriesList(),
               ),
               buildPieSection(
-                title: L10n.of(context)!.analytics_page_label,
-                data: labelCounts,
-                top5List: buildTop5LabelList(),
-              ),
-              buildPieSection(
                 title: L10n.of(context)!.analytics_page_maker,
                 data: makerCounts,
                 top5List: buildTop5MakerList(),
+              ),
+              buildPieSection(
+                title: L10n.of(context)!.analytics_page_label,
+                data: labelCounts,
+                top5List: buildTop5LabelList(),
               ),
 
               const SizedBox(height: 120),

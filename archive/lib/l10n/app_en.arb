@@ -52,6 +52,9 @@
 
   "grid_page_item_count": "{length} items",
   "grid_page_no_item": "No items",
+  "grid_page_add_item": "Choose how to add an item",
+  "grid_page_by_web": "Add via web search",
+  "grid_page_by_manual": "Add manually",
   "grid_page_cant_load_image": "Unable to load image",
   "grid_page_no_title": "(No title)",
   "grid_page_url_unable": "Invalid URL",
@@ -61,6 +64,7 @@
   "grid_page_sort_count_asc": "Most viewed",
   "grid_page_sort_count_desc": "Least viewed",
   "grid_page_items_selected_delete": "Delete {count} selected items?",
+  "grid_page_rating_guidance": "Items you rate will appear here",
   
   "detail_page_url_empty": "URL is empty.",
   "detail_page_input_url": "Please enter a URL.",
@@ -98,7 +102,10 @@
   "detail_page_delete_confirm02": "This action cannot be undone.",
   "detail_page_url_unable": "Invalid URL",
   "detail_page_review_confirm01": "Are you enjoying \"ArchiVe - Favorite Video Tracker\"?",
-  "detail_page_review_confirm02": "If so, we would love to hear your feedback.",
+  "detail_page_review_confirm02": "Thank you for using our app.\n\nYour feedback will be carefully reviewed by the developer and used to improve future updates.\n\nIf you enjoy the app, we’d really appreciate your support through a review.",
+  "detail_page_review_contact_support": "Report feedback or a bug",
+  "detail_page_review_later": "Later",
+  "detail_page_review_now": "Leave a review",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
 
   "search_page_cast": "Cast",
@@ -131,7 +138,10 @@
   "search_result_page_saving_list": "Destination list",
   "search_result_page_url_already_saved": "This URL has already been saved",
   "search_result_page_save_as_item": "Item has been saved",
-    "search_result_page_delete_site": "Remove \"{siteName}\" from favorites?",
+  "search_result_page_delete_site": "Remove \"{siteName}\" from favorites?",
+  "search_result_page_new_list": "New List",
+  "search_result_page_input_list_name": "Enter list name",
+  "search_result_page_list_already_exists": "A list with the same name already exists",
 
   "analytics": "Analytics",
   "analytics_page_piechart_others": "Others\n{percent}%",

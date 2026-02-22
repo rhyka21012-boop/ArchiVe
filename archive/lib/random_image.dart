@@ -225,6 +225,14 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                                     MaterialStateProperty.all(
                                                       Colors.black,
                                                     ),
+                                                shape: MaterialStateProperty.all(
+                                                  RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                ),
                                               ),
                                               child: Text(
                                                 L10n.of(context)!.cancel,
@@ -249,6 +257,14 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                                     MaterialStateProperty.all(
                                                       Colors.white,
                                                     ),
+                                                shape: MaterialStateProperty.all(
+                                                  RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                ),
                                               ),
                                               child: Text(
                                                 L10n.of(
@@ -362,6 +378,11 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(L10n.of(context)!.cancel),
               onPressed: () => Navigator.pop(context),
@@ -371,6 +392,11 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(
                 L10n.of(context)!.random_image_change_list_name_confirm,

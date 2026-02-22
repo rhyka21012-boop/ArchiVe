@@ -12,6 +12,9 @@ import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'random_image_reload_provider.dart';
+import 'home_tab_index_provider.dart';
+import 'search_tab_index_provider.dart';
+import 'search_result_page.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -50,6 +53,9 @@ class GridPageState extends ConsumerState<GridPage> {
 
   //グリッドの列数
   int _gridCount = 2;
+
+  //Youtube形式のグリッド
+  bool _isYoutubeGrid = false;
 
   //ローカル画像のパスを URL ごとに保存
   Map<String, List<String>> _localImagesMap = {};
@@ -143,7 +149,115 @@ class GridPageState extends ConsumerState<GridPage> {
             ),
             body:
                 itemsToShow.isEmpty
-                    ? Center(child: Text(L10n.of(context)!.grid_page_no_item))
+                    ? Center(
+                      child:
+                          widget.rating.isNotEmpty
+                              /// ⭐ 評価フィルタ表示時
+                              ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.emoji_events_outlined,
+                                    size: 64,
+                                    color: _getRatingColor(),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    L10n.of(context)!.grid_page_rating_guidance,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              )
+                              /// ⭐ 通常リスト表示時
+                              : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.inventory_2_outlined,
+                                    size: 64,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    L10n.of(context)!.grid_page_no_item,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    L10n.of(context)!.grid_page_add_item,
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  const SizedBox(height: 24),
+
+                                  /// Web検索追加
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.search),
+                                    label: Text(
+                                      L10n.of(context)!.grid_page_by_web,
+                                    ),
+                                    style: ButtonStyle(
+                                      elevation: MaterialStateProperty.all(0),
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                            Colors.grey[300],
+                                          ),
+                                      foregroundColor:
+                                          MaterialStateProperty.all(
+                                            Colors.black,
+                                          ),
+                                      shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      ref
+                                          .read(homeTabIndexProvider.notifier)
+                                          .state = 1;
+                                      ref
+                                          .read(searchTabIndexProvider.notifier)
+                                          .state = 0;
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  /// 手動追加
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.add),
+                                    label: Text(
+                                      L10n.of(context)!.grid_page_by_manual,
+                                    ),
+                                    style: ButtonStyle(
+                                      elevation: MaterialStateProperty.all(0),
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                            Colors.grey[300],
+                                          ),
+                                      foregroundColor:
+                                          MaterialStateProperty.all(
+                                            Colors.black,
+                                          ),
+                                      shape: MaterialStateProperty.all(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    onPressed: _onAddPressed,
+                                  ),
+                                ],
+                              ),
+                    )
                     : _isGridView
                     ? GridView.builder(
                       controller: _scrollController,
@@ -152,7 +266,7 @@ class GridPageState extends ConsumerState<GridPage> {
                         crossAxisCount: _gridCount,
                         mainAxisSpacing: 0.2,
                         crossAxisSpacing: 0.2,
-                        childAspectRatio: 1.4,
+                        childAspectRatio: _isYoutubeGrid ? 0.7 : 1.4,
                       ),
                       itemBuilder: (context, index) {
                         final item = itemsToShow[index];
@@ -228,59 +342,177 @@ class GridPageState extends ConsumerState<GridPage> {
                               AnimatedScale(
                                 duration: const Duration(milliseconds: 200),
                                 scale:
-                                    _removingIndexes.contains(index) ? 0.8 : 1,
+                                    _removingIndexes.contains(index)
+                                        ? 0.8
+                                        : _selectedIndexes.contains(index)
+                                        ? 0.92 // ← 好みで 0.9〜0.95 に調整OK
+                                        : 1,
                                 child: AnimatedOpacity(
                                   duration: const Duration(milliseconds: 200),
                                   opacity:
                                       _removingIndexes.contains(index) ? 0 : 1,
                                   child: Card(
+                                    elevation: 0,
+                                    color:
+                                        colorScheme.brightness ==
+                                                Brightness.light
+                                            ? Colors.grey[200]
+                                            : const Color(0xFF2C2C2C),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
+                                      side:
+                                          _selectedIndexes.contains(index)
+                                              ? BorderSide(
+                                                color: colorScheme.primary,
+                                                width: 6,
+                                              )
+                                              : BorderSide.none,
                                     ),
                                     clipBehavior: Clip.antiAlias,
-                                    child: Stack(
-                                      children: [
-                                        Positioned.fill(
-                                          child:
-                                              item['image'] != null
-                                                  ? Image.network(
-                                                    item['image'],
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                  : placeholderWidget(context),
-                                        ),
+                                    child:
+                                        _isYoutubeGrid //Youtube風グリッドUI
+                                            ? Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                /// サムネ（比率 2）
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: SizedBox(
+                                                    width: double.infinity,
+                                                    child: Stack(
+                                                      children: [
+                                                        Positioned.fill(
+                                                          child:
+                                                              item['image'] !=
+                                                                      null
+                                                                  ? Image.network(
+                                                                    item['image'],
+                                                                    fit:
+                                                                        BoxFit
+                                                                            .cover,
+                                                                  )
+                                                                  : placeholderWidget(
+                                                                    context,
+                                                                  ),
+                                                        ),
 
-                                        // 下グラデーション（タイトル可読性）
-                                        Positioned(
-                                          bottom: 0,
-                                          left: 0,
-                                          right: 0,
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topCenter,
-                                                end: Alignment.bottomCenter,
-                                                colors: [
-                                                  Colors.transparent,
-                                                  Colors.black.withOpacity(0.7),
-                                                ],
-                                              ),
+                                                        /// 外部リンクボタン
+                                                        Positioned(
+                                                          right: 6,
+                                                          bottom: 6,
+                                                          child: GestureDetector(
+                                                            onTap:
+                                                                () => openPlayer(
+                                                                  item['url'],
+                                                                ),
+                                                            child: Container(
+                                                              padding:
+                                                                  const EdgeInsets.all(
+                                                                    6,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    Colors
+                                                                        .black54,
+                                                                shape:
+                                                                    BoxShape
+                                                                        .circle,
+                                                              ),
+                                                              child: const Icon(
+                                                                Icons
+                                                                    .play_arrow,
+                                                                size: 18,
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                /// タイトル（比率 1）
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.fromLTRB(
+                                                          10,
+                                                          8,
+                                                          10,
+                                                          2,
+                                                        ),
+                                                    child: Text(
+                                                      item['title'] ?? '',
+                                                      maxLines: 3,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        height: 1.25,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                            /// 大サムネUI
+                                            : Stack(
+                                              children: [
+                                                Positioned.fill(
+                                                  child:
+                                                      item['image'] != null
+                                                          ? Image.network(
+                                                            item['image'],
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                          : placeholderWidget(
+                                                            context,
+                                                          ),
+                                                ),
+                                                Positioned(
+                                                  bottom: 0,
+                                                  left: 0,
+                                                  right: 0,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end:
+                                                            Alignment
+                                                                .bottomCenter,
+                                                        colors: [
+                                                          Colors.transparent,
+                                                          Colors.black
+                                                              .withOpacity(0.7),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      item['title'] ?? '',
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            child: Text(
-                                              item['title'] ?? '',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                   ),
                                 ),
                               ),
@@ -289,20 +521,13 @@ class GridPageState extends ConsumerState<GridPage> {
                               if (_isSelectionMode)
                                 Positioned.fill(
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      border:
-                                          _selectedIndexes.contains(index)
-                                              ? Border.all(
-                                                color: colorScheme.primary,
-                                                width: 4,
-                                              )
-                                              : null,
-                                    ),
                                     child: Align(
                                       alignment: Alignment.topLeft,
                                       child: Padding(
-                                        padding: EdgeInsets.all(8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 16,
+                                        ),
                                         child:
                                             _selectedIndexes.contains(index)
                                                 ? Icon(
@@ -369,7 +594,11 @@ class GridPageState extends ConsumerState<GridPage> {
                             if (result == true) (await _searchMetadata());
                           },
                           child: Card(
-                            color: colorScheme.secondary,
+                            elevation: 0,
+                            color:
+                                colorScheme.brightness == Brightness.light
+                                    ? Colors.grey[200]
+                                    : const Color(0xFF2C2C2C),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -557,7 +786,7 @@ class GridPageState extends ConsumerState<GridPage> {
             floatingActionButton: FloatingActionButton(
               key: fabKey,
               onPressed: _onAddPressed,
-              backgroundColor: colorScheme.primary,
+              backgroundColor: _getRatingColor(),
               shape: CircleBorder(),
               child: Icon(Icons.add, color: Colors.white),
             ),
@@ -741,6 +970,11 @@ class GridPageState extends ConsumerState<GridPage> {
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                   foregroundColor: MaterialStateProperty.all(Colors.black),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 child: Text(L10n.of(context)!.cancel),
               ),
@@ -751,6 +985,11 @@ class GridPageState extends ConsumerState<GridPage> {
                     colorScheme.primary,
                   ),
                   foregroundColor: MaterialStateProperty.all(Colors.white),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 child: Text(L10n.of(context)!.delete),
               ),
@@ -808,6 +1047,30 @@ class GridPageState extends ConsumerState<GridPage> {
     });
   }
 
+  //動画再生処理
+  void openPlayer(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchResultPage(initialUrl: url, title: url),
+      ),
+    );
+  }
+
+  //評価ごとの色
+  Color _getRatingColor() {
+    switch (widget.rating) {
+      case 'critical':
+        return Colors.red[800]!;
+      case 'normal':
+        return Colors.yellow[800]!;
+      case 'maniac':
+        return Colors.purple[800]!;
+      default:
+        return Theme.of(context).colorScheme.primary;
+    }
+  }
+
   //====================
   //ソートのモーダルウィンドウ
   //====================
@@ -842,13 +1105,19 @@ class GridPageState extends ConsumerState<GridPage> {
                     style: ButtonStyle(
                       elevation: MaterialStateProperty.all(0),
                       backgroundColor: MaterialStateProperty.all(
-                        _isGridView && _gridCount == 2
+                        _isGridView && _gridCount == 2 && !_isYoutubeGrid
                             ? colorScheme.primary
                             : Colors.transparent,
+                      ),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     onPressed: () {
                       setState(() {
+                        _isYoutubeGrid = false;
                         _isGridView = true;
                         _gridCount = 2;
                       });
@@ -863,15 +1132,47 @@ class GridPageState extends ConsumerState<GridPage> {
                     style: ButtonStyle(
                       elevation: MaterialStateProperty.all(0),
                       backgroundColor: MaterialStateProperty.all(
-                        _isGridView && _gridCount == 3
+                        _isGridView && _gridCount == 3 && !_isYoutubeGrid
                             ? colorScheme.primary
                             : Colors.transparent,
+                      ),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isYoutubeGrid = false;
+                        _isGridView = true;
+                        _gridCount = 3;
+                      });
+                      _saveViewSettings();
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // YouTube風3列グリッド
+                  IconButton(
+                    icon: const Icon(Icons.video_library, size: 32),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(
+                        _isYoutubeGrid
+                            ? colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     onPressed: () {
                       setState(() {
                         _isGridView = true;
                         _gridCount = 3;
+                        _isYoutubeGrid = true;
                       });
                       _saveViewSettings();
                       Navigator.pop(context);
@@ -886,10 +1187,16 @@ class GridPageState extends ConsumerState<GridPage> {
                       backgroundColor: MaterialStateProperty.all(
                         !_isGridView ? colorScheme.primary : Colors.transparent,
                       ),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                     onPressed: () {
                       setState(() {
                         _isGridView = false;
+                        _isYoutubeGrid = false;
                       });
                       _saveViewSettings();
                       Navigator.pop(context);
@@ -912,6 +1219,11 @@ class GridPageState extends ConsumerState<GridPage> {
                     _sortedMenuSelected[0]
                         ? colorScheme.primary
                         : Colors.transparent,
+                  ),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 child: Text(
@@ -938,6 +1250,11 @@ class GridPageState extends ConsumerState<GridPage> {
                         ? colorScheme.primary
                         : Colors.transparent,
                   ),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 child: Text(
                   L10n.of(context)!.grid_page_sort_new,
@@ -962,6 +1279,11 @@ class GridPageState extends ConsumerState<GridPage> {
                     _sortedMenuSelected[2]
                         ? colorScheme.primary
                         : Colors.transparent,
+                  ),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 child: Text(
@@ -1037,6 +1359,7 @@ class GridPageState extends ConsumerState<GridPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isGridView', _isGridView);
     await prefs.setInt('gridCount', _gridCount);
+    await prefs.setBool('youtubeGrid', _isYoutubeGrid);
   }
 
   //ビュー設定を読み込む
@@ -1045,6 +1368,7 @@ class GridPageState extends ConsumerState<GridPage> {
     setState(() {
       _isGridView = prefs.getBool('isGridView') ?? true;
       _gridCount = prefs.getInt('gridCount') ?? 2;
+      _isYoutubeGrid = prefs.getBool('youtubeGrid') ?? false;
     });
   }
 
@@ -1127,10 +1451,12 @@ class GridPageState extends ConsumerState<GridPage> {
 
   //作品数上限オーバー時の案内ダイアログ
   Future<void> _showSaveLimitDialog(int count, int limit) async {
+    final colorScheme = Theme.of(context).colorScheme;
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
             L10n.of(context)!.save_limit_dialog_description(limit, count),

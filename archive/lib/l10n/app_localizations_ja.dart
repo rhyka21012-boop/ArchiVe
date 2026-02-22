@@ -148,6 +148,15 @@ class L10nJa extends L10n {
   String get grid_page_no_item => 'アイテムがありません';
 
   @override
+  String get grid_page_add_item => '追加方法を選択してください';
+
+  @override
+  String get grid_page_by_web => 'Web検索で追加';
+
+  @override
+  String get grid_page_by_manual => '手動で追加';
+
+  @override
   String get grid_page_cant_load_image => '画像を読み込めません';
 
   @override
@@ -175,6 +184,9 @@ class L10nJa extends L10n {
   String grid_page_items_selected_delete(Object count) {
     return '選択した$count件を削除しますか？';
   }
+
+  @override
+  String get grid_page_rating_guidance => '作品を評価するとここに表示されます';
 
   @override
   String get detail_page_url_empty => 'URLが未入力です。';
@@ -287,7 +299,17 @@ class L10nJa extends L10n {
       '「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？';
 
   @override
-  String get detail_page_review_confirm02 => 'もしよろしければ、ぜひご感想をお聞かせください。';
+  String get detail_page_review_confirm02 =>
+      'いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。';
+
+  @override
+  String get detail_page_review_contact_support => 'ご意見・不具合を報告';
+
+  @override
+  String get detail_page_review_later => 'あとで';
+
+  @override
+  String get detail_page_review_now => 'レビューする';
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe ご意見・ご要望';
@@ -381,6 +403,15 @@ class L10nJa extends L10n {
   String search_result_page_delete_site(Object siteName) {
     return '「$siteName」をお気に入りから削除しますか？';
   }
+
+  @override
+  String get search_result_page_new_list => '新規リスト';
+
+  @override
+  String get search_result_page_input_list_name => 'リスト名を入力';
+
+  @override
+  String get search_result_page_list_already_exists => '同じ名前のリストが既にあります';
 
   @override
   String get analytics => '統計';

@@ -64,16 +64,16 @@ ThemeData getThemeData(ThemeColorType type, bool isDark) {
   final colorScheme =
       isDark
           ? ColorScheme.dark(
-            primary: primaryColor,
-            onPrimary: Colors.white,
-            surface: const Color(0xFF121212),
-            secondary: const Color(0xFF2C2C2C),
+            primary: primaryColor, //テーマカラー
+            onPrimary: Colors.white, //文字やアイコン
+            surface: const Color(0xFF121212), //カードなどの色
+            secondary: const Color(0xFF2C2C2C), //背景色
           )
           : ColorScheme.light(
-            primary: primaryColor,
-            onPrimary: Colors.black,
-            surface: Colors.white,
-            secondary: Colors.white,
+            primary: primaryColor, //テーマカラー
+            onPrimary: Colors.black, //文字やアイコン
+            surface: Colors.white, //カードなどの色
+            secondary: Colors.white, //背景色
           );
 
   return ThemeData(

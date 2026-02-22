@@ -1,6 +1,7 @@
 import 'home_tab_index_provider.dart';
 import 'list_tab_index_provider.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
@@ -30,11 +31,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   int currentCount = 0; // 現在の保存数
   int baseLimit = 100; // 基本上限
 
-  static const bool isTestMode = false;
-  String rewardedAdUnitId =
-      isTestMode
-          ? 'ca-app-pub-3940256099942544/1712485313' //テスト用
-          : 'ca-app-pub-8268997781284735/5356923320'; //本番用
+  static const bool isTestMode = false; //テストモード切り替え
+  String get rewardedAdUnitId {
+    if (isTestMode) {
+      return 'ca-app-pub-3940256099942544/1712485313';
+    }
+
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-8268997781284735/8948638186';
+    } else {
+      return 'ca-app-pub-8268997781284735/5356923320';
+    }
+  }
 
   @override
   void initState() {
@@ -465,6 +473,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                   foregroundColor: MaterialStateProperty.all(Colors.black),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(L10n.of(context)!.cancel),
@@ -476,6 +489,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     colorScheme.primary,
                   ),
                   foregroundColor: MaterialStateProperty.all(Colors.white),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(L10n.of(context)!.ok),

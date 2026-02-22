@@ -52,6 +52,9 @@
 
   "grid_page_item_count": "{length}件",
   "grid_page_no_item": "アイテムがありません",
+  "grid_page_add_item": "追加方法を選択してください",
+  "grid_page_by_web": "Web検索で追加",
+  "grid_page_by_manual": "手動で追加",
   "grid_page_cant_load_image": "画像を読み込めません",
   "grid_page_no_title": "（タイトルなし）",
   "grid_page_url_unable": "有効なURLではありません",
@@ -61,6 +64,7 @@
   "grid_page_sort_count_asc": "視聴回数が多い順",
   "grid_page_sort_count_desc": "視聴回数が少ない順",
   "grid_page_items_selected_delete": "選択した{count}件を削除しますか？",
+  "grid_page_rating_guidance": "作品を評価するとここに表示されます",
 
   "detail_page_url_empty": "URLが未入力です。",
   "detail_page_input_url": "URLを入力してください。",
@@ -98,7 +102,10 @@
   "detail_page_delete_confirm02": "削除後は復元できません。",
   "detail_page_url_unable": "有効なURLではありません",
   "detail_page_review_confirm01": "「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？",
-  "detail_page_review_confirm02": "もしよろしければ、ぜひご感想をお聞かせください。",
+  "detail_page_review_confirm02": "いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。",
+  "detail_page_review_contact_support": "ご意見・不具合を報告",
+  "detail_page_review_later": "あとで",
+  "detail_page_review_now": "レビューする",
   "detail_page_mail_subject": "subject=ArchiVe ご意見・ご要望",
 
   "search_page_cast": "出演",
@@ -132,6 +139,9 @@
   "search_result_page_url_already_saved": "このURLはすでに保存されています",
   "search_result_page_save_as_item": "作品を保存しました",
   "search_result_page_delete_site": "「{siteName}」をお気に入りから削除しますか？",
+  "search_result_page_new_list": "新規リスト",
+  "search_result_page_input_list_name": "リスト名を入力",
+  "search_result_page_list_already_exists": "同じ名前のリストが既にあります",
 
   "analytics": "統計",
   "analytics_page_piechart_others": "その他\n{percent}%",

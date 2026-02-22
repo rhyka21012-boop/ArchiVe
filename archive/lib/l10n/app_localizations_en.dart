@@ -149,6 +149,15 @@ class L10nEn extends L10n {
   String get grid_page_no_item => 'No items';
 
   @override
+  String get grid_page_add_item => 'Choose how to add an item';
+
+  @override
+  String get grid_page_by_web => 'Add via web search';
+
+  @override
+  String get grid_page_by_manual => 'Add manually';
+
+  @override
   String get grid_page_cant_load_image => 'Unable to load image';
 
   @override
@@ -176,6 +185,9 @@ class L10nEn extends L10n {
   String grid_page_items_selected_delete(Object count) {
     return 'Delete $count selected items?';
   }
+
+  @override
+  String get grid_page_rating_guidance => 'Items you rate will appear here';
 
   @override
   String get detail_page_url_empty => 'URL is empty.';
@@ -290,7 +302,16 @@ class L10nEn extends L10n {
 
   @override
   String get detail_page_review_confirm02 =>
-      'If so, we would love to hear your feedback.';
+      'Thank you for using our app.\n\nYour feedback will be carefully reviewed by the developer and used to improve future updates.\n\nIf you enjoy the app, we’d really appreciate your support through a review.';
+
+  @override
+  String get detail_page_review_contact_support => 'Report feedback or a bug';
+
+  @override
+  String get detail_page_review_later => 'Later';
+
+  @override
+  String get detail_page_review_now => 'Leave a review';
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
@@ -385,6 +406,16 @@ class L10nEn extends L10n {
   String search_result_page_delete_site(Object siteName) {
     return 'Remove \"$siteName\" from favorites?';
   }
+
+  @override
+  String get search_result_page_new_list => 'New List';
+
+  @override
+  String get search_result_page_input_list_name => 'Enter list name';
+
+  @override
+  String get search_result_page_list_already_exists =>
+      'A list with the same name already exists';
 
   @override
   String get analytics => 'Analytics';

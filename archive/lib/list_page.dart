@@ -12,6 +12,7 @@ import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'list_tab_index_provider.dart';
 import 'random_image_reload_provider.dart';
+import 'list_reload_provider.dart';
 
 class ListPage extends ConsumerStatefulWidget {
   const ListPage({super.key});
@@ -43,6 +44,11 @@ class ListPageState extends ConsumerState<ListPage>
     super.initState();
 
     _loadLists();
+
+    //リスト一覧の更新をlisten
+    ref.listenManual<int>(listReloadProvider, (prev, next) {
+      _loadLists();
+    });
 
     _tabController = TabController(length: 2, vsync: this);
 
@@ -574,6 +580,11 @@ class ListPageState extends ConsumerState<ListPage>
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(L10n.of(context)!.cancel),
               onPressed: () => Navigator.pop(context),
@@ -610,6 +621,11 @@ class ListPageState extends ConsumerState<ListPage>
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(L10n.of(context)!.add),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'launch_gate.dart';
 //import 'grid_view_native_ad_factory.dart';
 //import 'package:firebase_core/firebase_core.dart';
@@ -26,7 +27,8 @@ void main() async {
   await Purchases.configure(
     PurchasesConfiguration("appl_kKWivbmxqAEXEBqUmLeiUoAyyRN"),
   );
-  //runApp(MyApp());
+
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(
     AppRestart(

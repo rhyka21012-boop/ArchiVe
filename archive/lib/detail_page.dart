@@ -20,7 +20,7 @@ import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'random_image_reload_provider.dart';
-import 'smart_player_page.dart';
+import 'search_result_page.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -343,6 +343,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       colorScheme.primary,
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   child: Text(L10n.of(context)!.ok),
                 ),
@@ -388,6 +393,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       Colors.grey[300],
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   child: Text(L10n.of(context)!.cancel),
                 ),
@@ -399,6 +409,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       colorScheme.primary,
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.white),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   child: Text(L10n.of(context)!.ok),
                 ),
@@ -677,18 +692,31 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                         fit: BoxFit.cover,
                                       ),
 
-                                      /// グラデーション（視認性UP）
-                                      Container(
-                                        height: 200,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.black.withOpacity(0.6),
-                                              Colors.transparent,
-                                              Colors.black.withOpacity(0.6),
+                                      /// ⭐ ファビコン（左下）
+                                      Positioned(
+                                        left: 8,
+                                        bottom: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(3),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black26,
+                                                blurRadius: 4,
+                                              ),
                                             ],
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
+                                          ),
+                                          child: Image.network(
+                                            _getFaviconUrl(_urlController.text),
+                                            width: 20,
+                                            height: 20,
+                                            errorBuilder:
+                                                (_, __, ___) =>
+                                                    const SizedBox(),
                                           ),
                                         ),
                                       ),
@@ -944,45 +972,61 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       const SizedBox(height: 10),
                     ],
                   ),
+                  //リスト一覧
                   _buildListDropdownButton(),
 
+                  //URL入力欄
                   _buildTextField(_urlController, 'URL', 'https://...'),
+
+                  //タイトル入力欄
                   _buildTextField(
                     _titleController,
                     L10n.of(context)!.detail_page_title,
                     L10n.of(context)!.detail_page_title_placeholder,
                     withFetchTitle: true,
                   ),
+
+                  //出演入力欄
                   _buildTextField(
                     _castController,
                     L10n.of(context)!.detail_page_cast,
                     L10n.of(context)!.detail_page_cast_placeholder,
                     autocompleteKey: 'cast',
                   ),
+
+                  //ジャンル入力欄
                   _buildTextField(
                     _genreController,
                     L10n.of(context)!.detail_page_genre,
                     L10n.of(context)!.detail_page_genre_placeholder,
                     autocompleteKey: 'genre',
                   ),
+
+                  //シリーズ入力欄
                   _buildTextField(
                     _seriesController,
                     L10n.of(context)!.detail_page_series,
                     L10n.of(context)!.detail_page_series_placeholder,
                     autocompleteKey: 'series',
                   ),
+
+                  //メーカー入力欄
                   _buildTextField(
                     _makerController,
                     L10n.of(context)!.detail_page_maker,
                     L10n.of(context)!.detail_page_maker_placeholder,
                     autocompleteKey: 'maker',
                   ),
+
+                  //レーベル入力欄
                   _buildTextField(
                     _labelController,
                     L10n.of(context)!.detail_page_label,
                     L10n.of(context)!.detail_page_label_placeholder,
                     autocompleteKey: 'label',
                   ),
+
+                  //メモ欄
                   _buildMemoTextField(),
 
                   const SizedBox(height: 70),
@@ -1321,45 +1365,48 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(
-                color: isEditing ? Colors.white : Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButton<String>(
-                dropdownColor: Colors.white,
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: isEditing ? Colors.white : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  menuMaxHeight: 300,
+                  dropdownColor: Colors.white,
 
-                items: [
-                  DropdownMenuItem<String>(
-                    value: noneListValue, // '選択なし'
-                    child: Text(
-                      L10n.of(context)!.detail_page_no_selected,
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                  ),
-                  ..._listNames.map(
-                    (value) => DropdownMenuItem<String>(
-                      value: value,
+                  items: [
+                    DropdownMenuItem<String>(
+                      value: noneListValue, // '選択なし'
                       child: Text(
-                        value,
+                        L10n.of(context)!.detail_page_no_selected,
                         style: const TextStyle(color: Colors.black),
                       ),
                     ),
-                  ),
-                ],
+                    ..._listNames.map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  ],
 
-                value: isSelectedValue,
+                  value: isSelectedValue,
 
-                onChanged:
-                    !isEditing
-                        ? null
-                        : (String? value) {
-                          if (value == null) return;
-                          setState(() {
-                            isSelectedValue = value;
-                          });
-                        },
+                  onChanged:
+                      !isEditing
+                          ? null
+                          : (String? value) {
+                            if (value == null) return;
+                            setState(() {
+                              isSelectedValue = value;
+                            });
+                          },
+                ),
               ),
             ),
           ],
@@ -1494,6 +1541,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   elevation: MaterialStateProperty.all(0),
                   backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                   foregroundColor: MaterialStateProperty.all(Colors.black),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 child: Text(L10n.of(context)!.cancel),
               ),
@@ -1505,6 +1557,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     colorScheme.primary,
                   ),
                   foregroundColor: MaterialStateProperty.all(Colors.white),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 child: Text(L10n.of(context)!.delete),
               ),
@@ -1813,10 +1870,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   //作品数上限オーバー時の案内ダイアログ
   Future<void> _showSaveLimitDialog(int count, int limit) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
             L10n.of(context)!.save_limit_dialog_description(limit, count),
@@ -1879,23 +1939,46 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   //レビュー促進画面
   Future<void> showReviewPrompt(BuildContext context) async {
     final inAppReview = InAppReview.instance;
+    final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(L10n.of(context)!.detail_page_review_confirm01),
           content: Text(L10n.of(context)!.detail_page_review_confirm02),
           actions: [
+            // 不具合報告
             TextButton(
-              child: Text(L10n.of(context)!.no),
+              style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+                foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               onPressed: () {
                 Navigator.pop(context);
-                _openSupport(); // 下で定義
+                _openSupport();
               },
+              child: Text(L10n.of(context)!.detail_page_review_contact_support),
             ),
-            ElevatedButton(
-              child: Text(L10n.of(context)!.yes),
+
+            // レビューする
+            TextButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(colorScheme.primary),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               onPressed: () async {
                 Navigator.pop(context);
 
@@ -1903,6 +1986,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   await inAppReview.requestReview();
                 }
               },
+              child: Text(L10n.of(context)!.detail_page_review_now),
+            ),
+
+            // あとで
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(L10n.of(context)!.detail_page_review_later),
             ),
           ],
         );
@@ -1938,6 +2028,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
   }
 
+  //ファビコン作成
+  String _getFaviconUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host.isEmpty) return "";
+    return "${uri.scheme}://${uri.host}/favicon.ico";
+  }
+
+  //チュートリアル - フォーカス位置を推定
   Rect getRectFromKey(GlobalKey key, BuildContext context) {
     final box = key.currentContext!.findRenderObject() as RenderBox;
     final overlay =
@@ -1948,6 +2046,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     return pos & box.size;
   }
 
+  //チュートリアル - 説明バルーン
   Positioned _buildBalloonFromRect(
     Rect rect,
     String text, {
@@ -1985,7 +2084,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   void openPlayer(String url) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SmartPlayerPage(url: url)),
+      MaterialPageRoute(
+        builder: (_) => SearchResultPage(initialUrl: url, title: url),
+      ),
     );
   }
 }

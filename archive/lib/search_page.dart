@@ -7,6 +7,7 @@ import 'l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'favorite_site_provider.dart';
+import 'search_tab_index_provider.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -29,8 +30,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
     'cast',
     'genre',
     'series',
-    'label',
     'maker',
+    'label',
   ];
 
   Map<String, bool> _showAllByKey = {}; //チョイスチップの「もっと見る」を管理
@@ -49,9 +50,6 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   final GlobalKey _searchBarKey = GlobalKey();
 
-  //検索UI切り替え状態
-  var _isWebSearch = false;
-
   //お気に入りサイトの選択状態
   int? _selectedFavoriteIndex;
 
@@ -60,7 +58,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
   @override
   void initState() {
     super.initState();
+
+    //検索履歴を更新
     _loadSearchHistory();
+
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         if (_ignoreNextFocus) {
@@ -75,6 +76,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
   }
 
   bool _isMetadataLoaded = false;
+
+  bool get isWeb => ref.read(searchTabIndexProvider) == 0;
 
   @override
   void didChangeDependencies() {
@@ -100,6 +103,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    //アプリ内・Webタブ管理
+    ref.watch(searchTabIndexProvider);
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -155,11 +162,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
                   icon: Icon(Icons.public),
                 ),
               ],
-              selected: {_isWebSearch},
+              selected: {isWeb},
               onSelectionChanged: (value) {
-                setState(() {
-                  _isWebSearch = value.first;
-                });
+                ref.read(searchTabIndexProvider.notifier).state =
+                    value.first ? 0 : 1;
               },
             ),
           ),
@@ -189,6 +195,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         foregroundColor: MaterialStateProperty.all(
                           Colors.black,
                         ),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       child: Text(L10n.of(context)!.clear), //クリア
                     ),
@@ -208,7 +219,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         final text = _searchController.text.trim();
 
                         /*
-                        if (_isWebSearch && text.isEmpty) {
+                        if (isWeb && text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -228,7 +239,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                             _countSelectedCategories();
 
                         //複数カテゴリ指定はプレミアム限定
-                        if (!_isWebSearch && selectedCategoryCount >= 2) {
+                        if (!isWeb && selectedCategoryCount >= 2) {
                           await _showPremiumInfoDialog();
                           return;
                         }
@@ -244,7 +255,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         _addSearchHistory(text);
 
                         final bool? updated =
-                            _isWebSearch
+                            isWeb
                                 ? await Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -288,6 +299,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         foregroundColor: MaterialStateProperty.all(
                           Colors.white,
                         ),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       child: Text(L10n.of(context)!.search_page_search), //検索
                     ),
@@ -295,9 +311,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 ),
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
-                _isWebSearch
-                    ? _buildWebSearchSection()
-                    : _buildAppSearchSection(),
+                isWeb ? _buildWebSearchSection() : _buildAppSearchSection(),
 
                 const SizedBox(height: 140),
                 /*** UI切り替え箇所End ***/
@@ -338,7 +352,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 _addSearchHistory(text);
 
                 final bool? updated =
-                    _isWebSearch
+                    isWeb
                         ? await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -395,7 +409,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         : null,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 hintText:
-                    _isWebSearch
+                    isWeb
                         ? L10n.of(context)!.search_page_search_word
                         : L10n.of(context)!.search_page_search_title, //タイトルを検索
                 hintStyle: const TextStyle(color: Colors.black, fontSize: 16),
@@ -481,7 +495,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
                             icon: const Icon(Icons.clear, color: Colors.black),
                             onPressed: () {
                               _searchHistory.remove(term);
-                              setState(() {});
+                              _removeOverlay();
+                              _showOverlay();
                             },
                           ),
                         );
@@ -605,10 +620,12 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   //非プレミアムユーザ用説明ウィンドウ
   Future<void> _showPremiumInfoDialog() async {
+    final colorScheme = Theme.of(context).colorScheme;
     return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(
             L10n.of(context)!.search_page_premium_title,
             style: TextStyle(
@@ -656,8 +673,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
             L10n.of(context)!.search_page_cast,
             L10n.of(context)!.search_page_genre,
             L10n.of(context)!.search_page_series,
-            L10n.of(context)!.search_page_label,
             L10n.of(context)!.search_page_maker,
+            L10n.of(context)!.search_page_label,
           ][index];
 
       final options = _optionsByKey[key] ?? [];
@@ -976,6 +993,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () => Navigator.pop(context),
               child: Text(L10n.of(context)!.cancel),
@@ -985,6 +1007,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () async {
                 final title = titleController.text.trim();
@@ -1064,6 +1091,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () => Navigator.of(context).pop(),
               child: Text(L10n.of(context)!.cancel),
@@ -1073,6 +1105,11 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () async {
                 final title = titleController.text.trim();

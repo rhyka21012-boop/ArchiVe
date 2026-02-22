@@ -105,10 +105,12 @@ class _MainPageState extends ConsumerState<MainPage>
 
   //作品数上限オーバー時の案内ダイアログ
   Future<void> _showSaveLimitDialog(int count, int limit) async {
+    final colorScheme = Theme.of(context).colorScheme;
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
             L10n.of(context)!.save_limit_dialog_description(limit, count),

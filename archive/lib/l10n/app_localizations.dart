@@ -367,6 +367,24 @@ abstract class L10n {
   /// **'アイテムがありません'**
   String get grid_page_no_item;
 
+  /// No description provided for @grid_page_add_item.
+  ///
+  /// In ja, this message translates to:
+  /// **'追加方法を選択してください'**
+  String get grid_page_add_item;
+
+  /// No description provided for @grid_page_by_web.
+  ///
+  /// In ja, this message translates to:
+  /// **'Web検索で追加'**
+  String get grid_page_by_web;
+
+  /// No description provided for @grid_page_by_manual.
+  ///
+  /// In ja, this message translates to:
+  /// **'手動で追加'**
+  String get grid_page_by_manual;
+
   /// No description provided for @grid_page_cant_load_image.
   ///
   /// In ja, this message translates to:
@@ -420,6 +438,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'選択した{count}件を削除しますか？'**
   String grid_page_items_selected_delete(Object count);
+
+  /// No description provided for @grid_page_rating_guidance.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品を評価するとここに表示されます'**
+  String get grid_page_rating_guidance;
 
   /// No description provided for @detail_page_url_empty.
   ///
@@ -640,8 +664,26 @@ abstract class L10n {
   /// No description provided for @detail_page_review_confirm02.
   ///
   /// In ja, this message translates to:
-  /// **'もしよろしければ、ぜひご感想をお聞かせください。'**
+  /// **'いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。'**
   String get detail_page_review_confirm02;
+
+  /// No description provided for @detail_page_review_contact_support.
+  ///
+  /// In ja, this message translates to:
+  /// **'ご意見・不具合を報告'**
+  String get detail_page_review_contact_support;
+
+  /// No description provided for @detail_page_review_later.
+  ///
+  /// In ja, this message translates to:
+  /// **'あとで'**
+  String get detail_page_review_later;
+
+  /// No description provided for @detail_page_review_now.
+  ///
+  /// In ja, this message translates to:
+  /// **'レビューする'**
+  String get detail_page_review_now;
 
   /// No description provided for @detail_page_mail_subject.
   ///
@@ -822,6 +864,24 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'「{siteName}」をお気に入りから削除しますか？'**
   String search_result_page_delete_site(Object siteName);
+
+  /// No description provided for @search_result_page_new_list.
+  ///
+  /// In ja, this message translates to:
+  /// **'新規リスト'**
+  String get search_result_page_new_list;
+
+  /// No description provided for @search_result_page_input_list_name.
+  ///
+  /// In ja, this message translates to:
+  /// **'リスト名を入力'**
+  String get search_result_page_input_list_name;
+
+  /// No description provided for @search_result_page_list_already_exists.
+  ///
+  /// In ja, this message translates to:
+  /// **'同じ名前のリストが既にあります'**
+  String get search_result_page_list_already_exists;
 
   /// No description provided for @analytics.
   ///

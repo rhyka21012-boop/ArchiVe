@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,8 @@ import 'l10n/app_localizations.dart';
 import 'premium_detail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'favorite_site_provider.dart';
+import 'list_reload_provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -43,9 +46,19 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     return Uri.tryParse(url)?.host;
   }
 
+  //サムネイル用変数
+  String? thumbnailUrl;
+
+  //インターステイシャル広告
+  InterstitialAd? _interstitialAd;
+  int _saveCount = 0;
+
   @override
   void initState() {
     super.initState();
+    _loadInterstitialAd();
+
+    _checkSubscriptionStatus();
 
     final initialUrl = _resolveInitialUrl(widget.initialUrl);
 
@@ -54,6 +67,13 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..setNavigationDelegate(
             NavigationDelegate(
+              onNavigationRequest: (request) {
+                // メインフレーム以外は拒否 = ポップアップ遮断
+                if (!request.isMainFrame) {
+                  return NavigationDecision.prevent;
+                }
+                return NavigationDecision.navigate;
+              },
               onPageFinished: (url) async {
                 final canBack = await _controller.canGoBack();
                 final title = await _getPageTitle();
@@ -190,6 +210,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(L10n.of(context)!.cancel),
               onPressed: () => Navigator.pop(context),
@@ -199,6 +224,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               child: Text(L10n.of(context)!.delete),
               onPressed: () {
@@ -236,6 +266,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     if (url == null) return;
 
     final title = await _getPageTitle();
+
     final prefs = await SharedPreferences.getInstance();
 
     // リスト一覧取得
@@ -260,6 +291,21 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    //サムネ表示
+                    /*
+                    if (thumbnailUrl != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            thumbnailUrl!,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),*/
+
                     // 評価
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -330,27 +376,186 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                     const SizedBox(height: 12),
 
                     // リスト選択
-                    DropdownButtonFormField<String>(
-                      value: selectedList,
-                      decoration: InputDecoration(
-                        labelText:
-                            L10n.of(context)!.search_result_page_saving_list,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'none',
-                          child: Text(L10n.of(context)!.no_select),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: selectedList,
+                            decoration: InputDecoration(
+                              labelText:
+                                  L10n.of(
+                                    context,
+                                  )!.search_result_page_saving_list,
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: 'none',
+                                child: Text(L10n.of(context)!.no_select),
+                              ),
+                              ...allLists.map(
+                                (list) => DropdownMenuItem(
+                                  value: list,
+                                  child: Text(list),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                selectedList = value ?? 'none';
+                              });
+                            },
+                          ),
                         ),
-                        ...allLists.map(
-                          (list) =>
-                              DropdownMenuItem(value: list, child: Text(list)),
+                        TextButton(
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all(0),
+                            backgroundColor: MaterialStateProperty.all(
+                              Colors.grey[300],
+                            ),
+                            foregroundColor: MaterialStateProperty.all(
+                              Colors.black,
+                            ),
+                          ),
+                          onPressed: () async {
+                            final nameController = TextEditingController();
+
+                            await showDialog(
+                              context:
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).context,
+                              builder: (_) {
+                                return AlertDialog(
+                                  backgroundColor: colorScheme.secondary,
+                                  title: Text(
+                                    L10n.of(
+                                      context,
+                                    )!.search_result_page_new_list,
+                                  ),
+                                  content: TextField(
+                                    controller: nameController,
+                                    autofocus: true,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          L10n.of(
+                                            context,
+                                          )!.search_result_page_input_list_name,
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      style: ButtonStyle(
+                                        elevation: MaterialStateProperty.all(0),
+                                        backgroundColor:
+                                            MaterialStateProperty.all(
+                                              Colors.grey[300],
+                                            ),
+                                        foregroundColor:
+                                            MaterialStateProperty.all(
+                                              Colors.black,
+                                            ),
+                                        shape: MaterialStateProperty.all(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text(L10n.of(context)!.cancel),
+                                    ),
+                                    TextButton(
+                                      style: ButtonStyle(
+                                        elevation: MaterialStateProperty.all(0),
+                                        backgroundColor:
+                                            MaterialStateProperty.all(
+                                              colorScheme.primary,
+                                            ),
+                                        foregroundColor:
+                                            MaterialStateProperty.all(
+                                              Colors.white,
+                                            ),
+                                        shape: MaterialStateProperty.all(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final name = nameController.text.trim();
+                                        if (name.isEmpty) return;
+
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+                                        final lists =
+                                            prefs.getStringList('all_lists') ??
+                                            [];
+
+                                        // ★ 重複チェック（追加）
+                                        if (lists.contains(name)) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                L10n.of(
+                                                  context,
+                                                )!.search_result_page_list_already_exists,
+                                              ),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        // リスト追加
+                                        lists.add(name);
+                                        await prefs.setStringList(
+                                          'all_lists',
+                                          lists,
+                                        );
+                                        // リスト画面に通知
+                                        ref
+                                            .read(listReloadProvider.notifier)
+                                            .state++;
+
+                                        // 評価確定
+                                        selectedRating = dialogSelectedRating;
+
+                                        //サムネ取得
+                                        thumbnailUrl =
+                                            await _getThumbnailFromPage();
+
+                                        // 保存実行
+                                        await _saveWorkFromWebView(
+                                          url: urlController.text,
+                                          title: titleController.text,
+                                          listName: name,
+                                          thumbnailUrl: thumbnailUrl,
+                                        );
+
+                                        if (!context.mounted) return;
+
+                                        Navigator.pop(context); // 新規リスト
+                                        Navigator.pop(context); // 保存ダイアログ
+                                      },
+
+                                      child: Text(L10n.of(context)!.ok),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Text(
+                            L10n.of(context)!.search_result_page_new_list,
+                          ),
                         ),
                       ],
-                      onChanged: (value) {
-                        setState(() {
-                          selectedList = value ?? 'none';
-                        });
-                      },
                     ),
                   ],
                 ),
@@ -363,23 +568,33 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                       Colors.grey[300],
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: Text(L10n.of(context)!.cancel),
+                  child: Text(L10n.of(context)!.cancel), //保存キャンセルボタン
                 ),
-                ElevatedButton(
+                TextButton(
                   style: ButtonStyle(
                     elevation: MaterialStateProperty.all(0),
                     backgroundColor: MaterialStateProperty.all(
                       colorScheme.primary,
                     ),
                     foregroundColor: MaterialStateProperty.all(Colors.white),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   onPressed: () async {
                     selectedRating = dialogSelectedRating;
 
-                    //サムネイル取得
-                    final thumbnailUrl = await _getThumbnailFromPage();
+                    //サムネ取得
+                    thumbnailUrl = await _getThumbnailFromPage();
 
                     await _saveWorkFromWebView(
                       url: urlController.text,
@@ -389,7 +604,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                     );
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: Text(L10n.of(context)!.save),
+                  child: Text(L10n.of(context)!.save), //保存ボタン
                 ),
               ],
             );
@@ -432,51 +647,96 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
   }
 
-  //サムネイルの取得
   Future<String?> _getThumbnailFromPage() async {
     final url = await _controller.currentUrl();
     if (url == null) return null;
 
-    // ⭐ YouTube専用処理
+    // ⭐ YouTube専用
     final ytThumb = _extractYoutubeThumbnail(url);
     if (ytThumb != null) return ytThumb;
 
-    // ⭐ 通常サイト用
-    final result = await _controller.runJavaScriptReturningResult("""
-  (() => {
-    const metas = document.getElementsByTagName('meta');
-    for (let m of metas) {
-      if (m.property === 'og:image' || m.name === 'twitter:image') {
-        return m.content;
-      }
-    }
-    return null;
-  })();
-  """);
+    // ⭐ DOM完全読み込み待ち
+    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (result == null || result == 'null') return null;
-    return result.toString().replaceAll('"', '');
+    try {
+      final result = await _controller.runJavaScriptReturningResult("""
+    (function() {
+
+      function abs(u){
+        try { return new URL(u, location.href).href; }
+        catch(e){ return u; }
+      }
+
+      // ① og:image
+      let el = document.querySelector('meta[property="og:image"]');
+      if(el?.content) return abs(el.content);
+
+      // ② twitter:image
+      el = document.querySelector('meta[name="twitter:image"]');
+      if(el?.content) return abs(el.content);
+
+      // ③ itemprop image
+      el = document.querySelector('meta[itemprop="image"]');
+      if(el?.content) return abs(el.content);
+
+      // ④ video poster
+      let v = document.querySelector('video');
+      if(v?.poster) return abs(v.poster);
+
+      // ⑤ link image_src
+      let link = document.querySelector('link[rel="image_src"]');
+      if(link?.href) return abs(link.href);
+
+      // ⑥ 大きい画像優先取得
+      let imgs = [...document.images]
+        .filter(i => i.width > 200 && i.height > 200)
+        .sort((a,b)=> (b.width*b.height)-(a.width*a.height));
+
+      if(imgs.length) return abs(imgs[0].src);
+
+      // ⑦ 最終fallback
+      let img = document.querySelector('img');
+      if(img?.src) return abs(img.src);
+
+      return null;
+    })();
+    """);
+
+      if (result == null || result == 'null') return null;
+
+      return result.toString().replaceAll('"', '');
+    } catch (_) {
+      return null;
+    }
   }
 
   String? _extractYoutubeThumbnail(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
 
-    if (uri.host.contains('youtube.com')) {
-      final id = uri.queryParameters['v'];
-      if (id != null) {
-        return "https://img.youtube.com/vi/$id/hqdefault.jpg";
-      }
-    }
+    String? id;
 
     if (uri.host.contains('youtu.be')) {
-      final id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
-      if (id != null) {
-        return "https://img.youtube.com/vi/$id/hqdefault.jpg";
+      id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+    }
+
+    if (uri.host.contains('youtube.com')) {
+      id = uri.queryParameters['v'];
+
+      // shorts
+      if (id == null && uri.pathSegments.contains('shorts')) {
+        id = uri.pathSegments.last;
+      }
+
+      // embed
+      if (id == null && uri.pathSegments.contains('embed')) {
+        id = uri.pathSegments.last;
       }
     }
 
-    return null;
+    if (id == null) return null;
+
+    return "https://img.youtube.com/vi/$id/hqdefault.jpg";
   }
 
   //追加作品の保存
@@ -538,6 +798,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         content: Text(L10n.of(context)!.search_result_page_save_as_item),
       ),
     );
+
+    //広告表示処理
+    await _maybeShowAd();
   }
 
   //*************
@@ -559,10 +822,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   //作品数上限オーバー時の案内ダイアログ
   Future<void> _showSaveLimitDialog(int count, int limit) async {
+    final colorScheme = Theme.of(context).colorScheme;
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: colorScheme.secondary,
           title: Text(L10n.of(context)!.save_limit_dialog_title),
           content: Text(
             L10n.of(context)!.save_limit_dialog_description(limit, count),
@@ -687,6 +952,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
                 foregroundColor: MaterialStateProperty.all(Colors.black),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () => Navigator.pop(context),
               child: Text(L10n.of(context)!.cancel),
@@ -696,6 +966,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 elevation: MaterialStateProperty.all(0),
                 backgroundColor: MaterialStateProperty.all(colorScheme.primary),
                 foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               onPressed: () {
                 ref
@@ -729,5 +1004,76 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     final uri = Uri.tryParse(url);
     if (uri == null) return url;
     return "${uri.scheme}://${uri.host}";
+  }
+
+  //=========
+  //広告関連
+  //=========
+  //インターステイシャル広告のロード
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: _adUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  //広告表示処理
+  Future<void> _maybeShowAd() async {
+    if (_isPremium) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    int count = prefs.getInt("save_ad_count") ?? 0;
+
+    count++;
+    await prefs.setInt("save_ad_count", count);
+
+    //初回保護
+    if (count < 3) return;
+
+    if (count % 15 == 0 && _interstitialAd != null) {
+      _interstitialAd!.show();
+
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+      );
+    }
+  }
+
+  String get _adUnitId {
+    if (Platform.isAndroid) {
+      return "ca-app-pub-8268997781284735/8554245309"; //本番用
+      //return "ca-app-pub-3940256099942544/1033173712"; //テスト用
+    } else {
+      return "ca-app-pub-8268997781284735/2906478597";
+    }
+  }
+
+  /// サブスクリプション状態を確認
+  Future<void> _checkSubscriptionStatus() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      final isActive =
+          customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+      setState(() {
+        _isPremium = isActive;
+      });
+    } catch (e) {
+      debugPrint("Error fetching subscription status: $e");
+    }
   }
 }
