@@ -81,15 +81,13 @@ class L10nEn extends L10n {
   String get save_limit_dialog_title => 'Save limit reached';
 
   @override
-  String save_limit_dialog_description(Object count, Object limit) {
-    return 'You can save up to $limit items.\n\nCurrent items: $count\n\nTo save more than $limit items:\n• Delete existing items\n• Upgrade to the Premium plan\n• Watch ads in Settings to increase your limit';
-  }
-
-  @override
-  String get save_limit_dialog_already_purchased => 'Already purchased.';
+  String get save_limit_dialog_status_label => 'Saved';
 
   @override
   String get save_limit_dialog_premium_detail => 'View Premium details';
+
+  @override
+  String get save_limit_loading_ad => 'Loading ad...';
 
   @override
   String get main_page_lists => 'Lists';
@@ -616,6 +614,9 @@ class L10nEn extends L10n {
   @override
   String get premium_detail_premium_item05 =>
       'Visualize statistics by genre and rating';
+
+  @override
+  String get premium_detail_premium_item06 => 'Remove ads';
 
   @override
   String get premium_detail_price => 'Start for ¥170 / month';

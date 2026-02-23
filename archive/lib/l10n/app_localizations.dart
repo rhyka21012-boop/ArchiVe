@@ -241,23 +241,23 @@ abstract class L10n {
   /// **'保存数の上限に達しました。'**
   String get save_limit_dialog_title;
 
-  /// No description provided for @save_limit_dialog_description.
+  /// No description provided for @save_limit_dialog_status_label.
   ///
   /// In ja, this message translates to:
-  /// **'現在の作品の保存枠は最大{limit} 件です。\n\n現在の作品数：{count} 件\n\n{limit} 件以上保存するには、\n・既存の作品を削除いただく\n・プレミアムプランをご利用いただく\n・設定ページから広告を視聴して保存枠を増やす'**
-  String save_limit_dialog_description(Object count, Object limit);
-
-  /// No description provided for @save_limit_dialog_already_purchased.
-  ///
-  /// In ja, this message translates to:
-  /// **'既に購入済みです。'**
-  String get save_limit_dialog_already_purchased;
+  /// **'保存済み'**
+  String get save_limit_dialog_status_label;
 
   /// No description provided for @save_limit_dialog_premium_detail.
   ///
   /// In ja, this message translates to:
   /// **'プレミアムの詳細'**
   String get save_limit_dialog_premium_detail;
+
+  /// No description provided for @save_limit_loading_ad.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告を読み込み中です…'**
+  String get save_limit_loading_ad;
 
   /// No description provided for @main_page_lists.
   ///
@@ -1248,6 +1248,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'ジャンル別・評価別にデータを可視化する統計機能'**
   String get premium_detail_premium_item05;
+
+  /// No description provided for @premium_detail_premium_item06.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告の非表示'**
+  String get premium_detail_premium_item06;
 
   /// No description provided for @premium_detail_price.
   ///

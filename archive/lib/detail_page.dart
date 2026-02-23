@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,19 +11,20 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
-import 'dart:async';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'view_counter.dart';
-import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
-import 'premium_detail.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import 'view_counter.dart';
+import 'premium_detail.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'random_image_reload_provider.dart';
 import 'search_result_page.dart';
+import "save_limit_helper.dart";
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -127,6 +131,49 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   //タイトルフェチ中判定
   bool _isFetchingTitle = false;
 
+  RewardedAd? _rewardedAd;
+
+  void _loadAd() {
+    String adUnitId;
+
+    const bool isTest = true; // ←テスト時だけtrueにする
+
+    if (isTest) {
+      adUnitId = 'ca-app-pub-3940256099942544/1712485313';
+    } else if (Platform.isAndroid) {
+      adUnitId = 'ca-app-pub-8268997781284735/8948638186';
+    } else if (Platform.isIOS) {
+      adUnitId = 'ca-app-pub-8268997781284735/5356923320';
+    } else {
+      return;
+    }
+
+    RewardedAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+
+          /// ⭐ 見終わったら自動再ロード（超重要）
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _loadAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, _) {
+              ad.dispose();
+              _loadAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (_) {
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -139,6 +186,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       _thumbnailUrl = widget.image; //保存済み画像を使う
     }
     _updatePalette();
+
+    _loadAd();
 
     _originalUrl = widget.url ?? '';
     _urlController.text = _originalUrl;
@@ -357,25 +406,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       return; // 保存処理を中断
     }
 
-    // URLが変更されているかチェック
+    // URLが変更されている場合の処理
     if (widget.url != null && _originalUrl.trim() != newUrl) {
-      //最大保存数
-      final limit = await _countSaveLimit();
-
-      //作品数
-      final savedCount = await _countSavedItems();
-
-      //プレミアムプランか判定
-      _isPremium = await _checkPremium();
-
-      //作品数 > 最大数かつ、非プレミアムユーザーであれば、ポップアップ表示
-      if (!_isPremium && savedCount >= limit) {
-        //if (true) {
-        //デバッグ用切り替え箇所
-        await _showSaveLimitDialog(savedCount, limit);
-        return;
-      }
-
       final confirmed = await showDialog<bool>(
         context: context,
         builder:
@@ -421,9 +453,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ),
       );
 
-      if (confirmed != true) return; // キャンセルされた場合は保存しない
+      if (confirmed != true) return;
 
-      //URLを変更させて次回からは比較しないようにする。
+      /// 作品数上限チェック
+      if (!await SaveLimitHelper.canSave(context, _rewardedAd, ref)) {
+        _loadAd();
+        return;
+      }
+
       _originalUrl = newUrl;
     }
 
@@ -1850,81 +1887,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
   }
   */
-
-  //*************
-  //保存数の上限管理
-  //*************
-  //保存数の上限をカウント
-  Future<int> _countSaveLimit() async {
-    final prefs = await SharedPreferences.getInstance();
-    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
-    return 100 + extraSaveLimit;
-  }
-
-  //作品数カウント
-  Future<int> _countSavedItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList('saved_metadata') ?? [];
-    return list.length;
-  }
-
-  //作品数上限オーバー時の案内ダイアログ
-  Future<void> _showSaveLimitDialog(int count, int limit) async {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: colorScheme.secondary,
-          title: Text(L10n.of(context)!.save_limit_dialog_title),
-          content: Text(
-            L10n.of(context)!.save_limit_dialog_description(limit, count),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(L10n.of(context)!.back),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                if (!await PremiumGate.ensurePremium(context)) return;
-
-                setState(() {
-                  _isPremium = true;
-                });
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      L10n.of(context)!.save_limit_dialog_already_purchased,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: Text(
-                L10n.of(context)!.save_limit_dialog_premium_detail,
-                style: TextStyle(
-                  color: Color(0xFFB8860B),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-
-                backgroundColor: Colors.black,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   static Future<bool> _checkPremium() async {
     try {

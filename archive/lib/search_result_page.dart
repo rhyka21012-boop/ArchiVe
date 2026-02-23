@@ -1,15 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'l10n/app_localizations.dart';
-import 'premium_detail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
 import 'list_reload_provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'save_limit_helper.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -53,12 +55,56 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   InterstitialAd? _interstitialAd;
   int _saveCount = 0;
 
+  RewardedAd? _rewardedAd;
+
+  void _loadAd() {
+    String adUnitId;
+
+    const bool isTest = false; // ←テスト時だけtrueにする
+
+    if (isTest) {
+      adUnitId = 'ca-app-pub-3940256099942544/1712485313';
+    } else if (Platform.isAndroid) {
+      adUnitId = 'ca-app-pub-8268997781284735/8948638186';
+    } else if (Platform.isIOS) {
+      adUnitId = 'ca-app-pub-8268997781284735/5356923320';
+    } else {
+      return;
+    }
+
+    RewardedAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+
+          /// ⭐ 見終わったら自動再ロード
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _loadAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, _) {
+              ad.dispose();
+              _loadAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (_) {
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _loadInterstitialAd();
 
     _checkSubscriptionStatus();
+    _loadAd();
 
     final initialUrl = _resolveInitialUrl(widget.initialUrl);
 
@@ -748,13 +794,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 保存数チェック
-    final limit = await _countSaveLimit();
-    final savedCount = await _countSavedItems();
-    final isPremium = await _checkPremium();
-
-    if (!isPremium && savedCount >= limit) {
-      await _showSaveLimitDialog(savedCount, limit);
+    //作品数上限チェック
+    if (!await SaveLimitHelper.canSave(context, _rewardedAd, ref)) {
+      _loadAd();
       return;
     }
 
@@ -801,80 +843,6 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
     //広告表示処理
     await _maybeShowAd();
-  }
-
-  //*************
-  //保存数の上限管理
-  //*************
-  //保存数の上限をカウント
-  Future<int> _countSaveLimit() async {
-    final prefs = await SharedPreferences.getInstance();
-    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
-    return 100 + extraSaveLimit;
-  }
-
-  //作品数カウント
-  Future<int> _countSavedItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList('saved_metadata') ?? [];
-    return list.length;
-  }
-
-  //作品数上限オーバー時の案内ダイアログ
-  Future<void> _showSaveLimitDialog(int count, int limit) async {
-    final colorScheme = Theme.of(context).colorScheme;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: colorScheme.secondary,
-          title: Text(L10n.of(context)!.save_limit_dialog_title),
-          content: Text(
-            L10n.of(context)!.save_limit_dialog_description(limit, count),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(L10n.of(context)!.back),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                if (!await PremiumGate.ensurePremium(context)) return;
-
-                setState(() {
-                  _isPremium = true;
-                });
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      L10n.of(context)!.save_limit_dialog_already_purchased,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: Text(
-                L10n.of(context)!.save_limit_dialog_premium_detail,
-                style: TextStyle(
-                  color: Color(0xFFB8860B),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-
-                backgroundColor: Colors.black,
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   static Future<bool> _checkPremium() async {

@@ -93,6 +93,8 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -140,6 +142,10 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
               text: L10n.of(context)!.premium_detail_premium_item05,
               index: 4,
             ),
+            _AnimatedFeatureItem(
+              text: L10n.of(context)!.premium_detail_premium_item06,
+              index: 5,
+            ),
 
             const Spacer(),
 
@@ -149,7 +155,11 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                 onPressed: _isPurchasing ? null : _startPurchase,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.black,
+                  backgroundColor:
+                      colorScheme.brightness == Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -167,6 +177,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                         : Text(
                           L10n.of(context)!.premium_detail_price,
                           style: TextStyle(
+                            color: Color(0xFFB8860B),
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

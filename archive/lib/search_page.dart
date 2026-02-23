@@ -940,7 +940,14 @@ class SearchPageState extends ConsumerState<SearchPage> {
       return;
     }
 
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchResultPage(initialUrl: url, title: url),
+      ),
+    );
+
+    //await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   // お気に入りサイト - 編集ダイアログ

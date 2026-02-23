@@ -1,20 +1,23 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:convert';
-import 'detail_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'premium_detail.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'detail_page.dart';
 import 'random_image_reload_provider.dart';
 import 'home_tab_index_provider.dart';
 import 'search_tab_index_provider.dart';
 import 'search_result_page.dart';
+import 'save_limit_helper.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -73,12 +76,56 @@ class GridPageState extends ConsumerState<GridPage> {
   final GlobalKey fabKey = GlobalKey();
   Rect? fabRect;
 
+  RewardedAd? _rewardedAd;
+
+  void _loadAd() {
+    String adUnitId;
+
+    const bool isTest = false; // ←テスト時だけtrueにする
+
+    if (isTest) {
+      adUnitId = 'ca-app-pub-3940256099942544/1712485313';
+    } else if (Platform.isAndroid) {
+      adUnitId = 'ca-app-pub-8268997781284735/8948638186';
+    } else if (Platform.isIOS) {
+      adUnitId = 'ca-app-pub-8268997781284735/5356923320';
+    } else {
+      return;
+    }
+
+    RewardedAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+
+          /// ⭐ 見終わったら自動再ロード（超重要）
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _loadAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, _) {
+              ad.dispose();
+              _loadAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (_) {
+          _rewardedAd = null;
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _searchMetadata();
     _loadLocalImages();
     _loadViewSettings();
+    _loadAd();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ref.watch(tutorialStepProvider) == TutorialStep.tapList) {
@@ -89,6 +136,13 @@ class GridPageState extends ConsumerState<GridPage> {
       //FABの位置を取得
       _updateFabRect();
     });
+  }
+
+  @override
+  void dispose() {
+    //_tabController.dispose();
+    _rewardedAd?.dispose();
+    super.dispose();
   }
 
   @override
@@ -397,7 +451,7 @@ class GridPageState extends ConsumerState<GridPage> {
                                                                   ),
                                                         ),
 
-                                                        /// 外部リンクボタン
+                                                        /// 再生ボタン
                                                         Positioned(
                                                           right: 6,
                                                           bottom: 6,
@@ -507,6 +561,33 @@ class GridPageState extends ConsumerState<GridPage> {
                                                         fontSize: 13,
                                                         fontWeight:
                                                             FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                /// 再生ボタン
+                                                Positioned(
+                                                  right: 6,
+                                                  bottom: 24,
+                                                  child: GestureDetector(
+                                                    onTap:
+                                                        () => openPlayer(
+                                                          item['url'],
+                                                        ),
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            6,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.black54,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.play_arrow,
+                                                        size: 18,
+                                                        color: Colors.white,
                                                       ),
                                                     ),
                                                   ),
@@ -711,7 +792,7 @@ class GridPageState extends ConsumerState<GridPage> {
                                           if (iconPath != null)
                                             Positioned(
                                               bottom: 0,
-                                              right: 70,
+                                              right: 90,
                                               child: Image.asset(
                                                 iconPath,
                                                 width: 24,
@@ -772,6 +853,30 @@ class GridPageState extends ConsumerState<GridPage> {
                                               },
                                             ),
                                           ),
+
+                                          /// 再生ボタン
+                                          Positioned(
+                                            right: 50,
+                                            bottom: 0,
+                                            child: GestureDetector(
+                                              onTap:
+                                                  () => openPlayer(item['url']),
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black54,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.play_arrow,
+                                                  size: 15,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -816,12 +921,11 @@ class GridPageState extends ConsumerState<GridPage> {
 
   // ===== チュートリアル対応：追加ボタン押下 =====
   Future<void> _onAddPressed() async {
-    final limit = await _countSaveLimit();
-    final savedCount = await _countSavedItems();
     _isPremium = await _checkPremium();
 
-    if (!_isPremium && savedCount >= limit) {
-      await _showSaveLimitDialog(savedCount, limit);
+    //作品数上限チェック
+    if (!await SaveLimitHelper.canSave(context, _rewardedAd, ref)) {
+      _loadAd();
       return;
     }
 
@@ -1432,80 +1536,6 @@ class GridPageState extends ConsumerState<GridPage> {
   }
   */
 
-  //*************
-  //保存数の上限管理
-  //*************
-  //保存数の上限をカウント
-  Future<int> _countSaveLimit() async {
-    final prefs = await SharedPreferences.getInstance();
-    final extraSaveLimit = prefs.getInt('extra_save_limit') ?? 0;
-    return 100 + extraSaveLimit;
-  }
-
-  //作品数カウント
-  Future<int> _countSavedItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList('saved_metadata') ?? [];
-    return list.length;
-  }
-
-  //作品数上限オーバー時の案内ダイアログ
-  Future<void> _showSaveLimitDialog(int count, int limit) async {
-    final colorScheme = Theme.of(context).colorScheme;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: colorScheme.secondary,
-          title: Text(L10n.of(context)!.save_limit_dialog_title),
-          content: Text(
-            L10n.of(context)!.save_limit_dialog_description(limit, count),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(L10n.of(context)!.back),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                if (!await PremiumGate.ensurePremium(context)) return;
-
-                setState(() {
-                  _isPremium = true;
-                });
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      L10n.of(context)!.save_limit_dialog_already_purchased,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-              label: Text(
-                L10n.of(context)!.save_limit_dialog_premium_detail,
-                style: TextStyle(
-                  color: Color(0xFFB8860B),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-
-                backgroundColor: Colors.black,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   static Future<bool> _checkPremium() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
@@ -1627,6 +1657,28 @@ class _TutorialBalloon extends StatelessWidget {
             context,
           ).textTheme.bodyMedium?.copyWith(color: Colors.black, height: 1.4),
         ),
+      ),
+    );
+  }
+}
+
+class PlayOverlayButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final double size;
+
+  const PlayOverlayButton({super.key, required this.onTap, this.size = 18});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(size * 0.35),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.play_arrow, size: size, color: Colors.white),
       ),
     );
   }

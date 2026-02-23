@@ -57,7 +57,7 @@ ThemeData getThemeData(ThemeColorType type, bool isDark) {
     ThemeColorType.blue => Colors.lightBlue,
     ThemeColorType.white => Colors.grey,
     ThemeColorType.red => Colors.red,
-    ThemeColorType.yellow => Colors.yellow,
+    ThemeColorType.yellow => Colors.yellow[700]!,
     ThemeColorType.orange => Colors.orange[600]!,
   };
 

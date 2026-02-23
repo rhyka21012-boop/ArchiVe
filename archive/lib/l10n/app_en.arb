@@ -27,9 +27,9 @@
   "close": "Close",
 
   "save_limit_dialog_title": "Save limit reached",
-  "save_limit_dialog_description": "You can save up to {limit} items.\n\nCurrent items: {count}\n\nTo save more than {limit} items:\n• Delete existing items\n• Upgrade to the Premium plan\n• Watch ads in Settings to increase your limit",
-  "save_limit_dialog_already_purchased": "Already purchased.",
+  "save_limit_dialog_status_label": "Saved",
   "save_limit_dialog_premium_detail": "View Premium details",
+  "save_limit_loading_ad": "Loading ad...",
 
   "main_page_lists": "Lists",
   "main_page_search": "Search & Collect",
@@ -208,6 +208,7 @@
   "premium_detail_premium_item03": "Add images freely",
   "premium_detail_premium_item04": "Quick search with multiple tags",
   "premium_detail_premium_item05": "Visualize statistics by genre and rating",
+  "premium_detail_premium_item06": "Remove ads",
   "premium_detail_price": "Start for ¥170 / month",
   "premium_detail_note": "Cancel anytime",
 

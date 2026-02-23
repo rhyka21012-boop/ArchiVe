@@ -81,15 +81,13 @@ class L10nJa extends L10n {
   String get save_limit_dialog_title => '保存数の上限に達しました。';
 
   @override
-  String save_limit_dialog_description(Object count, Object limit) {
-    return '現在の作品の保存枠は最大$limit 件です。\n\n現在の作品数：$count 件\n\n$limit 件以上保存するには、\n・既存の作品を削除いただく\n・プレミアムプランをご利用いただく\n・設定ページから広告を視聴して保存枠を増やす';
-  }
-
-  @override
-  String get save_limit_dialog_already_purchased => '既に購入済みです。';
+  String get save_limit_dialog_status_label => '保存済み';
 
   @override
   String get save_limit_dialog_premium_detail => 'プレミアムの詳細';
+
+  @override
+  String get save_limit_loading_ad => '広告を読み込み中です…';
 
   @override
   String get main_page_lists => 'リスト';
@@ -609,6 +607,9 @@ class L10nJa extends L10n {
 
   @override
   String get premium_detail_premium_item05 => 'ジャンル別・評価別にデータを可視化する統計機能';
+
+  @override
+  String get premium_detail_premium_item06 => '広告の非表示';
 
   @override
   String get premium_detail_price => '¥170 / 月で始める';

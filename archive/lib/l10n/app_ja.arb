@@ -27,9 +27,9 @@
   "close": "閉じる",
 
   "save_limit_dialog_title": "保存数の上限に達しました。",
-  "save_limit_dialog_description": "現在の作品の保存枠は最大{limit} 件です。\n\n現在の作品数：{count} 件\n\n{limit} 件以上保存するには、\n・既存の作品を削除いただく\n・プレミアムプランをご利用いただく\n・設定ページから広告を視聴して保存枠を増やす",
-  "save_limit_dialog_already_purchased": "既に購入済みです。",
+  "save_limit_dialog_status_label": "保存済み",
   "save_limit_dialog_premium_detail": "プレミアムの詳細",
+  "save_limit_loading_ad": "広告を読み込み中です…",
 
   "main_page_lists": "リスト",
   "main_page_search": "検索・収集",
@@ -208,6 +208,7 @@
   "premium_detail_premium_item03": "画像を自由に追加",
   "premium_detail_premium_item04": "複数のタグで素早く検索",
   "premium_detail_premium_item05": "ジャンル別・評価別にデータを可視化する統計機能",
+  "premium_detail_premium_item06": "広告の非表示",
   "premium_detail_price": "¥170 / 月で始める",
   "premium_detail_note": "いつでもキャンセル可能",
 

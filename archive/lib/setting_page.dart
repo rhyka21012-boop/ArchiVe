@@ -32,6 +32,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   int baseLimit = 100; // 基本上限
 
   static const bool isTestMode = false; //テストモード切り替え
+
   String get rewardedAdUnitId {
     if (isTestMode) {
       return 'ca-app-pub-3940256099942544/1712485313';
@@ -206,7 +207,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                               L10n.of(context)!.settings_page_watch_ad,
                               style: TextStyle(color: Colors.white),
                             ),
-                            style: ElevatedButton.styleFrom(
+                            style: TextButton.styleFrom(
                               backgroundColor: Colors.grey.shade800,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -294,39 +295,54 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             },
           ),
 
+          //プレミアム詳細ボタン
           Center(
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                if (!await PremiumGate.ensurePremium(context)) return;
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
 
-                setState(() {
-                  _isPremium = true;
-                });
+                child: TextButton.icon(
+                  onPressed: () async {
+                    if (!await PremiumGate.ensurePremium(context)) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      L10n.of(context)!.settings_page_already_purchased,
+                    setState(() {
+                      _isPremium = true;
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          L10n.of(context)!.settings_page_already_purchased,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
+                  label: Text(
+                    L10n.of(context)!.settings_page_premium,
+                    style: TextStyle(
+                      color: Color(0xFFB8860B),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                );
-              },
-              icon: const Icon(Icons.star, color: Colors.white),
-              label: Text(
-                L10n.of(context)!.settings_page_premium,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
+                    backgroundColor: MaterialStateProperty.all(
+                      colorScheme.brightness == Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                    ),
+                    foregroundColor: MaterialStateProperty.all(Colors.white),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-
-                backgroundColor: Color(0xFFB8860B),
               ),
             ),
           ),
