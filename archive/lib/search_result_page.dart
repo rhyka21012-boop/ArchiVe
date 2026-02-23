@@ -57,6 +57,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   RewardedAd? _rewardedAd;
 
+  //リワード広告のロード
   void _loadAd() {
     String adUnitId;
 
