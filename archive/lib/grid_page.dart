@@ -1203,6 +1203,32 @@ class GridPageState extends ConsumerState<GridPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // YouTube風3列グリッド
+                  IconButton(
+                    icon: const Icon(Icons.video_library, size: 32),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(
+                        _isYoutubeGrid
+                            ? colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isGridView = true;
+                        _gridCount = 3;
+                        _isYoutubeGrid = true;
+                      });
+                      _saveViewSettings();
+                      Navigator.pop(context);
+                    },
+                  ),
+
                   // 2列グリッド
                   IconButton(
                     icon: const Icon(Icons.grid_view, size: 32),
@@ -1251,32 +1277,6 @@ class GridPageState extends ConsumerState<GridPage> {
                         _isYoutubeGrid = false;
                         _isGridView = true;
                         _gridCount = 3;
-                      });
-                      _saveViewSettings();
-                      Navigator.pop(context);
-                    },
-                  ),
-
-                  // YouTube風3列グリッド
-                  IconButton(
-                    icon: const Icon(Icons.video_library, size: 32),
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(
-                        _isYoutubeGrid
-                            ? colorScheme.primary
-                            : Colors.transparent,
-                      ),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isGridView = true;
-                        _gridCount = 3;
-                        _isYoutubeGrid = true;
                       });
                       _saveViewSettings();
                       Navigator.pop(context);
@@ -1471,8 +1471,8 @@ class GridPageState extends ConsumerState<GridPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isGridView = prefs.getBool('isGridView') ?? true;
-      _gridCount = prefs.getInt('gridCount') ?? 2;
-      _isYoutubeGrid = prefs.getBool('youtubeGrid') ?? false;
+      _gridCount = prefs.getInt('gridCount') ?? 3;
+      _isYoutubeGrid = prefs.getBool('youtubeGrid') ?? true;
     });
   }
 

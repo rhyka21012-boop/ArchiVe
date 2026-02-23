@@ -806,6 +806,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
       borderRadius: BorderRadius.circular(12),
       onTap: _showAddFavoriteDialog,
       child: Card(
+        elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: const Center(child: Icon(Icons.add, size: 40)),
       ),
