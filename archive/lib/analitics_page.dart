@@ -28,7 +28,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   bool _isPremium = false;
 
-  bool isDebug = true; //デバッグ用切り替え箇所
+  bool isDebug = false; //デバッグ用切り替え箇所
 
   int pieTopN = 5;
 
@@ -376,8 +376,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               const SizedBox(height: 120),
             ],
           ),
-          //if (!_isPremium) ...[
-          if (!isDebug) ...[
+          if (!_isPremium) ...[
+            //if (!isDebug) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.black26),
