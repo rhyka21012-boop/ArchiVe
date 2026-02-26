@@ -12,7 +12,7 @@ class L10nEn extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.7';
+  String get version => 'v1.8';
 
   @override
   String get critical => 'Critical';
@@ -100,6 +100,15 @@ class L10nEn extends L10n {
 
   @override
   String get main_page_settings => 'Settings';
+
+  @override
+  String get main_page_update_info => 'Update Notice';
+
+  @override
+  String get main_page_update_later => 'Later';
+
+  @override
+  String get main_page_update_now => 'Update';
 
   @override
   String get list_page_my_list => 'My Lists';
@@ -546,6 +555,9 @@ class L10nEn extends L10n {
 
   @override
   String get settings_page_save_count_increased => 'Save limit increased by +5';
+
+  @override
+  String get setting_page_unlimited => 'Unlimited';
 
   @override
   String view_counter_view_count(Object viewCount) {

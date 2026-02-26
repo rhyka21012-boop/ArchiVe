@@ -12,7 +12,7 @@ class L10nJa extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.7';
+  String get version => 'v1.8';
 
   @override
   String get critical => 'クリティカル';
@@ -100,6 +100,15 @@ class L10nJa extends L10n {
 
   @override
   String get main_page_settings => '設定';
+
+  @override
+  String get main_page_update_info => 'アップデートのお知らせ';
+
+  @override
+  String get main_page_update_later => 'あとで';
+
+  @override
+  String get main_page_update_now => 'アップデート';
 
   @override
   String get list_page_my_list => 'マイリスト';
@@ -542,6 +551,9 @@ class L10nJa extends L10n {
 
   @override
   String get settings_page_save_count_increased => '保存枠が +5 されました';
+
+  @override
+  String get setting_page_unlimited => '無制限';
 
   @override
   String view_counter_view_count(Object viewCount) {

@@ -106,7 +106,7 @@ abstract class L10n {
   /// No description provided for @version.
   ///
   /// In ja, this message translates to:
-  /// **'v1.7'**
+  /// **'v1.8'**
   String get version;
 
   /// No description provided for @critical.
@@ -282,6 +282,24 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'設定'**
   String get main_page_settings;
+
+  /// No description provided for @main_page_update_info.
+  ///
+  /// In ja, this message translates to:
+  /// **'アップデートのお知らせ'**
+  String get main_page_update_info;
+
+  /// No description provided for @main_page_update_later.
+  ///
+  /// In ja, this message translates to:
+  /// **'あとで'**
+  String get main_page_update_later;
+
+  /// No description provided for @main_page_update_now.
+  ///
+  /// In ja, this message translates to:
+  /// **'アップデート'**
+  String get main_page_update_now;
 
   /// No description provided for @list_page_my_list.
   ///
@@ -1128,6 +1146,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'保存枠が +5 されました'**
   String get settings_page_save_count_increased;
+
+  /// No description provided for @setting_page_unlimited.
+  ///
+  /// In ja, this message translates to:
+  /// **'無制限'**
+  String get setting_page_unlimited;
 
   /// No description provided for @view_counter_view_count.
   ///

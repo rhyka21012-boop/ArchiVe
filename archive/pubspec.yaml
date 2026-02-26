@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.7.14+17
+version: 1.8.0+20
 
 environment:
   sdk: ^3.7.2
@@ -42,6 +42,8 @@ dependencies:
   webview_flutter: ^4.13.1
   youtube_player_iframe: ^5.1.2
   video_player: ^2.8.2
+  package_info_plus: ^9.0.0
+  pub_semver: ^2.2.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

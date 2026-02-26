@@ -1,11 +1,17 @@
 import 'dart:io';
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:pub_semver/pub_semver.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:archive_app/detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'list_page.dart';
 import 'search_page.dart';
@@ -37,6 +43,9 @@ class _MainPageState extends ConsumerState<MainPage>
       GlobalKey<AnalyticsPageState>();
 
   RewardedAd? _rewardedAd;
+
+  //保存済みバージョン保存用キー
+  static const _shownVersionKey = 'last_shown_update_version';
 
   void _loadAd() {
     String adUnitId;
@@ -85,6 +94,7 @@ class _MainPageState extends ConsumerState<MainPage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await AppTrackingTransparency.requestTrackingAuthorization();
+      checkAppVersion(context);
     });
     _checkSubscriptionStatus();
 
@@ -245,5 +255,112 @@ class _MainPageState extends ConsumerState<MainPage>
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
     }
+  }
+
+  //バージョンチェック
+  Future<void> checkAppVersion(BuildContext context) async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://archive-e4efc.firebaseapp.com/version.json'),
+      );
+
+      if (response.statusCode != 200) return;
+
+      final data = jsonDecode(response.body);
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = Version.parse(packageInfo.version);
+
+      final latestVersion = Version.parse(data["latest_version"]);
+      final minRequiredVersion = Version.parse(data["min_required_version"]);
+
+      if (!mounted) return;
+
+      // 🔹 強制アップデートは毎回チェック
+      if (currentVersion < minRequiredVersion) {
+        _showUpdateDialog(context, data, force: true);
+        return;
+      }
+
+      // 🔹 任意アップデート
+      if (currentVersion < latestVersion) {
+        final prefs = await SharedPreferences.getInstance();
+        final shownVersion = prefs.getString(_shownVersionKey);
+
+        // すでに表示済みなら出さない
+        if (shownVersion == latestVersion.toString()) {
+          return;
+        }
+
+        _showUpdateDialog(context, data, force: false);
+
+        // 表示済みとして保存
+        await prefs.setString(_shownVersionKey, latestVersion.toString());
+      }
+    } catch (e) {
+      debugPrint("Version check failed: $e");
+    }
+  }
+
+  //アップデートダイアログ
+  void _showUpdateDialog(
+    BuildContext context,
+    Map<String, dynamic> data, {
+    required bool force,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      barrierDismissible: !force,
+      builder:
+          (_) => AlertDialog(
+            title: Text(L10n.of(context)!.main_page_update_info),
+            content: Text(data["message"]),
+            actions: [
+              if (!force)
+                TextButton(
+                  style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
+                    backgroundColor: MaterialStateProperty.all(
+                      Colors.grey[300],
+                    ),
+                    foregroundColor: MaterialStateProperty.all(Colors.black),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(L10n.of(context)!.main_page_update_later),
+                ),
+              TextButton(
+                style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(0),
+                  backgroundColor: MaterialStateProperty.all(
+                    colorScheme.primary,
+                  ),
+                  foregroundColor: MaterialStateProperty.all(Colors.white),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                onPressed: () {
+                  final url =
+                      Platform.isIOS ? data["ios_url"] : data["android_url"];
+
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+                child: Text(L10n.of(context)!.main_page_update_now),
+              ),
+            ],
+          ),
+    );
   }
 }

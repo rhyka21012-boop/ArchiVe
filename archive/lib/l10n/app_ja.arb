@@ -1,7 +1,7 @@
 {
   "@@locale": "ja",
   "app_title": "ArchiVe",
-  "version": "v1.7",
+  "version": "v1.8",
 
   "critical": "クリティカル",
   "normal": "ノーマル",
@@ -35,6 +35,9 @@
   "main_page_search": "検索・収集",
   "main_page_analytics": "統計",
   "main_page_settings": "設定",
+  "main_page_update_info": "アップデートのお知らせ",
+  "main_page_update_later": "あとで",
+  "main_page_update_now": "アップデート",
 
   "list_page_my_list": "マイリスト",
   "list_page_my_ranking": "マイランキング",
@@ -185,6 +188,7 @@
   "settings_page_disable_link": "リンクを開けませんでした",
   "settings_page_terms": "利用規約（Apple標準EULA）",
   "settings_page_save_count_increased": "保存枠が +5 されました",
+  "setting_page_unlimited": "無制限",
 
   "view_counter_view_count": "視聴回数:{viewCount}",
 

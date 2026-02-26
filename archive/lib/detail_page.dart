@@ -916,16 +916,20 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        //ローカル画像追加
                         if (isEditing) ...[
                           TextButton.icon(
                             onPressed: () async {
+                              //プレミアム判定
                               if (!await PremiumGate.ensurePremium(context))
                                 return;
 
                               setState(() {
                                 _isPremium = true;
                               });
-                              _isPremium ? _addLocalImage : null;
+                              _isPremium ? _addLocalImage() : null;
+
+                              //_addLocalImage(); //デバッグ用切り替え箇所
                             },
                             icon: const Icon(
                               Icons.add_photo_alternate,
@@ -941,6 +945,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           ),
                         ],
                         SizedBox(width: 8),
+
+                        //ローカル画像の枚数
                         _localImageMaxIndex > 1
                             ? Container(
                               margin: EdgeInsets.only(top: 2.0),

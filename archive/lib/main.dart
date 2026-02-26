@@ -1,12 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'launch_gate.dart';
 //import 'grid_view_native_ad_factory.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart'; //AdMob用のライブラリをインポート
-import 'package:purchases_flutter/purchases_flutter.dart';
+
 import 'l10n/app_localizations.dart';
 
 void main() async {
@@ -23,10 +25,13 @@ void main() async {
   // AdMobの初期化処理
   await MobileAds.instance.initialize();
 
+  final apiKey =
+      Platform.isAndroid
+          ? "goog_ynrVimxZpjIrMuoZAHIgIotPSQk"
+          : "appl_kKWivbmxqAEXEBqUmLeiUoAyyRN";
+
   //RevenueCat を初期化
-  await Purchases.configure(
-    PurchasesConfiguration("appl_kKWivbmxqAEXEBqUmLeiUoAyyRN"),
-  );
+  await Purchases.configure(PurchasesConfiguration(apiKey));
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 

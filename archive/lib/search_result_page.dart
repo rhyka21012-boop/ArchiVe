@@ -1007,7 +1007,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     //初回保護
     if (count < 3) return;
 
-    if (count % 15 == 0 && _interstitialAd != null) {
+    if (count % 5 == 0 && _interstitialAd != null) {
       _interstitialAd!.show();
 
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(

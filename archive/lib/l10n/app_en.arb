@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   "app_title": "ArchiVe",
-  "version": "v1.7",
+  "version": "v1.8",
 
   "critical": "Critical",
   "normal": "Normal",
@@ -35,6 +35,9 @@
   "main_page_search": "Search & Collect",
   "main_page_analytics": "Analytics",
   "main_page_settings": "Settings",
+  "main_page_update_info": "Update Notice",
+  "main_page_update_later": "Later",
+  "main_page_update_now": "Update",
 
   "list_page_my_list": "My Lists",
   "list_page_my_ranking": "My Rankings",
@@ -185,6 +188,7 @@
   "settings_page_disable_link": "Unable to open link",
   "settings_page_terms": "Terms of Service (Apple Standard EULA)",
   "settings_page_save_count_increased": "Save limit increased by +5",
+  "setting_page_unlimited": "Unlimited",
 
   "view_counter_view_count": "Views: {viewCount}",
 
