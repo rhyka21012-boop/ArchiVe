@@ -5,8 +5,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
 import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
+import 'app_localizations_pt.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -93,8 +99,15 @@ abstract class L10n {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
     Locale('en'),
+    Locale('es'),
+    Locale('fr'),
     Locale('ja'),
+    Locale('ko'),
+    Locale('pt'),
+    Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans'),
+    Locale('zh'),
   ];
 
   /// No description provided for @app_title.
@@ -847,12 +860,6 @@ abstract class L10n {
   /// **'お気に入りサイトを追加'**
   String get search_page_add_favorite;
 
-  /// No description provided for @search_result_page_save_as_item.
-  ///
-  /// In ja, this message translates to:
-  /// **'作品を保存しました'**
-  String get search_result_page_save_as_item;
-
   /// No description provided for @search_result_page_site_saved.
   ///
   /// In ja, this message translates to:
@@ -876,6 +883,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'このURLはすでに保存されています'**
   String get search_result_page_url_already_saved;
+
+  /// No description provided for @search_result_page_has_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品を保存しました'**
+  String get search_result_page_has_saved;
 
   /// No description provided for @search_result_page_delete_site.
   ///
@@ -906,6 +919,24 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'統計'**
   String get analytics;
+
+  /// No description provided for @analytics_page_summary.
+  ///
+  /// In ja, this message translates to:
+  /// **'概要'**
+  String get analytics_page_summary;
+
+  /// No description provided for @analytics_page_item_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存数: {totalWorks}'**
+  String analytics_page_item_count(Object totalWorks);
+
+  /// No description provided for @analytics_page_recent_additions.
+  ///
+  /// In ja, this message translates to:
+  /// **'最近追加した作品'**
+  String get analytics_page_recent_additions;
 
   /// No description provided for @analytics_page_piechart_others.
   ///
@@ -1487,20 +1518,52 @@ class _L10nDelegate extends LocalizationsDelegate<L10n> {
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'ja'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'de',
+    'en',
+    'es',
+    'fr',
+    'ja',
+    'ko',
+    'pt',
+    'zh',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_L10nDelegate old) => false;
 }
 
 L10n lookupL10n(Locale locale) {
+  // Lookup logic when language+script codes are specified.
+  switch (locale.languageCode) {
+    case 'zh':
+      {
+        switch (locale.scriptCode) {
+          case 'Hans':
+            return L10nZhHans();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return L10nDe();
     case 'en':
       return L10nEn();
+    case 'es':
+      return L10nEs();
+    case 'fr':
+      return L10nFr();
     case 'ja':
       return L10nJa();
+    case 'ko':
+      return L10nKo();
+    case 'pt':
+      return L10nPt();
+    case 'zh':
+      return L10nZh();
   }
 
   throw FlutterError(

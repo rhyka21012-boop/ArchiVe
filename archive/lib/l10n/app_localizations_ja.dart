@@ -392,9 +392,6 @@ class L10nJa extends L10n {
   String get search_page_add_favorite => 'お気に入りサイトを追加';
 
   @override
-  String get search_result_page_save_as_item => '作品を保存しました';
-
-  @override
   String get search_result_page_site_saved => 'サイトを保存しました';
 
   @override
@@ -405,6 +402,9 @@ class L10nJa extends L10n {
 
   @override
   String get search_result_page_url_already_saved => 'このURLはすでに保存されています';
+
+  @override
+  String get search_result_page_has_saved => '作品を保存しました';
 
   @override
   String search_result_page_delete_site(Object siteName) {
@@ -422,6 +422,17 @@ class L10nJa extends L10n {
 
   @override
   String get analytics => '統計';
+
+  @override
+  String get analytics_page_summary => '概要';
+
+  @override
+  String analytics_page_item_count(Object totalWorks) {
+    return '保存数: $totalWorks';
+  }
+
+  @override
+  String get analytics_page_recent_additions => '最近追加した作品';
 
   @override
   String analytics_page_piechart_others(Object percent) {

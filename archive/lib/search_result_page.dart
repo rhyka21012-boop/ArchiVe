@@ -837,9 +837,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(L10n.of(context)!.search_result_page_save_as_item),
-      ),
+      SnackBar(content: Text(L10n.of(context)!.search_result_page_has_saved)),
     );
 
     //広告表示処理

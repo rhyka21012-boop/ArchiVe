@@ -394,9 +394,6 @@ class L10nEn extends L10n {
   String get search_page_add_favorite => 'Add favorite site';
 
   @override
-  String get search_result_page_save_as_item => 'Item has been saved';
-
-  @override
   String get search_result_page_site_saved => 'Site has been saved';
 
   @override
@@ -408,6 +405,9 @@ class L10nEn extends L10n {
   @override
   String get search_result_page_url_already_saved =>
       'This URL has already been saved';
+
+  @override
+  String get search_result_page_has_saved => 'Item has been saved';
 
   @override
   String search_result_page_delete_site(Object siteName) {
@@ -426,6 +426,17 @@ class L10nEn extends L10n {
 
   @override
   String get analytics => 'Analytics';
+
+  @override
+  String get analytics_page_summary => 'Summary';
+
+  @override
+  String analytics_page_item_count(Object totalWorks) {
+    return 'Saved items: $totalWorks';
+  }
+
+  @override
+  String get analytics_page_recent_additions => 'Recently Added Items';
 
   @override
   String analytics_page_piechart_others(Object percent) {

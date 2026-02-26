@@ -28,9 +28,15 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   bool _isPremium = false;
 
-  bool isDebug = false; //デバッグ用切り替え箇所
+  bool isDebug = true; //デバッグ用切り替え箇所
 
   int pieTopN = 5;
+
+  //総数
+  int totalWorks = 0;
+
+  //最後に追加したアイテム
+  List<Map<String, dynamic>> recentItems = [];
 
   Color getTopColor(int index) {
     return Colors.primaries[index % Colors.primaries.length];
@@ -244,6 +250,20 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           labelCounts[name] = (labelCounts[name] ?? 0) + 1;
         }
       }
+
+      // ===== 総数 =====
+      totalWorks = savedList.length;
+
+      // ===== 最近追加 =====
+      recentItems.clear();
+
+      for (final item in savedList) {
+        final map = jsonDecode(item) as Map<String, dynamic>;
+        recentItems.add(map);
+      }
+
+      // 保存順が「古い→新しい」なら reverse でOK
+      recentItems = recentItems.reversed.toList();
     }
   }
 
@@ -268,6 +288,31 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              //概要
+              _section(
+                icon: Icons.inventory_2,
+                title: L10n.of(context)!.analytics_page_summary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      L10n.of(context)!.analytics_page_item_count(totalWorks),
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      L10n.of(context)!.analytics_page_recent_additions,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    buildRecentList(),
+                  ],
+                ),
+              ),
+              //視聴回数TOP5
               _section(
                 icon: Icons.bar_chart,
                 title: L10n.of(context)!.analytics_page_view_count_top5,
@@ -283,6 +328,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                           : BarChart(top5ViewingBarChartData()),
                 ),
               ),
+              //評価
               _section(
                 icon: Icons.star,
                 title: L10n.of(context)!.analytics_page_evaluation,
@@ -300,6 +346,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                   ],
                 ),
               ),
+              //出演
               buildPieSection(
                 title: L10n.of(context)!.analytics_page_cast,
                 data: castCounts,
@@ -329,8 +376,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               const SizedBox(height: 120),
             ],
           ),
-          if (!_isPremium) ...[
-            //if (!isDebug) ...[
+          //if (!_isPremium) ...[
+          if (!isDebug) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.black26),
@@ -347,32 +394,37 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     required String title,
     required Widget child,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 24),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color:
+            colorScheme.brightness == Brightness.light
+                ? Colors.grey[200]
+                : const Color(0xFF2C2C2C),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            child,
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
       ),
     );
   }
@@ -381,6 +433,8 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   //プレミアム購入ダイアログ
   //====================
   Widget _buildPremiumDialog(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       elevation: 12,
@@ -404,8 +458,21 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+            TextButton.icon(
+              style: ButtonStyle(
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(
+                  colorScheme.brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
               label: Text(
                 L10n.of(context)!.analytics_page_premium_button,
@@ -981,14 +1048,19 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                     width: 45,
                     child:
                         imageUrl != null
-                            ? Image.network(
-                              imageUrl,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image, size: 40),
+                            ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) => const Icon(
+                                      Icons.broken_image,
+                                      size: 40,
+                                    ),
+                              ),
                             )
                             : const Icon(Icons.image_not_supported, size: 40),
                   ),
@@ -1105,6 +1177,62 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           top5List,
         ],
       ),
+    );
+  }
+
+  //概要(総数、最近の追加作品)
+  Widget buildRecentList() {
+    final top3 = recentItems.take(3).toList();
+
+    if (top3.isEmpty) {
+      return Center(child: Text(L10n.of(context)!.analytics_page_no_data));
+    }
+
+    return Column(
+      children:
+          top3.map((item) {
+            final title = item['title'] ?? '';
+            final image = item['image'];
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    image != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            image,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => const Icon(Icons.broken_image),
+                          ),
+                        )
+                        : const Icon(Icons.image_not_supported, size: 56),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
     );
   }
 }
