@@ -264,9 +264,15 @@ class _MainPageState extends ConsumerState<MainPage>
         Uri.parse('https://archive-e4efc.firebaseapp.com/version.json'),
       );
 
+      print(response.statusCode);
+      print(response.headers);
+      print(response.bodyBytes.length);
+      print(response.bodyBytes.take(20).toList());
+
       if (response.statusCode != 200) return;
 
-      final data = jsonDecode(response.body);
+      final decodedBody = utf8.decode(response.bodyBytes);
+      final data = jsonDecode(decodedBody);
 
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = Version.parse(packageInfo.version);
