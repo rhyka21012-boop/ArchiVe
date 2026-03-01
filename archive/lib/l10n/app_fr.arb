@@ -25,6 +25,7 @@
   "no_select": "Aucun",
   "modify": "Modifier",
   "close": "Fermer",
+  "skip": "Ignorer",
 
   "save_limit_dialog_title": "Limite d’enregistrement atteinte",
   "save_limit_dialog_status_label": "Enregistré",
@@ -110,6 +111,7 @@
   "detail_page_review_later": "Plus tard",
   "detail_page_review_now": "Laisser un avis",
   "detail_page_mail_subject": "subject=Retour ArchiVe",
+  "detail_page_fetching_thumbnail": "Récupération de la miniature...",
 
   "search_page_cast": "Distribution",
   "search_page_genre": "Genre",

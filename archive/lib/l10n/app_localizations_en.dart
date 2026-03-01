@@ -78,6 +78,9 @@ class L10nEn extends L10n {
   String get close => 'Close';
 
   @override
+  String get skip => 'Skip';
+
+  @override
   String get save_limit_dialog_title => 'Save limit reached';
 
   @override
@@ -322,6 +325,9 @@ class L10nEn extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => 'Fetching thumbnail...';
 
   @override
   String get search_page_cast => 'Cast';

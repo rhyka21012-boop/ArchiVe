@@ -771,32 +771,37 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
     final favorites = ref.watch(favoriteSitesProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          L10n.of(context)!.search_page_select_site,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: favorites.length + 1,
-          itemBuilder: (context, index) {
-            if (index == favorites.length) {
-              return _buildAddFavoriteGridItem(); // 追加「+」ボタン
-            }
-            return _buildFavoriteSiteCard(favorites[index], index);
-          },
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= 600;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              L10n.of(context)!.search_page_select_site,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isTablet ? 4 : 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: isTablet ? 1.3 : 1.2, // iPad少し広め
+              ),
+              itemCount: favorites.length + 1,
+              itemBuilder: (context, index) {
+                if (index == favorites.length) {
+                  return _buildAddFavoriteGridItem(); // 追加「+」ボタン
+                }
+                return _buildFavoriteSiteCard(favorites[index], index);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -813,14 +818,15 @@ class SearchPageState extends ConsumerState<SearchPage> {
     );
   }
 
-  //お気に入りサイト - グリッドカード
+  //お気に入りサイトUI
   Widget _buildFavoriteSiteCard(Map<String, String> site, int index) {
     final isSelected = _selectedFavoriteIndex == index;
     final faviconUrl = _faviconUrl(site['url'] ?? '');
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(18),
       onTap: () {
         setState(() {
           _selectedFavoriteIndex = isSelected ? null : index;
@@ -829,45 +835,69 @@ class SearchPageState extends ConsumerState<SearchPage> {
       onLongPress: () {
         _showFavoriteActionSheet(site, index);
       },
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side:
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border:
               isSelected
-                  ? BorderSide(color: colorScheme.primary, width: 2)
-                  : BorderSide.none,
+                  ? Border.all(
+                    color: colorScheme.primary.withOpacity(0.5),
+                    width: 1.5,
+                  )
+                  : null,
         ),
-        color:
-            colorScheme.brightness == Brightness.light
-                ? Colors.grey[200]
-                : const Color(0xFF2C2C2C),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // favicon
-              Image.network(
-                faviconUrl,
-                width: 35,
-                height: 35,
-                errorBuilder: (_, __, ___) {
-                  return const Icon(Icons.public, size: 32);
-                },
+              /// 丸背景 + favicon（Edge風）
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey.shade100,
+                ),
+                child: Center(
+                  child: Image.network(
+                    faviconUrl,
+                    width: 28,
+                    height: 28,
+                    errorBuilder:
+                        (_, __, ___) => const Icon(Icons.public, size: 26),
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              // タイトル
+
+              const SizedBox(height: 12),
+
+              /// タイトル
               Text(
                 site['title'] ?? '',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color:
-                      isSelected ? Theme.of(context).colorScheme.primary : null,
+                      isSelected
+                          ? colorScheme.primary
+                          : (isDark ? Colors.white : Colors.black87),
                 ),
               ),
             ],

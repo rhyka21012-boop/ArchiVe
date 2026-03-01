@@ -25,6 +25,7 @@
   "no_select": "None",
   "modify": "Modify",
   "close": "Close",
+  "skip": "Skip",
 
   "save_limit_dialog_title": "Save limit reached",
   "save_limit_dialog_status_label": "Saved",
@@ -110,6 +111,7 @@
   "detail_page_review_later": "Later",
   "detail_page_review_now": "Leave a review",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
+  "detail_page_fetching_thumbnail": "Fetching thumbnail...",
 
   "search_page_cast": "Cast",
   "search_page_genre": "Genre",

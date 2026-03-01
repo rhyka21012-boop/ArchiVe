@@ -78,6 +78,9 @@ class L10nPt extends L10n {
   String get close => 'Fechar';
 
   @override
+  String get skip => 'Ignorar';
+
+  @override
   String get save_limit_dialog_title => 'Limite de guardados atingido';
 
   @override
@@ -322,6 +325,9 @@ class L10nPt extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => 'Obtendo miniatura...';
 
   @override
   String get search_page_cast => 'Elenco';

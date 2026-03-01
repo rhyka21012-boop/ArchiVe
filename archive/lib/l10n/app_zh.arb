@@ -25,6 +25,7 @@
   "no_select": "未选择",
   "modify": "修改",
   "close": "关闭",
+  "skip": "跳过",
 
   "save_limit_dialog_title": "已达到保存上限",
   "save_limit_dialog_status_label": "已保存",
@@ -110,6 +111,7 @@
   "detail_page_review_later": "稍后",
   "detail_page_review_now": "去评价",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
+  "detail_page_fetching_thumbnail": "正在获取缩略图...",
 
   "search_page_cast": "演员",
   "search_page_genre": "类型",

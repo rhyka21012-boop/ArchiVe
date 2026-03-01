@@ -80,6 +80,9 @@ class ListPageState extends ConsumerState<ListPage>
 
   Future<void> _loadLists() async {
     final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
     setState(() {
       _listNames = prefs.getStringList('all_lists') ?? [];
     });
@@ -91,6 +94,9 @@ class ListPageState extends ConsumerState<ListPage>
       final customerInfo = await Purchases.getCustomerInfo();
       final isActive =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+
+      if (!mounted) return;
+
       setState(() {
         _isPremium = isActive;
       });
@@ -195,6 +201,7 @@ class ListPageState extends ConsumerState<ListPage>
                                 crossAxisCount: 3,
                                 crossAxisSpacing: 8,
                                 mainAxisSpacing: 8,
+                                mainAxisExtent: 75,
                                 childAspectRatio: 1.7,
                               ),
                           itemCount: 3,
@@ -324,7 +331,7 @@ class ListPageState extends ConsumerState<ListPage>
                         ),
                       ),
                     ),
-                    //中心部分の広告を廃止
+                    //中心部分の広告は廃止
                     //プレミアムじゃなければ広告を表示
                     //if (!_isPremium) MyAdWidgetRect(),
                     Container(
@@ -348,105 +355,100 @@ class ListPageState extends ConsumerState<ListPage>
                     //const MyNativeAdWidget(),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child:
-                      /* リストがないときに「全てのアイテム」が表示されないため、削除
-                        _listNames.isEmpty
-                            ? Center(
-                              child: Text(
-                                'リストがありません。\nリストを作成してください。',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey[700],
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isTablet = constraints.maxWidth >= 600;
+
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: isTablet ? 3 : 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: 2,
                                 ),
-                              ),
-                            )
-                            : 
-                            */
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                              childAspectRatio: 2,
-                            ),
-                        itemCount:
-                            _listNames.length + 1, //+1することで、先頭に「全アイテム」分を追加
+                            itemCount:
+                                _listNames.length + 1, //+1することで、先頭に「全アイテム」分を追加
 
-                        itemBuilder: (context, index) {
-                          final isAllItem = index == 0;
-                          final listName =
-                              isAllItem ? '' : _listNames[index - 1];
+                            itemBuilder: (context, index) {
+                              final isAllItem = index == 0;
+                              final listName =
+                                  isAllItem ? '' : _listNames[index - 1];
 
-                          final lastListName = ref.read(
-                            tutorialTargetListNameProvider,
-                          );
+                              final lastListName = ref.read(
+                                tutorialTargetListNameProvider,
+                              );
 
-                          final keyToUse =
-                              isAllItem
-                                  ? ValueKey('all_$reloadSeed')
-                                  : (listName == lastListName
-                                      ? firstListKey
-                                      : ValueKey(listName));
+                              final keyToUse =
+                                  isAllItem
+                                      ? ValueKey('all_$reloadSeed')
+                                      : (listName == lastListName
+                                          ? firstListKey
+                                          : ValueKey(listName));
 
-                          return AnimatedDelay(
-                            delay: Duration(milliseconds: index * 100),
-                            child: GestureDetector(
-                              key: keyToUse,
-                              onTap: () async {
-                                if (isAllItem) {
-                                  final isTutorial = ref.read(
-                                    isTutorialModeProvider,
-                                  );
-                                  final step = ref.read(tutorialStepProvider);
+                              return AnimatedDelay(
+                                delay: Duration(milliseconds: index * 100),
+                                child: GestureDetector(
+                                  key: keyToUse,
+                                  onTap: () async {
+                                    if (isAllItem) {
+                                      final isTutorial = ref.read(
+                                        isTutorialModeProvider,
+                                      );
+                                      final step = ref.read(
+                                        tutorialStepProvider,
+                                      );
 
-                                  if (isTutorial &&
-                                      step != TutorialStep.tapList) {
-                                    return;
-                                  }
-                                }
+                                      if (isTutorial &&
+                                          step != TutorialStep.tapList) {
+                                        return;
+                                      }
+                                    }
 
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => GridPage(
-                                          selectedItems:
-                                              <String, List<String>>{},
-                                          searchText: '',
-                                          rating: '',
-                                          listName: listName,
-                                          onDeleted: () async {
-                                            await _loadLists();
-                                          },
-                                        ),
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => GridPage(
+                                              selectedItems:
+                                                  <String, List<String>>{},
+                                              searchText: '',
+                                              rating: '',
+                                              listName: listName,
+                                              onDeleted: () async {
+                                                await _loadLists();
+                                              },
+                                            ),
+                                      ),
+                                    );
+
+                                    await _loadLists();
+                                    setState(() {});
+                                  },
+                                  child: RandomImageContainer(
+                                    key: ValueKey(
+                                      '${isAllItem ? "all" : listName}_$reloadSeed',
+                                    ),
+                                    listName:
+                                        isAllItem
+                                            ? L10n.of(
+                                              context,
+                                            )!.all_item_list_name
+                                            : listName,
+                                    onDeleted: () async {
+                                      await _loadLists();
+                                      setState(() {});
+                                    },
+                                    onChanged: () async {
+                                      await _loadLists();
+                                      setState(() {});
+                                    },
                                   ),
-                                );
-
-                                await _loadLists();
-                                setState(() {});
-                              },
-                              child: RandomImageContainer(
-                                key: ValueKey(
-                                  '${isAllItem ? "all" : listName}_$reloadSeed',
                                 ),
-                                listName:
-                                    isAllItem
-                                        ? L10n.of(context)!.all_item_list_name
-                                        : listName,
-                                onDeleted: () async {
-                                  await _loadLists();
-                                  setState(() {});
-                                },
-                                onChanged: () async {
-                                  await _loadLists();
-                                  setState(() {});
-                                },
-                              ),
-                            ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -657,6 +659,8 @@ class ListPageState extends ConsumerState<ListPage>
     final box = context.findRenderObject() as RenderBox;
     final offset = box.localToGlobal(Offset.zero);
 
+    if (!mounted) return;
+
     setState(() {
       fabRect = offset & box.size;
     });
@@ -669,6 +673,8 @@ class ListPageState extends ConsumerState<ListPage>
 
     final box = context.findRenderObject() as RenderBox;
     final offset = box.localToGlobal(Offset.zero);
+
+    if (!mounted) return;
 
     setState(() {
       listRect = offset & box.size;

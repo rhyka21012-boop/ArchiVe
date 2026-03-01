@@ -25,6 +25,7 @@
   "no_select": "選択なし",
   "modify": "編集",
   "close": "閉じる",
+  "skip": "スキップ",
 
   "save_limit_dialog_title": "保存数の上限に達しました。",
   "save_limit_dialog_status_label": "保存済み",
@@ -110,6 +111,7 @@
   "detail_page_review_later": "あとで",
   "detail_page_review_now": "レビューする",
   "detail_page_mail_subject": "subject=ArchiVe ご意見・ご要望",
+  "detail_page_fetching_thumbnail": "サムネイルを取得中...",
 
   "search_page_cast": "出演",
   "search_page_genre": "ジャンル",

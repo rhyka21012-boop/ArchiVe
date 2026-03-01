@@ -78,6 +78,9 @@ class L10nJa extends L10n {
   String get close => '閉じる';
 
   @override
+  String get skip => 'スキップ';
+
+  @override
   String get save_limit_dialog_title => '保存数の上限に達しました。';
 
   @override
@@ -320,6 +323,9 @@ class L10nJa extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe ご意見・ご要望';
+
+  @override
+  String get detail_page_fetching_thumbnail => 'サムネイルを取得中...';
 
   @override
   String get search_page_cast => '出演';

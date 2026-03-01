@@ -78,6 +78,9 @@ class L10nKo extends L10n {
   String get close => '닫기';
 
   @override
+  String get skip => '건너뛰기';
+
+  @override
   String get save_limit_dialog_title => '저장 한도에 도달했습니다';
 
   @override
@@ -320,6 +323,9 @@ class L10nKo extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => '썸네일을 가져오는 중...';
 
   @override
   String get search_page_cast => '출연';

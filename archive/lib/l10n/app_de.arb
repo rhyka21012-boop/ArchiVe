@@ -25,6 +25,7 @@
   "no_select": "Keine",
   "modify": "Bearbeiten",
   "close": "Schließen",
+  "skip": "Überspringen",
 
   "save_limit_dialog_title": "Speicherlimit erreicht",
   "save_limit_dialog_status_label": "Gespeichert",
@@ -104,13 +105,13 @@
   "detail_page_delete_confirm01": "Diesen Eintrag löschen?",
   "detail_page_delete_confirm02": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "detail_page_url_unable": "Ungültige URL",
-
   "detail_page_review_confirm01": "Gefällt Ihnen \"ArchiVe - Favorite Video Tracker\"?",
   "detail_page_review_confirm02": "Vielen Dank für die Nutzung unserer App.\n\nIhr Feedback wird vom Entwickler sorgfältig geprüft und zur Verbesserung verwendet.\n\nWenn Ihnen die App gefällt, würden wir uns sehr über eine Bewertung freuen.",
   "detail_page_review_contact_support": "Feedback oder Fehler melden",
   "detail_page_review_later": "Später",
   "detail_page_review_now": "Bewertung abgeben",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
+  "detail_page_fetching_thumbnail": "Miniaturbild wird geladen...",
 
   "search_page_cast": "Darsteller",
   "search_page_genre": "Genre",

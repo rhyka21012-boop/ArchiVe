@@ -26,6 +26,7 @@
   "no_select": "Nenhum",
   "modify": "Editar",
   "close": "Fechar",
+  "skip": "Ignorar",
 
   "save_limit_dialog_title": "Limite de guardados atingido",
   "save_limit_dialog_status_label": "Guardado",
@@ -105,13 +106,13 @@
   "detail_page_delete_confirm01": "Eliminar este item?",
   "detail_page_delete_confirm02": "Esta ação não pode ser desfeita.",
   "detail_page_url_unable": "URL inválido",
-
   "detail_page_review_confirm01": "Está a gostar de \"ArchiVe - Favorite Video Tracker\"?",
   "detail_page_review_confirm02": "Obrigado por utilizar a nossa aplicação.\n\nO seu feedback será cuidadosamente analisado pelo programador e usado para melhorar futuras atualizações.\n\nSe estiver a gostar da aplicação, agradecemos muito a sua avaliação.",
   "detail_page_review_contact_support": "Reportar feedback ou erro",
   "detail_page_review_later": "Mais tarde",
   "detail_page_review_now": "Deixar avaliação",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
+  "detail_page_fetching_thumbnail": "Obtendo miniatura...",
 
   "search_page_cast": "Elenco",
   "search_page_genre": "Género",

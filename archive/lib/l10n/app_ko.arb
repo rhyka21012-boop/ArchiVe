@@ -25,6 +25,7 @@
   "no_select": "선택 없음",
   "modify": "수정",
   "close": "닫기",
+  "skip": "건너뛰기",
 
   "save_limit_dialog_title": "저장 한도에 도달했습니다",
   "save_limit_dialog_status_label": "저장됨",
@@ -110,8 +111,9 @@
   "detail_page_review_later": "나중에",
   "detail_page_review_now": "리뷰 작성",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
+  "detail_page_fetching_thumbnail": "썸네일을 가져오는 중...",
 
-    "search_page_cast": "출연",
+  "search_page_cast": "출연",
   "search_page_genre": "장르",
   "search_page_series": "시리즈",
   "search_page_label": "레이블",

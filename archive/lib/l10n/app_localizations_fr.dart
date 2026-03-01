@@ -78,6 +78,9 @@ class L10nFr extends L10n {
   String get close => 'Fermer';
 
   @override
+  String get skip => 'Ignorer';
+
+  @override
   String get save_limit_dialog_title => 'Limite d’enregistrement atteinte';
 
   @override
@@ -324,6 +327,10 @@ class L10nFr extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=Retour ArchiVe';
+
+  @override
+  String get detail_page_fetching_thumbnail =>
+      'Récupération de la miniature...';
 
   @override
   String get search_page_cast => 'Distribution';

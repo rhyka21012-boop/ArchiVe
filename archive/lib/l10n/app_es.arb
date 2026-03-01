@@ -25,6 +25,7 @@
   "no_select": "Ninguno",
   "modify": "Editar",
   "close": "Cerrar",
+  "skip": "Omitir",
 
   "save_limit_dialog_title": "Límite de guardado alcanzado",
   "save_limit_dialog_status_label": "Guardado",
@@ -110,6 +111,7 @@
   "detail_page_review_later": "Más tarde",
   "detail_page_review_now": "Dejar reseña",
   "detail_page_mail_subject": "subject=Comentarios ArchiVe",
+  "detail_page_fetching_thumbnail": "Obteniendo miniatura...",
 
   "search_page_cast": "Reparto",
   "search_page_genre": "Género",

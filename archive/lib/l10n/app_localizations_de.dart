@@ -78,6 +78,9 @@ class L10nDe extends L10n {
   String get close => 'Schließen';
 
   @override
+  String get skip => 'Überspringen';
+
+  @override
   String get save_limit_dialog_title => 'Speicherlimit erreicht';
 
   @override
@@ -327,6 +330,9 @@ class L10nDe extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => 'Miniaturbild wird geladen...';
 
   @override
   String get search_page_cast => 'Darsteller';

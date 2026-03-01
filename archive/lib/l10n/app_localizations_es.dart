@@ -78,6 +78,9 @@ class L10nEs extends L10n {
   String get close => 'Cerrar';
 
   @override
+  String get skip => 'Omitir';
+
+  @override
   String get save_limit_dialog_title => 'Límite de guardado alcanzado';
 
   @override
@@ -326,6 +329,9 @@ class L10nEs extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=Comentarios ArchiVe';
+
+  @override
+  String get detail_page_fetching_thumbnail => 'Obteniendo miniatura...';
 
   @override
   String get search_page_cast => 'Reparto';

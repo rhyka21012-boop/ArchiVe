@@ -78,6 +78,9 @@ class L10nZh extends L10n {
   String get close => '关闭';
 
   @override
+  String get skip => '跳过';
+
+  @override
   String get save_limit_dialog_title => '已达到保存上限';
 
   @override
@@ -319,6 +322,9 @@ class L10nZh extends L10n {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => '正在获取缩略图...';
 
   @override
   String get search_page_cast => '演员';
@@ -805,6 +811,9 @@ class L10nZhHans extends L10nZh {
   String get close => '关闭';
 
   @override
+  String get skip => '跳过';
+
+  @override
   String get save_limit_dialog_title => '已达到保存上限';
 
   @override
@@ -1046,6 +1055,9 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe Feedback';
+
+  @override
+  String get detail_page_fetching_thumbnail => '正在获取缩略图...';
 
   @override
   String get search_page_cast => '演员';

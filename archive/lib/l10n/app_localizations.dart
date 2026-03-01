@@ -248,6 +248,12 @@ abstract class L10n {
   /// **'閉じる'**
   String get close;
 
+  /// No description provided for @skip.
+  ///
+  /// In ja, this message translates to:
+  /// **'スキップ'**
+  String get skip;
+
   /// No description provided for @save_limit_dialog_title.
   ///
   /// In ja, this message translates to:
@@ -721,6 +727,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'subject=ArchiVe ご意見・ご要望'**
   String get detail_page_mail_subject;
+
+  /// No description provided for @detail_page_fetching_thumbnail.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネイルを取得中...'**
+  String get detail_page_fetching_thumbnail;
 
   /// No description provided for @search_page_cast.
   ///

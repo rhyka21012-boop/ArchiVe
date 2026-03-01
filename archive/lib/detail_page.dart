@@ -126,17 +126,22 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   Rect? _saveRect;
 
   //スクロールコントローラ
-  final ScrollController _scrollController = ScrollController();
+  //final ScrollController _scrollController = ScrollController();
 
   //タイトルフェチ中判定
   bool _isFetchingTitle = false;
 
   RewardedAd? _rewardedAd;
 
+  bool _isLoadingThumbnail = false;
+  bool _showSkipButton = false;
+  bool _cancelThumbnailFetch = false;
+  Timer? _skipTimer;
+
   void _loadAd() {
     String adUnitId;
 
-    const bool isTest = true; // ←テスト時だけtrueにする
+    const bool isTest = false; // ←テスト時だけtrueにする
 
     if (isTest) {
       adUnitId = 'ca-app-pub-3940256099942544/1712485313';
@@ -181,7 +186,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     //_initializeFirebase();
 
     if ((widget.image == null || widget.image!.isEmpty) && widget.url != null) {
-      _initializeThumbnail(widget.url!); //URLから取得
+      //_initializeThumbnail(widget.url!); //URLから取得
     } else {
       _thumbnailUrl = widget.image; //保存済み画像を使う
     }
@@ -252,28 +257,61 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
   */
 
-  bool _isLoadingThumbnail = false;
-
   Future<void> _initializeThumbnail(String url) async {
+    // 既にサムネがあるなら取得しない
+    if (_thumbnailUrl != null && _thumbnailUrl!.isNotEmpty) return;
+    if (_isLoadingThumbnail) return;
+
+    _cancelThumbnailFetch = false;
+
     setState(() {
       _isLoadingThumbnail = true;
+      _showSkipButton = false;
+    });
+
+    // 3秒後にスキップ表示
+    _skipTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() {
+        _showSkipButton = true;
+      });
     });
 
     final thumb = await fetchThumbnailByWebView(url);
 
-    if (!mounted) return;
+    if (!mounted || _cancelThumbnailFetch) return;
+
+    _skipTimer?.cancel();
 
     if (thumb != null) {
       setState(() {
         _thumbnailUrl = thumb;
         _isLoadingThumbnail = false;
       });
+
       await _saveChanges(exitEditMode: false);
     } else {
       setState(() {
         _isLoadingThumbnail = false;
+        _showSkipButton = false;
       });
     }
+  }
+
+  //サムネ取得をスキップ
+  void _skipThumbnail() async {
+    _cancelThumbnailFetch = true;
+    _skipTimer?.cancel();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingThumbnail = false;
+      _showSkipButton = false;
+    });
+
+    // サムネなしで保存
+    await _saveChanges(exitEditMode: false);
   }
 
   Future<String?> fetchThumbnailByWebView(String url) async {
@@ -350,7 +388,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     // タイムアウト 10秒
     return completer.future
         .timeout(
-          Duration(seconds: 10),
+          Duration(seconds: 30),
           onTimeout: () {
             entry.remove();
             return null;
@@ -504,8 +542,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     bool success = await prefs.setStringList('saved_metadata', updatedList);
 
     if (exitEditMode) {
+      await _initializeThumbnail(_urlController.text);
       setState(() => isEditing = false);
-      _initializeThumbnail(_urlController.text);
     }
 
     //保存完了時
@@ -532,6 +570,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _labelController.dispose();
     _makerController.dispose();
     _memoController.dispose();
+    _skipTimer?.cancel();
     super.dispose();
   }
 
@@ -588,55 +627,57 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     return Stack(
       children: [
-        Scaffold(
-          //backgroundColor: Colors.transparent,
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF121212).withOpacity(0.3),
-            title: Text(
-              L10n.of(context)!.detail_page_item_detail,
-              style: TextStyle(color: Colors.white),
-            ),
-            iconTheme: const IconThemeData(color: Colors.white),
-            actions: [
-              _buildIconWithLabel(
-                Icons.delete,
-                L10n.of(context)!.detail_page_delete, //削除アイコン
-                _confirmDelete,
+        WillPopScope(
+          onWillPop: () async => !_isLoadingThumbnail,
+          child: Scaffold(
+            //backgroundColor: Colors.transparent,
+            extendBodyBehindAppBar: true,
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF121212).withOpacity(0.3),
+              title: Text(
+                L10n.of(context)!.detail_page_item_detail,
+                style: TextStyle(color: Colors.white),
               ),
-              _buildIconWithLabel(
-                Icons.open_in_new,
-                L10n.of(context)!.detail_page_access, //ブラウザアイコン
-                _launchUrl,
-              ),
-              if (!isEditing)
+              iconTheme: const IconThemeData(color: Colors.white),
+              actions: [
                 _buildIconWithLabel(
-                  Icons.edit,
-                  L10n.of(context)!.detail_page_modify, //編集アイコン
-                  () => setState(() => isEditing = true),
+                  Icons.delete,
+                  L10n.of(context)!.detail_page_delete, //削除アイコン
+                  _confirmDelete,
                 ),
-              if (isEditing)
                 _buildIconWithLabel(
-                  Icons.save,
-                  L10n.of(context)!.detail_page_save, //保存アイコン
-                  _saveChanges,
-                  key: _saveIconKey,
+                  Icons.open_in_new,
+                  L10n.of(context)!.detail_page_access, //ブラウザアイコン
+                  _launchUrl,
                 ),
-            ],
-          ),
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [_dominantColor, colorScheme.secondary],
-              ),
+                if (!isEditing)
+                  _buildIconWithLabel(
+                    Icons.edit,
+                    L10n.of(context)!.detail_page_modify, //編集アイコン
+                    () => setState(() => isEditing = true),
+                  ),
+                if (isEditing)
+                  _buildIconWithLabel(
+                    Icons.save,
+                    L10n.of(context)!.detail_page_save, //保存アイコン
+                    _saveChanges,
+                    key: _saveIconKey,
+                  ),
+              ],
             ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  /*
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [_dominantColor, colorScheme.secondary],
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    /*
               if ((widget.image ?? _thumbnailUrl) != null) ...[
                 SizedBox(height: 100),
                 ClipRRect(
@@ -668,21 +709,23 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   ),
                 ),
                 */
-                  const SizedBox(height: 100),
-                  //if (_localImagePaths.isNotEmpty) ...[
-                  SizedBox(
-                    height: 200,
-                    child: PageView.builder(
-                      itemCount:
-                          _localImagePaths.length +
-                          1, //1ページ目：サムネ、2ページ目以降：ローカル画像
-                      onPageChanged: (index) {
-                        setState(() {
-                          _localImageCorrentIndex = index + 1;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
+                    const SizedBox(height: 100),
+                    //if (_localImagePaths.isNotEmpty) ...[
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      //height: 200,
+                      child: PageView.builder(
+                        itemCount:
+                            _localImagePaths.length +
+                            1, //1ページ目：サムネ、2ページ目以降：ローカル画像
+                        onPageChanged: (index) {
+                          setState(() {
+                            _localImageCorrentIndex = index + 1;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            /*
                           //サムネ取得中
                           if (_isLoadingThumbnail) {
                             return Stack(
@@ -701,91 +744,95 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                               ],
                             );
                           }
+                          */
 
-                          //サムネ表示
-                          if ((widget.image ?? _thumbnailUrl) != null) {
-                            return AnimatedScale(
-                              scale: _isPressed ? 0.94 : 1.0,
-                              duration: const Duration(milliseconds: 120),
-                              curve: Curves.easeOut,
-                              child: GestureDetector(
-                                onTapDown:
-                                    (_) => setState(() => _isPressed = true),
-                                onTapUp:
-                                    (_) => setState(() => _isPressed = false),
-                                onTapCancel:
-                                    () => setState(() => _isPressed = false),
-                                onTap: () => openPlayer(widget.url!),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      /// 背景画像
-                                      Image.network(
-                                        widget.image ?? _thumbnailUrl!,
-                                        width: double.infinity,
-                                        height: 200,
-                                        fit: BoxFit.cover,
-                                      ),
+                            //サムネ表示
+                            if ((widget.image ?? _thumbnailUrl) != null) {
+                              return AnimatedScale(
+                                scale: _isPressed ? 0.94 : 1.0,
+                                duration: const Duration(milliseconds: 120),
+                                curve: Curves.easeOut,
+                                child: GestureDetector(
+                                  onTapDown:
+                                      (_) => setState(() => _isPressed = true),
+                                  onTapUp:
+                                      (_) => setState(() => _isPressed = false),
+                                  onTapCancel:
+                                      () => setState(() => _isPressed = false),
+                                  onTap: () => openPlayer(widget.url!),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        /// 背景画像
+                                        Image.network(
+                                          widget.image ?? _thumbnailUrl!,
+                                          width: double.infinity,
+                                          //height: 200,
+                                          fit: BoxFit.cover,
+                                        ),
 
-                                      /// ⭐ ファビコン（左下）
-                                      Positioned(
-                                        left: 8,
-                                        bottom: 8,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(3),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              6,
+                                        /// ⭐ ファビコン（左下）
+                                        Positioned(
+                                          left: 8,
+                                          bottom: 8,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black26,
+                                                  blurRadius: 4,
+                                                ),
+                                              ],
                                             ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black26,
-                                                blurRadius: 4,
+                                            child: Image.network(
+                                              _getFaviconUrl(
+                                                _urlController.text,
                                               ),
-                                            ],
-                                          ),
-                                          child: Image.network(
-                                            _getFaviconUrl(_urlController.text),
-                                            width: 20,
-                                            height: 20,
-                                            errorBuilder:
-                                                (_, __, ___) =>
-                                                    const SizedBox(),
+                                              width: 20,
+                                              height: 20,
+                                              errorBuilder:
+                                                  (_, __, ___) =>
+                                                      const SizedBox(),
+                                            ),
                                           ),
                                         ),
-                                      ),
 
-                                      /// 再生ボタン
-                                      AnimatedContainer(
-                                        duration: const Duration(
-                                          milliseconds: 150,
+                                        /// 再生ボタン
+                                        AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 150,
+                                          ),
+                                          padding: const EdgeInsets.all(18),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.6,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.play_arrow,
+                                            size: 40,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                        padding: const EdgeInsets.all(18),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.6),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.play_arrow,
-                                          size: 40,
-                                          color: Colors.white,
-                                        ),
-                                      ),
 
-                                      /// 下部情報バー
-                                      Positioned(
-                                        bottom: 8,
-                                        left: 8,
-                                        right: 8,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            /// 再生時間（後程実装する）
-                                            /*
+                                        /// 下部情報バー
+                                        Positioned(
+                                          bottom: 8,
+                                          left: 8,
+                                          right: 8,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              /// 再生時間（後程実装する）
+                                              /*
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -805,275 +852,277 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                                 ),
                                               ),
                                             ), */
-                                            SizedBox(),
+                                              SizedBox(),
 
-                                            /// 閲覧数
-                                            ViewingCounterWidget(
-                                              url: widget.url,
-                                            ),
-                                          ],
+                                              /// 閲覧数
+                                              ViewingCounterWidget(
+                                                url: widget.url,
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              //サムネ未取得
+                              return GestureDetector(
+                                onTap: () {
+                                  if (widget.url != null &&
+                                      widget.url!.isNotEmpty) {
+                                    openPlayer(widget.url!);
+                                  }
+                                },
+                                child: Stack(
+                                  alignment: Alignment.bottomRight,
+                                  children: [
+                                    SizedBox(
+                                      height: 300,
+                                      child: Align(
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          L10n.of(
+                                            context,
+                                          )!.detail_page_thumbnail_placeholder,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: ViewingCounterWidget(
+                                        url: widget.url,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                           } else {
-                            //サムネ未取得
-                            return GestureDetector(
-                              onTap: () {
-                                if (widget.url != null &&
-                                    widget.url!.isNotEmpty) {
-                                  openPlayer(widget.url!);
-                                }
-                              },
+                            final imageIndex = index - 1;
+                            final imageWidget = Image.file(
+                              File(_localImagePaths[imageIndex]),
+                              fit: BoxFit.contain,
+                              width: double.infinity,
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
                               child: Stack(
-                                alignment: Alignment.bottomRight,
                                 children: [
-                                  SizedBox(
-                                    height: 300,
-                                    child: Align(
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        L10n.of(
-                                          context,
-                                        )!.detail_page_thumbnail_placeholder,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: imageWidget,
+                                  ),
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: GestureDetector(
+                                      onTap:
+                                          () => _removeLocalImage(imageIndex),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        padding: EdgeInsets.all(6),
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ViewingCounterWidget(
-                                      url: widget.url,
+                                  Positioned(
+                                    width: 0,
+                                    height: 0,
+                                    child: InAppWebView(
+                                      initialSettings: InAppWebViewSettings(
+                                        javaScriptEnabled: true,
+                                        transparentBackground: true,
+                                      ),
+                                      onWebViewCreated: (controller) {
+                                        _hiddenWebViewController = controller;
+                                      },
                                     ),
                                   ),
                                 ],
                               ),
                             );
                           }
-                        } else {
-                          final imageIndex = index - 1;
-                          final imageWidget = Image.file(
-                            File(_localImagePaths[imageIndex]),
-                            fit: BoxFit.contain,
-                            width: double.infinity,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: imageWidget,
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: GestureDetector(
-                                    onTap: () => _removeLocalImage(imageIndex),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      padding: EdgeInsets.all(6),
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  width: 0,
-                                  height: 0,
-                                  child: InAppWebView(
-                                    initialSettings: InAppWebViewSettings(
-                                      javaScriptEnabled: true,
-                                      transparentBackground: true,
-                                    ),
-                                    onWebViewCreated: (controller) {
-                                      _hiddenWebViewController = controller;
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
+                        },
+                      ),
                     ),
-                  ),
 
-                  //],
-                  SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        //ローカル画像追加
-                        if (isEditing) ...[
-                          TextButton.icon(
-                            onPressed: () async {
-                              //プレミアム判定
-                              if (!await PremiumGate.ensurePremium(context))
-                                return;
+                    //],
+                    SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          //ローカル画像追加
+                          if (isEditing) ...[
+                            TextButton.icon(
+                              onPressed: () async {
+                                //プレミアム判定
+                                if (!await PremiumGate.ensurePremium(context))
+                                  return;
 
-                              setState(() {
-                                _isPremium = true;
-                              });
-                              _isPremium ? _addLocalImage() : null;
+                                setState(() {
+                                  _isPremium = true;
+                                });
+                                _isPremium ? _addLocalImage() : null;
 
-                              //_addLocalImage(); //デバッグ用切り替え箇所
-                            },
-                            icon: const Icon(
-                              Icons.add_photo_alternate,
-                              color: Color(0xFFB8860B),
-                            ),
-                            label: Text(
-                              L10n.of(context)!.detail_page_add_image, //画像を追加
-                              style: TextStyle(
+                                //_addLocalImage(); //デバッグ用切り替え箇所
+                              },
+                              icon: const Icon(
+                                Icons.add_photo_alternate,
                                 color: Color(0xFFB8860B),
-                                fontSize: 12,
+                              ),
+                              label: Text(
+                                L10n.of(context)!.detail_page_add_image, //画像を追加
+                                style: TextStyle(
+                                  color: Color(0xFFB8860B),
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                        SizedBox(width: 8),
+                          ],
+                          SizedBox(width: 8),
 
-                        //ローカル画像の枚数
-                        _localImageMaxIndex > 1
-                            ? Container(
-                              margin: EdgeInsets.only(top: 2.0),
-                              padding: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.image_outlined,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  Text(
-                                    '$_localImageCorrentIndex/$_localImageMaxIndex',
-                                    style: TextStyle(
+                          //ローカル画像の枚数
+                          _localImageMaxIndex > 1
+                              ? Container(
+                                margin: EdgeInsets.only(top: 2.0),
+                                padding: EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.image_outlined,
                                       color: Colors.white,
-                                      fontSize: 16,
+                                      size: 18,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : SizedBox(),
+                                    Text(
+                                      '$_localImageCorrentIndex/$_localImageMaxIndex',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : SizedBox(),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          L10n.of(context)!.detail_page_rate,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimary,
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _ratingButton(
+                              'critical',
+                              L10n.of(context)!.critical,
+                              'assets/icons/critical.png',
+                              'assets/icons/critical_gray.png',
+                            ),
+                            _ratingButton(
+                              'normal',
+                              L10n.of(context)!.normal,
+                              'assets/icons/normal.png',
+                              'assets/icons/normal_gray.png',
+                            ),
+                            _ratingButton(
+                              'maniac',
+                              L10n.of(context)!.maniac,
+                              'assets/icons/maniac.png',
+                              'assets/icons/maniac_gray.png',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                       ],
                     ),
-                  ),
+                    //リスト一覧
+                    _buildListDropdownButton(),
 
-                  const SizedBox(height: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        L10n.of(context)!.detail_page_rate,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimary,
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _ratingButton(
-                            'critical',
-                            L10n.of(context)!.critical,
-                            'assets/icons/critical.png',
-                            'assets/icons/critical_gray.png',
-                          ),
-                          _ratingButton(
-                            'normal',
-                            L10n.of(context)!.normal,
-                            'assets/icons/normal.png',
-                            'assets/icons/normal_gray.png',
-                          ),
-                          _ratingButton(
-                            'maniac',
-                            L10n.of(context)!.maniac,
-                            'assets/icons/maniac.png',
-                            'assets/icons/maniac_gray.png',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                  //リスト一覧
-                  _buildListDropdownButton(),
+                    //URL入力欄
+                    _buildTextField(_urlController, 'URL', 'https://...'),
 
-                  //URL入力欄
-                  _buildTextField(_urlController, 'URL', 'https://...'),
+                    //タイトル入力欄
+                    _buildTextField(
+                      _titleController,
+                      L10n.of(context)!.detail_page_title,
+                      L10n.of(context)!.detail_page_title_placeholder,
+                      withFetchTitle: true,
+                    ),
 
-                  //タイトル入力欄
-                  _buildTextField(
-                    _titleController,
-                    L10n.of(context)!.detail_page_title,
-                    L10n.of(context)!.detail_page_title_placeholder,
-                    withFetchTitle: true,
-                  ),
+                    //出演入力欄
+                    _buildTextField(
+                      _castController,
+                      L10n.of(context)!.detail_page_cast,
+                      L10n.of(context)!.detail_page_cast_placeholder,
+                      autocompleteKey: 'cast',
+                    ),
 
-                  //出演入力欄
-                  _buildTextField(
-                    _castController,
-                    L10n.of(context)!.detail_page_cast,
-                    L10n.of(context)!.detail_page_cast_placeholder,
-                    autocompleteKey: 'cast',
-                  ),
+                    //ジャンル入力欄
+                    _buildTextField(
+                      _genreController,
+                      L10n.of(context)!.detail_page_genre,
+                      L10n.of(context)!.detail_page_genre_placeholder,
+                      autocompleteKey: 'genre',
+                    ),
 
-                  //ジャンル入力欄
-                  _buildTextField(
-                    _genreController,
-                    L10n.of(context)!.detail_page_genre,
-                    L10n.of(context)!.detail_page_genre_placeholder,
-                    autocompleteKey: 'genre',
-                  ),
+                    //シリーズ入力欄
+                    _buildTextField(
+                      _seriesController,
+                      L10n.of(context)!.detail_page_series,
+                      L10n.of(context)!.detail_page_series_placeholder,
+                      autocompleteKey: 'series',
+                    ),
 
-                  //シリーズ入力欄
-                  _buildTextField(
-                    _seriesController,
-                    L10n.of(context)!.detail_page_series,
-                    L10n.of(context)!.detail_page_series_placeholder,
-                    autocompleteKey: 'series',
-                  ),
+                    //メーカー入力欄
+                    _buildTextField(
+                      _makerController,
+                      L10n.of(context)!.detail_page_maker,
+                      L10n.of(context)!.detail_page_maker_placeholder,
+                      autocompleteKey: 'maker',
+                    ),
 
-                  //メーカー入力欄
-                  _buildTextField(
-                    _makerController,
-                    L10n.of(context)!.detail_page_maker,
-                    L10n.of(context)!.detail_page_maker_placeholder,
-                    autocompleteKey: 'maker',
-                  ),
+                    //レーベル入力欄
+                    _buildTextField(
+                      _labelController,
+                      L10n.of(context)!.detail_page_label,
+                      L10n.of(context)!.detail_page_label_placeholder,
+                      autocompleteKey: 'label',
+                    ),
 
-                  //レーベル入力欄
-                  _buildTextField(
-                    _labelController,
-                    L10n.of(context)!.detail_page_label,
-                    L10n.of(context)!.detail_page_label_placeholder,
-                    autocompleteKey: 'label',
-                  ),
+                    //メモ欄
+                    _buildMemoTextField(),
 
-                  //メモ欄
-                  _buildMemoTextField(),
-
-                  const SizedBox(height: 70),
-                ],
+                    const SizedBox(height: 70),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1136,6 +1185,48 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ref.read(isTutorialModeProvider.notifier).state = false;
               ref.read(tutorialStepProvider.notifier).state = TutorialStep.none;
             },
+          ),
+
+        if (_isLoadingThumbnail)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    L10n.of(context)!.detail_page_fetching_thumbnail,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_showSkipButton)
+                    ElevatedButton(
+                      onPressed: _skipThumbnail,
+                      child: Text(L10n.of(context)!.skip),
+                      style: ButtonStyle(
+                        elevation: MaterialStateProperty.all(0),
+                        backgroundColor: MaterialStateProperty.all(
+                          Colors.grey[300],
+                        ),
+                        foregroundColor: MaterialStateProperty.all(
+                          Colors.black,
+                        ),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
       ],
     );

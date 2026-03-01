@@ -313,159 +313,307 @@ class GridPageState extends ConsumerState<GridPage> {
                               ),
                     )
                     : _isGridView
-                    ? GridView.builder(
-                      controller: _scrollController,
-                      itemCount: itemsToShow.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _gridCount,
-                        mainAxisSpacing: 0.2,
-                        crossAxisSpacing: 0.2,
-                        childAspectRatio: _isYoutubeGrid ? 0.7 : 1.4,
-                      ),
-                      itemBuilder: (context, index) {
-                        final item = itemsToShow[index];
-
-                        final url = item['url'] ?? '';
-                        final localPaths = _localImagesMap[url] ?? [];
-
-                        String? rating = item['rating'];
-                        String? iconPath;
-                        switch (rating) {
-                          case 'critical':
-                            iconPath = 'assets/icons/critical.png';
-                            break;
-                          case 'normal':
-                            iconPath = 'assets/icons/normal.png';
-                            break;
-                          case 'maniac':
-                            iconPath = 'assets/icons/maniac.png';
-                            break;
-                        }
-
-                        return GestureDetector(
-                          onLongPress: () {
-                            setState(() {
-                              _isSelectionMode = true;
-                              _selectedIndexes.add(index);
-                            });
-                          },
-                          onTap: () async {
-                            if (_isSelectionMode) {
-                              setState(() {
-                                if (_selectedIndexes.contains(index)) {
-                                  _selectedIndexes.remove(index);
-                                  if (_selectedIndexes.isEmpty) {
-                                    _isSelectionMode = false;
-                                  }
-                                } else {
-                                  _selectedIndexes.add(index);
-                                }
-                              });
-                              return;
-                            }
-                            final result = await Navigator.push(
-                              context,
-                              fadeScaleRoute(
-                                DetailPage(
-                                  listName: item['listName'],
-                                  url: item['url'],
-                                  title: item['title'],
-                                  image: item['image'],
-                                  cast: item['cast'] ?? '',
-                                  genre: item['genre'] ?? '',
-                                  series: item['series'] ?? '',
-                                  label: item['label'] ?? '',
-                                  maker: item['maker'] ?? '',
-                                  rating: item['rating'],
-                                  memo: item['memo'],
-                                  isReadOnly: true,
-                                ),
+                    ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isTablet = constraints.maxWidth >= 600; //タブレット判定
+                        final effectiveGridCount =
+                            isTablet
+                                ? _gridCount + 1
+                                : _gridCount; //タブレットの場合のグリッド数
+                        return GridView.builder(
+                          controller: _scrollController,
+                          itemCount: itemsToShow.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: effectiveGridCount,
+                                mainAxisSpacing: 0.2,
+                                crossAxisSpacing: 0.2,
+                                childAspectRatio:
+                                    isTablet
+                                        ? (_isYoutubeGrid ? 0.8 : 1.6)
+                                        : (_isYoutubeGrid ? 0.7 : 1.4),
                               ),
-                            ).then((_) {
-                              setState(() {
-                                _searchMetadata();
-                              });
-                            });
+                          itemBuilder: (context, index) {
+                            final item = itemsToShow[index];
 
-                            // 戻ってきたタイミングでフォーカスを外す
-                            FocusScope.of(context).unfocus();
-                            if (result == true) (await _searchMetadata());
-                          },
-                          child: Stack(
-                            children: [
-                              AnimatedScale(
-                                duration: const Duration(milliseconds: 200),
-                                scale:
-                                    _removingIndexes.contains(index)
-                                        ? 0.8
-                                        : _selectedIndexes.contains(index)
-                                        ? 0.92 // ← 好みで 0.9〜0.95 に調整OK
-                                        : 1,
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 200),
-                                  opacity:
-                                      _removingIndexes.contains(index) ? 0 : 1,
-                                  child: Card(
-                                    elevation: 0,
-                                    color:
-                                        colorScheme.brightness ==
-                                                Brightness.light
-                                            ? Colors.grey[200]
-                                            : const Color(0xFF2C2C2C),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      side:
-                                          _selectedIndexes.contains(index)
-                                              ? BorderSide(
-                                                color: colorScheme.primary,
-                                                width: 6,
-                                              )
-                                              : BorderSide.none,
+                            final url = item['url'] ?? '';
+                            final localPaths = _localImagesMap[url] ?? [];
+
+                            String? rating = item['rating'];
+                            String? iconPath;
+                            switch (rating) {
+                              case 'critical':
+                                iconPath = 'assets/icons/critical.png';
+                                break;
+                              case 'normal':
+                                iconPath = 'assets/icons/normal.png';
+                                break;
+                              case 'maniac':
+                                iconPath = 'assets/icons/maniac.png';
+                                break;
+                            }
+
+                            return GestureDetector(
+                              onLongPress: () {
+                                setState(() {
+                                  _isSelectionMode = true;
+                                  _selectedIndexes.add(index);
+                                });
+                              },
+                              onTap: () async {
+                                if (_isSelectionMode) {
+                                  setState(() {
+                                    if (_selectedIndexes.contains(index)) {
+                                      _selectedIndexes.remove(index);
+                                      if (_selectedIndexes.isEmpty) {
+                                        _isSelectionMode = false;
+                                      }
+                                    } else {
+                                      _selectedIndexes.add(index);
+                                    }
+                                  });
+                                  return;
+                                }
+                                final result = await Navigator.push(
+                                  context,
+                                  fadeScaleRoute(
+                                    DetailPage(
+                                      listName: item['listName'],
+                                      url: item['url'],
+                                      title: item['title'],
+                                      image: item['image'],
+                                      cast: item['cast'] ?? '',
+                                      genre: item['genre'] ?? '',
+                                      series: item['series'] ?? '',
+                                      label: item['label'] ?? '',
+                                      maker: item['maker'] ?? '',
+                                      rating: item['rating'],
+                                      memo: item['memo'],
+                                      isReadOnly: true,
                                     ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child:
-                                        _isYoutubeGrid //Youtube風グリッドUI
-                                            ? Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                /// サムネ（比率 2）
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    width: double.infinity,
-                                                    child: Stack(
-                                                      children: [
-                                                        Positioned.fill(
-                                                          child:
-                                                              item['image'] !=
-                                                                      null
-                                                                  ? Image.network(
-                                                                    item['image'],
-                                                                    fit:
-                                                                        BoxFit
-                                                                            .cover,
-                                                                  )
-                                                                  : placeholderWidget(
-                                                                    context,
-                                                                  ),
-                                                        ),
+                                  ),
+                                ).then((_) {
+                                  setState(() {
+                                    _searchMetadata();
+                                  });
+                                });
 
-                                                        /// 再生ボタン
-                                                        Positioned(
-                                                          right: 6,
-                                                          bottom: 6,
-                                                          child: GestureDetector(
-                                                            onTap:
-                                                                () => openPlayer(
-                                                                  item['url'],
-                                                                ),
-                                                            child: Container(
-                                                              padding:
-                                                                  const EdgeInsets.all(
-                                                                    6,
+                                // 戻ってきたタイミングでフォーカスを外す
+                                FocusScope.of(context).unfocus();
+                                if (result == true) (await _searchMetadata());
+                              },
+                              child: Stack(
+                                children: [
+                                  AnimatedScale(
+                                    duration: const Duration(milliseconds: 200),
+                                    scale:
+                                        _removingIndexes.contains(index)
+                                            ? 0.8
+                                            : _selectedIndexes.contains(index)
+                                            ? 0.92 // ← 好みで 0.9〜0.95 に調整OK
+                                            : 1,
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      opacity:
+                                          _removingIndexes.contains(index)
+                                              ? 0
+                                              : 1,
+                                      child: Card(
+                                        elevation: 0,
+                                        color:
+                                            colorScheme.brightness ==
+                                                    Brightness.light
+                                                ? Colors.grey[200]
+                                                : const Color(0xFF2C2C2C),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          side:
+                                              _selectedIndexes.contains(index)
+                                                  ? BorderSide(
+                                                    color: colorScheme.primary,
+                                                    width: 6,
+                                                  )
+                                                  : BorderSide.none,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child:
+                                            _isYoutubeGrid //Youtube風グリッドUI
+                                                ? Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    /// サムネ（比率 2）
+                                                    Expanded(
+                                                      flex: 3,
+                                                      child: SizedBox(
+                                                        width: double.infinity,
+                                                        child: Stack(
+                                                          children: [
+                                                            Positioned.fill(
+                                                              child:
+                                                                  item['image'] !=
+                                                                          null
+                                                                      ? Image.network(
+                                                                        item['image'],
+                                                                        fit:
+                                                                            BoxFit.cover,
+                                                                      )
+                                                                      : placeholderWidget(
+                                                                        context,
+                                                                      ),
+                                                            ),
+
+                                                            /// 再生ボタン
+                                                            Positioned(
+                                                              right: 6,
+                                                              bottom: 6,
+                                                              child: GestureDetector(
+                                                                onTap:
+                                                                    () => openPlayer(
+                                                                      item['url'],
+                                                                    ),
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.all(
+                                                                        6,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color:
+                                                                        Colors
+                                                                            .black54,
+                                                                    shape:
+                                                                        BoxShape
+                                                                            .circle,
                                                                   ),
-                                                              decoration: BoxDecoration(
+                                                                  child: const Icon(
+                                                                    Icons
+                                                                        .play_arrow,
+                                                                    size: 18,
+                                                                    color:
+                                                                        Colors
+                                                                            .white,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    /// タイトル（比率 1）
+                                                    Expanded(
+                                                      flex: 2,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets.fromLTRB(
+                                                              10,
+                                                              8,
+                                                              10,
+                                                              2,
+                                                            ),
+                                                        child: Text(
+                                                          item['title'] ?? '',
+                                                          maxLines: 3,
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                height: 1.25,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                                /// 大サムネUI
+                                                : Stack(
+                                                  children: [
+                                                    Positioned.fill(
+                                                      child:
+                                                          item['image'] != null
+                                                              ? Image.network(
+                                                                item['image'],
+                                                                fit:
+                                                                    BoxFit
+                                                                        .cover,
+                                                              )
+                                                              : placeholderWidget(
+                                                                context,
+                                                              ),
+                                                    ),
+                                                    Positioned(
+                                                      bottom: 0,
+                                                      left: 0,
+                                                      right: 0,
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              8,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          gradient: LinearGradient(
+                                                            begin:
+                                                                Alignment
+                                                                    .topCenter,
+                                                            end:
+                                                                Alignment
+                                                                    .bottomCenter,
+                                                            colors: [
+                                                              Colors
+                                                                  .transparent,
+                                                              Colors.black
+                                                                  .withOpacity(
+                                                                    0.7,
+                                                                  ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        child: Text(
+                                                          item['title'] ?? '',
+                                                          maxLines: 1,
+                                                          overflow:
+                                                              TextOverflow
+                                                                  .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                                fontSize: 13,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    /// 再生ボタン
+                                                    Positioned(
+                                                      right: 6,
+                                                      bottom: 24,
+                                                      child: GestureDetector(
+                                                        onTap:
+                                                            () => openPlayer(
+                                                              item['url'],
+                                                            ),
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.all(
+                                                                6,
+                                                              ),
+                                                          decoration:
+                                                              BoxDecoration(
                                                                 color:
                                                                     Colors
                                                                         .black54,
@@ -473,160 +621,53 @@ class GridPageState extends ConsumerState<GridPage> {
                                                                     BoxShape
                                                                         .circle,
                                                               ),
-                                                              child: const Icon(
-                                                                Icons
-                                                                    .play_arrow,
-                                                                size: 18,
-                                                                color:
-                                                                    Colors
-                                                                        .white,
-                                                              ),
-                                                            ),
+                                                          child: const Icon(
+                                                            Icons.play_arrow,
+                                                            size: 18,
+                                                            color: Colors.white,
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-
-                                                /// タイトル（比率 1）
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.fromLTRB(
-                                                          10,
-                                                          8,
-                                                          10,
-                                                          2,
-                                                        ),
-                                                    child: Text(
-                                                      item['title'] ?? '',
-                                                      maxLines: 3,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        height: 1.25,
                                                       ),
                                                     ),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                            /// 大サムネUI
-                                            : Stack(
-                                              children: [
-                                                Positioned.fill(
-                                                  child:
-                                                      item['image'] != null
-                                                          ? Image.network(
-                                                            item['image'],
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                          : placeholderWidget(
-                                                            context,
-                                                          ),
-                                                ),
-                                                Positioned(
-                                                  bottom: 0,
-                                                  left: 0,
-                                                  right: 0,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      gradient: LinearGradient(
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end:
-                                                            Alignment
-                                                                .bottomCenter,
-                                                        colors: [
-                                                          Colors.transparent,
-                                                          Colors.black
-                                                              .withOpacity(0.7),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      item['title'] ?? '',
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-
-                                                /// 再生ボタン
-                                                Positioned(
-                                                  right: 6,
-                                                  bottom: 24,
-                                                  child: GestureDetector(
-                                                    onTap:
-                                                        () => openPlayer(
-                                                          item['url'],
-                                                        ),
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            6,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black54,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.play_arrow,
-                                                        size: 18,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                  ),
-                                ),
-                              ),
-
-                              // 選択モード中の表示
-                              if (_isSelectionMode)
-                                Positioned.fill(
-                                  child: Container(
-                                    child: Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 16,
-                                        ),
-                                        child:
-                                            _selectedIndexes.contains(index)
-                                                ? Icon(
-                                                  Icons.check_circle,
-                                                  color: colorScheme.primary,
-                                                  size: 28,
-                                                )
-                                                : Icon(
-                                                  Icons.radio_button_unchecked,
-                                                  color: Colors.white,
-                                                  key: ValueKey(false),
+                                                  ],
                                                 ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
+
+                                  // 選択モード中の表示
+                                  if (_isSelectionMode)
+                                    Positioned.fill(
+                                      child: Container(
+                                        child: Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 16,
+                                            ),
+                                            child:
+                                                _selectedIndexes.contains(index)
+                                                    ? Icon(
+                                                      Icons.check_circle,
+                                                      color:
+                                                          colorScheme.primary,
+                                                      size: 28,
+                                                    )
+                                                    : Icon(
+                                                      Icons
+                                                          .radio_button_unchecked,
+                                                      color: Colors.white,
+                                                      key: ValueKey(false),
+                                                    ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
                         );
                       },
                     )
