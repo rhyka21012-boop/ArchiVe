@@ -208,6 +208,7 @@ class _TutorialCompleteOverlayState extends State<TutorialCompleteOverlay>
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                   ],

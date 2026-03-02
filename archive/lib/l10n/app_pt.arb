@@ -147,6 +147,9 @@
   "search_result_page_new_list": "Nova lista",
   "search_result_page_input_list_name": "Introduzir nome da lista",
   "search_result_page_list_already_exists": "Já existe uma lista com este nome",
+  "search_result_page_history": "Histórico",
+  "search_result_page_ad_remainder01": "Um anúncio será exibido após o próximo salvamento",
+  "search_result_page_ad_remainder02": "Exibir anúncio",
 
   "analytics": "Análises",
   "analytics_page_summary": "Resumo",
@@ -218,7 +221,7 @@
   "premium_detail_premium_item04": "Pesquisa rápida com várias etiquetas",
   "premium_detail_premium_item05": "Visualizar estatísticas por género e avaliação",
   "premium_detail_premium_item06": "Remover anúncios",
-  "premium_detail_price": "A partir de ¥170 / mês",
+  "premium_detail_price": "A partir de €0.99 / mês",
   "premium_detail_note": "Cancelar a qualquer momento",
 
   "tutorial": "Tutorial",

@@ -427,6 +427,15 @@ class L10nJa extends L10n {
   String get search_result_page_list_already_exists => '同じ名前のリストが既にあります';
 
   @override
+  String get search_result_page_history => '履歴';
+
+  @override
+  String get search_result_page_ad_remainder01 => '次の保存後に広告が表示されます';
+
+  @override
+  String get search_result_page_ad_remainder02 => '広告を表示します';
+
+  @override
   String get analytics => '統計';
 
   @override

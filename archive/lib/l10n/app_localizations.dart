@@ -926,6 +926,24 @@ abstract class L10n {
   /// **'同じ名前のリストが既にあります'**
   String get search_result_page_list_already_exists;
 
+  /// No description provided for @search_result_page_history.
+  ///
+  /// In ja, this message translates to:
+  /// **'履歴'**
+  String get search_result_page_history;
+
+  /// No description provided for @search_result_page_ad_remainder01.
+  ///
+  /// In ja, this message translates to:
+  /// **'次の保存後に広告が表示されます'**
+  String get search_result_page_ad_remainder01;
+
+  /// No description provided for @search_result_page_ad_remainder02.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告を表示します'**
+  String get search_result_page_ad_remainder02;
+
   /// No description provided for @analytics.
   ///
   /// In ja, this message translates to:

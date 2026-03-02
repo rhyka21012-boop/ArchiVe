@@ -427,6 +427,15 @@ class L10nKo extends L10n {
   String get search_result_page_list_already_exists => '같은 이름의 리스트가 이미 존재합니다';
 
   @override
+  String get search_result_page_history => '기록';
+
+  @override
+  String get search_result_page_ad_remainder01 => '다음 저장 후 광고가 표시됩니다';
+
+  @override
+  String get search_result_page_ad_remainder02 => '광고 표시';
+
+  @override
   String get analytics => '통계';
 
   @override
@@ -642,7 +651,7 @@ class L10nKo extends L10n {
   String get premium_detail_premium_item06 => '광고 제거';
 
   @override
-  String get premium_detail_price => '월 ₩170부터 시작';
+  String get premium_detail_price => '월 ₩1,100.00부터 시작';
 
   @override
   String get premium_detail_note => '언제든지 해지 가능';

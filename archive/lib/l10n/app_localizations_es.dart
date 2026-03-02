@@ -436,6 +436,16 @@ class L10nEs extends L10n {
       'Ya existe una lista con ese nombre';
 
   @override
+  String get search_result_page_history => 'Historial';
+
+  @override
+  String get search_result_page_ad_remainder01 =>
+      'Se mostrará un anuncio después del próximo guardado';
+
+  @override
+  String get search_result_page_ad_remainder02 => 'Mostrar anuncio';
+
+  @override
   String get analytics => 'Estadísticas';
 
   @override
@@ -661,7 +671,7 @@ class L10nEs extends L10n {
   String get premium_detail_premium_item06 => 'Eliminar anuncios';
 
   @override
-  String get premium_detail_price => 'Desde ¥170 / mes';
+  String get premium_detail_price => 'Desde €0.99 / mes';
 
   @override
   String get premium_detail_note => 'Cancela en cualquier momento';

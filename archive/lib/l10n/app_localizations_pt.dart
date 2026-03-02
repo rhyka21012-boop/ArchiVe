@@ -430,6 +430,16 @@ class L10nPt extends L10n {
       'Já existe uma lista com este nome';
 
   @override
+  String get search_result_page_history => 'Histórico';
+
+  @override
+  String get search_result_page_ad_remainder01 =>
+      'Um anúncio será exibido após o próximo salvamento';
+
+  @override
+  String get search_result_page_ad_remainder02 => 'Exibir anúncio';
+
+  @override
   String get analytics => 'Análises';
 
   @override
@@ -655,7 +665,7 @@ class L10nPt extends L10n {
   String get premium_detail_premium_item06 => 'Remover anúncios';
 
   @override
-  String get premium_detail_price => 'A partir de ¥170 / mês';
+  String get premium_detail_price => 'A partir de €0.99 / mês';
 
   @override
   String get premium_detail_note => 'Cancelar a qualquer momento';

@@ -146,6 +146,9 @@
   "search_result_page_new_list": "Neue Liste",
   "search_result_page_input_list_name": "Listennamen eingeben",
   "search_result_page_list_already_exists": "Eine Liste mit diesem Namen existiert bereits",
+  "search_result_page_history": "Verlauf",
+  "search_result_page_ad_remainder01": "Nach dem nächsten Speichern wird eine Anzeige angezeigt",
+  "search_result_page_ad_remainder02": "Anzeige anzeigen",
 
   "analytics": "Analyse",
   "analytics_page_summary": "Übersicht",
@@ -217,7 +220,7 @@
   "premium_detail_premium_item04": "Schnellsuche mit mehreren Tags",
   "premium_detail_premium_item05": "Statistiken nach Genre und Bewertung visualisieren",
   "premium_detail_premium_item06": "Werbung entfernen",
-  "premium_detail_price": "Start ab ¥170 / Monat",
+  "premium_detail_price": "Start ab €0.99 / Monat",
   "premium_detail_note": "Jederzeit kündbar",
 
   "tutorial": "Tutorial",

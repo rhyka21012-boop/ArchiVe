@@ -160,7 +160,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     children: [
                       Text(L10n.of(context)!.settings_page_save_count),
                       Text(
-                        '$currentCount / ${maxSaveLimit == 999999 ? L10n.of(context)!.setting_page_unlimited : maxSaveLimit}',
+                        maxSaveLimit == 999999
+                            ? '$currentCount (${L10n.of(context)!.setting_page_unlimited})'
+                            : '$currentCount / $maxSaveLimit',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],

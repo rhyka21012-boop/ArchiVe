@@ -425,6 +425,15 @@ class L10nZh extends L10n {
   String get search_result_page_list_already_exists => '已存在同名列表';
 
   @override
+  String get search_result_page_history => '历史记录';
+
+  @override
+  String get search_result_page_ad_remainder01 => '下次保存后将显示广告';
+
+  @override
+  String get search_result_page_ad_remainder02 => '显示广告';
+
+  @override
   String get analytics => '统计';
 
   @override
@@ -638,7 +647,7 @@ class L10nZh extends L10n {
   String get premium_detail_premium_item06 => '移除广告';
 
   @override
-  String get premium_detail_price => '每月 ¥170 起';
+  String get premium_detail_price => '每月 ￥8.00 起';
 
   @override
   String get premium_detail_note => '可随时取消';
@@ -1158,6 +1167,15 @@ class L10nZhHans extends L10nZh {
   String get search_result_page_list_already_exists => '已存在同名列表';
 
   @override
+  String get search_result_page_history => '历史记录';
+
+  @override
+  String get search_result_page_ad_remainder01 => '下次保存后将显示广告';
+
+  @override
+  String get search_result_page_ad_remainder02 => '显示广告';
+
+  @override
   String get analytics => '统计';
 
   @override
@@ -1371,7 +1389,7 @@ class L10nZhHans extends L10nZh {
   String get premium_detail_premium_item06 => '移除广告';
 
   @override
-  String get premium_detail_price => '每月 ¥170 起';
+  String get premium_detail_price => '每月 ￥8.00 起';
 
   @override
   String get premium_detail_note => '可随时取消';

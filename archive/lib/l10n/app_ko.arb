@@ -146,6 +146,9 @@
   "search_result_page_new_list": "새 리스트",
   "search_result_page_input_list_name": "리스트 이름 입력",
   "search_result_page_list_already_exists": "같은 이름의 리스트가 이미 존재합니다",
+  "search_result_page_history": "기록",
+  "search_result_page_ad_remainder01": "다음 저장 후 광고가 표시됩니다",
+  "search_result_page_ad_remainder02": "광고 표시",
 
   "analytics": "통계",
   "analytics_page_summary": "개요",
@@ -217,7 +220,7 @@
   "premium_detail_premium_item04": "여러 태그로 빠른 검색",
   "premium_detail_premium_item05": "장르 및 평가 통계 시각화",
   "premium_detail_premium_item06": "광고 제거",
-  "premium_detail_price": "월 ₩170부터 시작",
+  "premium_detail_price": "월 ₩1,100.00부터 시작",
   "premium_detail_note": "언제든지 해지 가능",
 
   "tutorial": "튜토리얼",

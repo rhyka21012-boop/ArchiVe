@@ -431,6 +431,16 @@ class L10nEn extends L10n {
       'A list with the same name already exists';
 
   @override
+  String get search_result_page_history => 'History';
+
+  @override
+  String get search_result_page_ad_remainder01 =>
+      'An ad will be shown after the next save';
+
+  @override
+  String get search_result_page_ad_remainder02 => 'Show Ad';
+
+  @override
   String get analytics => 'Analytics';
 
   @override
@@ -648,7 +658,7 @@ class L10nEn extends L10n {
   String get premium_detail_premium_item06 => 'Remove ads';
 
   @override
-  String get premium_detail_price => 'Start for ¥170 / month';
+  String get premium_detail_price => 'Start for \$0.99 / month';
 
   @override
   String get premium_detail_note => 'Cancel anytime';

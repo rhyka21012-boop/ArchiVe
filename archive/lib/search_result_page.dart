@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+//import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,6 +60,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   RewardedAd? _rewardedAd;
 
+  //検索履歴リスト
+  List<WebHistoryItem> _history = [];
+
+  //プログレスバーの表示
+  int _progress = 0;
+
   //リワード広告のロード
   void _loadAd() {
     String adUnitId;
@@ -100,30 +109,53 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   }
 
   @override
+  @override
   void initState() {
     super.initState();
     _loadInterstitialAd();
-
     _checkSubscriptionStatus();
     _loadAd();
 
     final initialUrl = _resolveInitialUrl(widget.initialUrl);
 
+    late final PlatformWebViewControllerCreationParams params;
+
+    if (Platform.isIOS) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const {},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+
     _controller =
-        WebViewController()
+        WebViewController.fromPlatformCreationParams(params)
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..setNavigationDelegate(
             NavigationDelegate(
-              onNavigationRequest: (request) {
-                // メインフレーム以外は拒否 = ポップアップ遮断
+              onNavigationRequest: (request) async {
                 if (!request.isMainFrame) {
+                  await _controller.loadRequest(Uri.parse(request.url));
                   return NavigationDecision.prevent;
                 }
                 return NavigationDecision.navigate;
               },
+              onProgress: (progress) {
+                setState(() {
+                  _progress = progress;
+                });
+              },
+
               onPageFinished: (url) async {
-                final canBack = await _controller.canGoBack();
                 final title = await _getPageTitle();
+
+                //検索履歴を追加
+                if (_history.isEmpty || _history.last != url) {
+                  _history.add(WebHistoryItem(url, title));
+                }
+
+                final canBack = await _controller.canGoBack();
 
                 setState(() {
                   _canGoBack = canBack;
@@ -152,15 +184,21 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         backgroundColor: colorScheme.surface,
 
         // 戻る専用
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () async {
+        leading: GestureDetector(
+          onTap: () async {
             if (_canGoBack) {
-              _controller.goBack();
+              await _controller.goBack();
             } else {
               Navigator.pop(context);
             }
           },
+          onLongPress: () {
+            _showHistoryDialog(); // ← 履歴表示
+          },
+          child: const Padding(
+            padding: EdgeInsets.all(12), // タップ領域を確保
+            child: Icon(Icons.arrow_back),
+          ),
         ),
 
         title: Text(
@@ -193,6 +231,16 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(2),
+          child:
+              _progress < 100
+                  ? LinearProgressIndicator(
+                    value: _progress / 100,
+                    minHeight: 2,
+                  )
+                  : const SizedBox.shrink(),
+        ),
       ),
 
       body: WebViewWidget(controller: _controller),
@@ -973,6 +1021,68 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     return "${uri.scheme}://${uri.host}";
   }
 
+  //検索履歴を表示
+  // 履歴を表示
+  void _showHistoryDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 🔹 上部タイトル
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  L10n.of(context)!.search_result_page_history,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Divider(height: 1),
+
+              // 🔹 履歴リスト
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _history.length,
+                  itemBuilder: (context, index) {
+                    final reversedIndex = _history.length - 1 - index;
+                    final item = _history[reversedIndex];
+
+                    return ListTile(
+                      title: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        item.url,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await _controller.loadRequest(Uri.parse(item.url));
+
+                        _history = _history.sublist(0, reversedIndex + 1);
+
+                        setState(() {});
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   //=========
   //広告関連
   //=========
@@ -1002,10 +1112,37 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     count++;
     await prefs.setInt("save_ad_count", count);
 
-    //初回保護
+    // 初回保護（3回未満は広告なし）
     if (count < 3) return;
 
-    if (count % 5 == 0 && _interstitialAd != null) {
+    final remainder = count % 5;
+
+    // ⭐ 4回目（予告）
+    if (remainder == 4) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context)!.search_result_page_ad_remainder01),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    // ⭐ 5回目（広告表示）
+    if (remainder == 0 && _interstitialAd != null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context)!.search_result_page_ad_remainder02),
+          duration: Duration(milliseconds: 800),
+        ),
+      );
+
+      // 少し待ってから表示（突然感をなくす）
+      await Future.delayed(const Duration(milliseconds: 800));
+
       _interstitialAd!.show();
 
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
@@ -1043,4 +1180,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       debugPrint("Error fetching subscription status: $e");
     }
   }
+}
+
+//検索履歴を管理するクラス
+class WebHistoryItem {
+  final String url;
+  final String title;
+
+  WebHistoryItem(this.url, this.title);
 }

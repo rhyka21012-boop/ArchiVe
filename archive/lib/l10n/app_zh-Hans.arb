@@ -146,6 +146,9 @@
   "search_result_page_new_list": "新建列表",
   "search_result_page_input_list_name": "输入列表名称",
   "search_result_page_list_already_exists": "已存在同名列表",
+  "search_result_page_history": "历史记录",
+  "search_result_page_ad_remainder01": "下次保存后将显示广告",
+  "search_result_page_ad_remainder02": "显示广告",
 
   "analytics": "统计",
   "analytics_page_summary": "概览",
@@ -217,7 +220,7 @@
   "premium_detail_premium_item04": "多标签快速搜索",
   "premium_detail_premium_item05": "按类型和评分可视化统计",
   "premium_detail_premium_item06": "移除广告",
-  "premium_detail_price": "每月 ¥170 起",
+  "premium_detail_price": "每月 ￥8.00 起",
   "premium_detail_note": "可随时取消",
 
   "tutorial": "教程",

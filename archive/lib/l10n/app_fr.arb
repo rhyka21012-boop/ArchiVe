@@ -112,6 +112,9 @@
   "detail_page_review_now": "Laisser un avis",
   "detail_page_mail_subject": "subject=Retour ArchiVe",
   "detail_page_fetching_thumbnail": "Récupération de la miniature...",
+  "search_result_page_history": "Historique",
+  "search_result_page_ad_remainder01": "Une publicité sera affichée après le prochain enregistrement",
+  "search_result_page_ad_remainder02": "Afficher la publicité",
 
   "search_page_cast": "Distribution",
   "search_page_genre": "Genre",
@@ -217,7 +220,7 @@
   "premium_detail_premium_item04": "Recherche rapide avec plusieurs tags",
   "premium_detail_premium_item05": "Visualiser les statistiques par genre et évaluation",
   "premium_detail_premium_item06": "Supprimer les publicités",
-  "premium_detail_price": "À partir de 170 ¥ / mois",
+  "premium_detail_price": "À partir de €0.99 / mois",
   "premium_detail_note": "Annulable à tout moment",
 
   "tutorial": "Tutoriel",

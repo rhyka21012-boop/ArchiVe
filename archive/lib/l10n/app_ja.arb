@@ -146,6 +146,9 @@
   "search_result_page_new_list": "新規リスト",
   "search_result_page_input_list_name": "リスト名を入力",
   "search_result_page_list_already_exists": "同じ名前のリストが既にあります",
+  "search_result_page_history": "履歴",
+  "search_result_page_ad_remainder01": "次の保存後に広告が表示されます",
+  "search_result_page_ad_remainder02": "広告を表示します",
 
   "analytics": "統計",
   "analytics_page_summary": "概要",

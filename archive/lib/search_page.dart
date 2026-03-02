@@ -888,7 +888,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
               /// タイトル
               Text(
                 site['title'] ?? '',
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(

@@ -146,6 +146,9 @@
   "search_result_page_new_list": "New List",
   "search_result_page_input_list_name": "Enter list name",
   "search_result_page_list_already_exists": "A list with the same name already exists",
+  "search_result_page_history": "History",
+  "search_result_page_ad_remainder01": "An ad will be shown after the next save",
+  "search_result_page_ad_remainder02": "Show Ad",
 
   "analytics": "Analytics",
   "analytics_page_summary": "Summary",
@@ -217,7 +220,7 @@
   "premium_detail_premium_item04": "Quick search with multiple tags",
   "premium_detail_premium_item05": "Visualize statistics by genre and rating",
   "premium_detail_premium_item06": "Remove ads",
-  "premium_detail_price": "Start for ¥170 / month",
+  "premium_detail_price": "Start for $0.99 / month",
   "premium_detail_note": "Cancel anytime",
 
   "tutorial": "tutorial",
