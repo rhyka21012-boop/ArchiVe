@@ -107,26 +107,8 @@ class ShareViewController: UIViewController {
 
     func openMainApp() {
 
-        let url = URL(string: "archive://share")!
-
-        var responder = self as UIResponder?
-
-        while responder != nil {
-
-            if let application = responder as? UIApplication {
-
-                application.performSelector(
-                    onMainThread: Selector(("openURL:")),
-                    with: url,
-                    waitUntilDone: false
-                )
-
-                break
-
-            }
-
-            responder = responder?.next
-
+        if let url = URL(string: "archive://share") {
+            extensionContext?.open(url, completionHandler: nil)
         }
 
         extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)

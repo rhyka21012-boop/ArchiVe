@@ -37,6 +37,7 @@ target 'Runner' do
 end
 
 target 'ShareExtension' do
+  use_frameworks! :linkage => :static
   inherit! :search_paths
 end
 
