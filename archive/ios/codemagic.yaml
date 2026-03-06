@@ -5,12 +5,13 @@ workflows:
     environment:
       flutter: stable
 
-    scripts:
-      - name: Flutter doctor
-        script: |
-          flutter doctor
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - $FLUTTER_ROOT/.pub-cache
 
-      - name: Flutter clean
+    scripts:
+      - name: Clean Flutter
         script: |
           flutter clean
 
@@ -18,7 +19,7 @@ workflows:
         script: |
           flutter pub get
 
-      - name: Precache iOS artifacts
+      - name: Flutter precache
         script: |
           flutter precache --ios
 
@@ -27,7 +28,7 @@ workflows:
           cd ios
           pod install
 
-      - name: Build IPA
+      - name: Build iOS
         script: |
           flutter build ipa --release
 
