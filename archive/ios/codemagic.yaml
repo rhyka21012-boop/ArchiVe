@@ -1,0 +1,26 @@
+workflows:
+  ios-release:
+    name: iOS Release
+    environment:
+      flutter: stable
+
+    scripts:
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+
+      - name: Flutter precache
+        script: |
+          flutter precache --ios
+
+      - name: Install pods
+        script: |
+          cd ios
+          pod install
+
+      - name: Build iOS
+        script: |
+          flutter build ipa --release
+
+    artifacts:
+      - build/ios/ipa/*.ipa
