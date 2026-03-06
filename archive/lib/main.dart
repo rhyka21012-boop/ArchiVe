@@ -1,14 +1,20 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'launch_gate.dart';
-//import 'grid_view_native_ad_factory.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:html/parser.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import 'theme_provider.dart';
+import 'launch_gate.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
@@ -59,7 +65,14 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _waitForInitialization();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 200));
+      checkShare();
+    });
   }
+
+  bool removed = false;
 
   Future<void> _waitForInitialization() async {
     // ここではあえてディレイを入れることで、初期描画前の安定化を図ります。
@@ -101,6 +114,193 @@ class _MyAppState extends State<MyApp> {
         );
       },
     );
+  }
+
+  void checkShare() async {
+    final url = await getSharedURL();
+
+    if (url != null) {
+      print("Shared URL: $url");
+
+      await saveUrlAuto(url);
+    }
+  }
+
+  Future<String?> getSharedURL() async {
+    final prefs = await SharedPreferences.getInstance();
+    final url = prefs.getString("shared_url");
+
+    if (url != null) {
+      await prefs.remove("shared_url"); // 一度取得したら削除
+    }
+
+    return url;
+  }
+
+  //タイトル取得
+  Future<String?> fetchTitleFromUrl(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final document = parse(response.body);
+        final titleTag = document.getElementsByTagName('title');
+
+        if (titleTag.isNotEmpty) {
+          return titleTag.first.text.trim();
+        }
+      }
+    } catch (e) {
+      print("title fetch error: $e");
+    }
+
+    return null;
+  }
+
+  //サムネを取得
+  Future<String?> fetchThumbnailByWebView(String url) async {
+    final Completer<String?> completer = Completer();
+
+    // Invisible WebView を作る
+    final InAppWebView webView = InAppWebView(
+      initialUrlRequest: URLRequest(url: WebUri(url)),
+      initialOptions: InAppWebViewGroupOptions(
+        crossPlatform: InAppWebViewOptions(
+          javaScriptEnabled: true,
+          transparentBackground: true,
+        ),
+      ),
+      onLoadStop: (controller, uri) async {
+        try {
+          final js = """
+          (function() {
+            var og = document.querySelector('meta[property="og:image"]');
+            if (og && og.content) return og.content;
+
+            var item = document.querySelector('meta[itemprop="image"]');
+            if (item && item.content) return item.content;
+
+            var video = document.querySelector('video');
+            if (video && video.poster) return video.poster;
+
+            var link = document.querySelector('link[rel="image_src"]');
+            if (link && link.href) return link.href;
+
+            var imgs = document.querySelectorAll('img');
+            for (var i = 0; i < imgs.length; i++) {
+              var s = imgs[i].src;
+              if (s.includes("/wp-content/uploads")) return s;
+            }
+
+            var img = document.querySelector('img');
+            if (img && img.src) return img.src;
+
+            return null;
+          })();
+        """;
+
+          final result = await controller.evaluateJavascript(source: js);
+
+          if (!completer.isCompleted) {
+            if (result == null || result == "null") {
+              completer.complete(null);
+            } else {
+              String resolved =
+                  Uri.parse(url).resolve(result.toString()).toString();
+              completer.complete(resolved);
+            }
+          }
+        } catch (_) {
+          if (!completer.isCompleted) completer.complete(null);
+        }
+      },
+    );
+
+    // WebView を非表示で画面に追加する
+    OverlayEntry entry = OverlayEntry(
+      builder: (_) {
+        return Positioned(
+          left: 0,
+          top: 0,
+          width: 1,
+          height: 1,
+          child: Opacity(opacity: 0.0, child: webView),
+        );
+      },
+    );
+
+    Overlay.of(context, rootOverlay: true).insert(entry);
+
+    void safeRemove() {
+      if (!removed) {
+        removed = true;
+        entry.remove();
+      }
+    }
+
+    // タイムアウト 10秒
+    return completer.future
+        .timeout(
+          Duration(seconds: 30),
+          onTimeout: () {
+            safeRemove();
+            return null;
+          },
+        )
+        .whenComplete(() {
+          safeRemove();
+        });
+  }
+
+  //自動保存
+  Future<void> saveUrlAuto(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final results = await Future.wait([
+      fetchTitleFromUrl(url),
+      fetchThumbnailByWebView(url),
+    ]);
+
+    final title = results[0];
+    final thumbnail = results[1];
+
+    final data = {
+      'listName': '',
+      'url': url,
+      'title': title ?? '',
+      'image': thumbnail ?? '',
+      'cast': '',
+      'genre': '',
+      'series': '',
+      'label': '',
+      'maker': '',
+      'memo': '',
+      'rating': 'unrated',
+    };
+
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final updatedList = <String>[];
+
+    bool found = false;
+
+    for (final item in savedList) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+
+      if (map['url'] == url) {
+        updatedList.add(jsonEncode(data));
+        found = true;
+      } else {
+        updatedList.add(item);
+      }
+    }
+
+    if (!found) {
+      updatedList.add(jsonEncode(data));
+    }
+
+    await prefs.setStringList('saved_metadata', updatedList);
+
+    print("saved complete");
   }
 }
 
