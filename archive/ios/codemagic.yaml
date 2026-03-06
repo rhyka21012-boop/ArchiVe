@@ -21,6 +21,8 @@ workflows:
 
       - name: Flutter precache
         script: |
+          flutter clean
+          flutter pub get
           flutter precache --ios
 
       - name: Install pods
