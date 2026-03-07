@@ -8,14 +8,10 @@ import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
 
-    let iconView = UIImageView()
     let titleLabel = UILabel()
     let domainLabel = UILabel()
-    let urlLabel = UILabel()
     let saveButton = UIButton(type: .system)
     let cancelButton = UIButton(type: .system)
-
-    let cardView = UIView()
 
     let appGroupId = "group.com.walkinggoblins.archive"
 
@@ -23,6 +19,8 @@ class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        preferredContentSize = CGSize(width: 0, height: 180)
 
         setupUI()
         fetchSharedURL()
@@ -34,99 +32,39 @@ class ShareViewController: UIViewController {
 
         view.backgroundColor = .systemGroupedBackground
 
-        iconView.image = UIImage(systemName: "bookmark.circle.fill")
-        iconView.tintColor = UIColor(red: 1.0, green: 0.45, blue: 0.0, alpha: 1.0)
-        iconView.contentMode = .scaleAspectFit
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-
-        titleLabel.text = NSLocalizedString("save_title", comment: "")
-        titleLabel.font = .boldSystemFont(ofSize: 22)
+        titleLabel.font = .boldSystemFont(ofSize: 20)
         titleLabel.textAlignment = .center
 
-        domainLabel.font = .boldSystemFont(ofSize: 16)
-        domainLabel.textColor = .label
+        domainLabel.font = .systemFont(ofSize: 15)
+        domainLabel.textColor = .secondaryLabel
         domainLabel.textAlignment = .center
 
-        urlLabel.font = .systemFont(ofSize: 14)
-        urlLabel.textColor = .secondaryLabel
-        urlLabel.numberOfLines = 2
-        urlLabel.textAlignment = .center
-
-        cardView.backgroundColor = .systemBackground
-        cardView.layer.cornerRadius = 14
-        cardView.layer.shadowColor = UIColor.black.cgColor
-        cardView.layer.shadowOpacity = 0.08
-        cardView.layer.shadowRadius = 8
-        cardView.layer.shadowOffset = CGSize(width: 0, height: 4)
-        cardView.translatesAutoresizingMaskIntoConstraints = false
-
-        let cardStack = UIStackView(arrangedSubviews: [
-            domainLabel,
-            urlLabel
-        ])
-
-        cardStack.axis = .vertical
-        cardStack.spacing = 6
-        cardStack.alignment = .center
-        cardStack.translatesAutoresizingMaskIntoConstraints = false
-
-        cardView.addSubview(cardStack)
-
-        NSLayoutConstraint.activate([
-            cardStack.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
-            cardStack.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
-            cardStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
-            cardStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16)
-        ])
-
-        saveButton.setTitle(
-            NSLocalizedString("save_button", comment: ""),
-            for: .normal
-        )
         saveButton.backgroundColor = UIColor(red: 1.0, green: 0.45, blue: 0.0, alpha: 1.0)
         saveButton.tintColor = .white
-        saveButton.titleLabel?.font = .boldSystemFont(ofSize: 17)
         saveButton.layer.cornerRadius = 12
-        saveButton.contentEdgeInsets = UIEdgeInsets(top: 14, left: 40, bottom: 14, right: 40)
+        saveButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 40, bottom: 12, right: 40)
 
-        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
-
-        cancelButton.setTitle(
-            NSLocalizedString("cancel_button", comment: ""),
-            for: .normal
-        )
-        cancelButton.titleLabel?.font = .systemFont(ofSize: 16)
-
-        cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+        cancelButton.setTitleColor(.secondaryLabel, for: .normal)
 
         let mainStack = UIStackView(arrangedSubviews: [
-            iconView,
+            domainLabel,
             titleLabel,
-            cardView,
             saveButton,
             cancelButton
         ])
 
         mainStack.axis = .vertical
-        mainStack.spacing = 20
+        mainStack.spacing = 14
         mainStack.alignment = .center
         mainStack.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(mainStack)
 
         NSLayoutConstraint.activate([
-
-            iconView.heightAnchor.constraint(equalToConstant: 70),
-            iconView.widthAnchor.constraint(equalToConstant: 70),
-
-            cardView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-
             mainStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             mainStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-
             mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
-
         ])
     }
 
@@ -192,10 +130,7 @@ class ShareViewController: UIViewController {
 
     func showSavedState() {
 
-        saveButton.setTitle(
-            NSLocalizedString("saved", comment: ""),
-            for: .normal
-        )
+        saveButton.setTitle("Saved ✓", for: .normal)
         saveButton.backgroundColor = .systemGreen
         saveButton.isEnabled = false
 
