@@ -10,7 +10,7 @@ project 'Runner', {
 
 def flutter_root
   generated_xcode_build_settings_path = File.expand_path(File.join('..','Flutter','Generated.xcconfig'), __FILE__)
-  raise "#{generated_xcode_build_settings_path} must exist." unless File.exist?(generated_xcode_build_settings_path)
+  raise "#{generated_xcconfig_path} must exist." unless File.exist?(generated_xcode_build_settings_path)
 
   File.foreach(generated_xcode_build_settings_path) do |line|
     matches = line.match(/FLUTTER_ROOT\=(.*)/)
@@ -31,12 +31,6 @@ target 'Runner' do
   target 'RunnerTests' do
     inherit! :search_paths
   end
-end
-
-target 'ShareExtension' do
-  use_frameworks! :linkage => :static
-  use_modular_headers!
-  inherit! :search_paths
 end
 
 post_install do |installer|
