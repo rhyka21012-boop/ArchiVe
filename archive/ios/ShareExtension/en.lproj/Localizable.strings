@@ -1,0 +1,11 @@
+/* 
+  Localizable.strings
+  Runner
+
+  Created by 001 on 2026/03/07.
+  
+*/
+"save_title" = "Save to ArchiVe";
+"save_button" = "Save Link";
+"cancel_button" = "Cancel";
+"saved" = "Saved ✓";

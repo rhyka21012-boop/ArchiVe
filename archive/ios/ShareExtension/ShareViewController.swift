@@ -35,11 +35,11 @@ class ShareViewController: UIViewController {
         view.backgroundColor = .systemGroupedBackground
 
         iconView.image = UIImage(systemName: "bookmark.circle.fill")
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = UIColor(red: 1.0, green: 0.45, blue: 0.0, alpha: 1.0)
         iconView.contentMode = .scaleAspectFit
         iconView.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.text = "Save to ArchiVe"
+        titleLabel.text = NSLocalizedString("save_title", comment: "")
         titleLabel.font = .boldSystemFont(ofSize: 22)
         titleLabel.textAlignment = .center
 
@@ -79,8 +79,11 @@ class ShareViewController: UIViewController {
             cardStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16)
         ])
 
-        saveButton.setTitle("Save Link", for: .normal)
-        saveButton.backgroundColor = .systemBlue
+        saveButton.setTitle(
+            NSLocalizedString("save_button", comment: ""),
+            for: .normal
+        )
+        saveButton.backgroundColor = UIColor(red: 1.0, green: 0.45, blue: 0.0, alpha: 1.0)
         saveButton.tintColor = .white
         saveButton.titleLabel?.font = .boldSystemFont(ofSize: 17)
         saveButton.layer.cornerRadius = 12
@@ -88,7 +91,10 @@ class ShareViewController: UIViewController {
 
         saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
 
-        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitle(
+            NSLocalizedString("cancel_button", comment: ""),
+            for: .normal
+        )
         cancelButton.titleLabel?.font = .systemFont(ofSize: 16)
 
         cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
@@ -186,7 +192,10 @@ class ShareViewController: UIViewController {
 
     func showSavedState() {
 
-        saveButton.setTitle("Saved ✓", for: .normal)
+        saveButton.setTitle(
+            NSLocalizedString("saved", comment: ""),
+            for: .normal
+        )
         saveButton.backgroundColor = .systemGreen
         saveButton.isEnabled = false
 

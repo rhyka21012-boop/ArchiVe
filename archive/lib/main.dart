@@ -40,6 +40,10 @@ void main() async {
   //RevenueCat を初期化
   await Purchases.configure(PurchasesConfiguration(apiKey));
 
+  await SharedPreferenceAppGroup.setAppGroup(
+    "group.com.walkinggoblins.archive",
+  );
+
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(
@@ -59,7 +63,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _initialized = false;
 
   @override
@@ -67,10 +71,26 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _waitForInitialization();
 
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 200));
       checkShare();
     });
+  }
+
+  //アプリ復帰通知
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkShare();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   bool removed = false;
@@ -128,10 +148,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<String?> getSharedURL() async {
-    await SharedPreferenceAppGroup.setAppGroup(
-      "group.com.walkinggoblins.archive",
-    );
-
     final url = await SharedPreferenceAppGroup.getString("shared_url");
 
     if (url != null) {

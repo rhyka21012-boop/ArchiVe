@@ -1,0 +1,12 @@
+
+/* Class = "UILabel"; text = "This is URL"; ObjectID = "AZB-Y7-shw"; */
+"AZB-Y7-shw.text" = "This is URL";
+
+/* Class = "UILabel"; text = "Title"; ObjectID = "diH-Im-lkj"; */
+"diH-Im-lkj.text" = "Title";
+
+/* Class = "UIButton"; configuration.title = "Save Button"; ObjectID = "jyZ-qp-x7c"; */
+"jyZ-qp-x7c.configuration.title" = "Save Button";
+
+/* Class = "UIButton"; normalTitle = "Button"; ObjectID = "jyZ-qp-x7c"; */
+"jyZ-qp-x7c.normalTitle" = "Button";
