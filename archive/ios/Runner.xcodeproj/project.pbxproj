@@ -17,8 +17,6 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		A61890222F59C195008C1AAB /* Flutter.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A61890212F59C194008C1AAB /* Flutter.xcframework */; };
-		A61890232F59C195008C1AAB /* Flutter.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A61890212F59C194008C1AAB /* Flutter.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A64369022E51542C00D757DB /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64369012E51542C00D757DB /* StoreKit.framework */; };
 		A6A210502F5649F100061A87 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A2104F2F5649F100061A87 /* ShareViewController.swift */; };
 		A6A210532F5649F100061A87 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A6A210512F5649F100061A87 /* MainInterface.storyboard */; };
@@ -44,17 +42,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				A61890232F59C195008C1AAB /* Flutter.xcframework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A6A210582F5649F100061A87 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -120,7 +107,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A61890222F59C195008C1AAB /* Flutter.xcframework in Frameworks */,
 				A64369022E51542C00D757DB /* StoreKit.framework in Frameworks */,
 				CA3CCC2A495DAB4BC1028B07 /* Pods_Runner.framework in Frameworks */,
 			);
@@ -266,7 +252,6 @@
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
-				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				A6A210582F5649F100061A87 /* Embed Foundation Extensions */,
 				860966E5BAFDF43EF6E7769C /* [CP] Copy Pods Resources */,
