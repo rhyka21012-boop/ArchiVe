@@ -2,22 +2,24 @@
 //  ShareViewController.swift
 //  ShareExtension
 //
-//  Created by 001 on 2026/03/03.
-//
 
 import UIKit
-import Social
 import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
 
+    let iconView = UIImageView()
     let titleLabel = UILabel()
+    let domainLabel = UILabel()
     let urlLabel = UILabel()
     let saveButton = UIButton(type: .system)
+    let cancelButton = UIButton(type: .system)
+
+    let cardView = UIView()
 
     let appGroupId = "group.com.walkinggoblins.archive"
 
-    var sharedURL: String?
+    var sharedURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,72 +28,142 @@ class ShareViewController: UIViewController {
         fetchSharedURL()
     }
 
+    // MARK: UI
+
     func setupUI() {
 
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .systemGroupedBackground
 
-        titleLabel.text = "Shared URL"
-        titleLabel.font = .boldSystemFont(ofSize: 18)
+        iconView.image = UIImage(systemName: "bookmark.circle.fill")
+        iconView.tintColor = .systemBlue
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
 
-        urlLabel.text = "Loading..."
-        urlLabel.numberOfLines = 0
+        titleLabel.text = "Save to ArchiVe"
+        titleLabel.font = .boldSystemFont(ofSize: 22)
+        titleLabel.textAlignment = .center
+
+        domainLabel.font = .boldSystemFont(ofSize: 16)
+        domainLabel.textColor = .label
+        domainLabel.textAlignment = .center
+
+        urlLabel.font = .systemFont(ofSize: 14)
+        urlLabel.textColor = .secondaryLabel
+        urlLabel.numberOfLines = 2
         urlLabel.textAlignment = .center
 
-        saveButton.setTitle("Save", for: .normal)
-        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+        cardView.backgroundColor = .systemBackground
+        cardView.layer.cornerRadius = 14
+        cardView.layer.shadowColor = UIColor.black.cgColor
+        cardView.layer.shadowOpacity = 0.08
+        cardView.layer.shadowRadius = 8
+        cardView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        cardView.translatesAutoresizingMaskIntoConstraints = false
 
-        let stack = UIStackView(arrangedSubviews: [
-            titleLabel,
-            urlLabel,
-            saveButton
+        let cardStack = UIStackView(arrangedSubviews: [
+            domainLabel,
+            urlLabel
         ])
 
-        stack.axis = .vertical
-        stack.spacing = 20
-        stack.alignment = .center
+        cardStack.axis = .vertical
+        cardStack.spacing = 6
+        cardStack.alignment = .center
+        cardStack.translatesAutoresizingMaskIntoConstraints = false
 
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        view.addSubview(stack)
+        cardView.addSubview(cardStack)
 
         NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20)
+            cardStack.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            cardStack.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
+            cardStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+            cardStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16)
+        ])
+
+        saveButton.setTitle("Save Link", for: .normal)
+        saveButton.backgroundColor = .systemBlue
+        saveButton.tintColor = .white
+        saveButton.titleLabel?.font = .boldSystemFont(ofSize: 17)
+        saveButton.layer.cornerRadius = 12
+        saveButton.contentEdgeInsets = UIEdgeInsets(top: 14, left: 40, bottom: 14, right: 40)
+
+        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.titleLabel?.font = .systemFont(ofSize: 16)
+
+        cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+
+        let mainStack = UIStackView(arrangedSubviews: [
+            iconView,
+            titleLabel,
+            cardView,
+            saveButton,
+            cancelButton
+        ])
+
+        mainStack.axis = .vertical
+        mainStack.spacing = 20
+        mainStack.alignment = .center
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(mainStack)
+
+        NSLayoutConstraint.activate([
+
+            iconView.heightAnchor.constraint(equalToConstant: 70),
+            iconView.widthAnchor.constraint(equalToConstant: 70),
+
+            cardView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
+
+            mainStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            mainStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+
         ])
     }
+
+    // MARK: Fetch URL
 
     func fetchSharedURL() {
 
         guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem else { return }
 
-        guard let itemProvider = extensionItem.attachments?.first else { return }
+        guard let attachments = extensionItem.attachments else { return }
 
-        if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+        for itemProvider in attachments {
 
-            itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
+            if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
 
-                DispatchQueue.main.async {
+                itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
 
-                    if let url = item as? URL {
-                        self.sharedURL = url.absoluteString
-                        self.urlLabel.text = url.absoluteString
+                    DispatchQueue.main.async {
+
+                        if let url = item as? URL {
+
+                            self.sharedURL = url
+
+                            self.domainLabel.text = url.host ?? "Link"
+
+                            self.urlLabel.text = url.absoluteString
+                        }
+
                     }
-
                 }
 
+                break
             }
-
         }
-
     }
+
+    // MARK: Save
 
     @objc func saveTapped() {
 
         guard let url = sharedURL else { return }
 
-        saveURL(url)
+        saveURL(url.absoluteString)
 
     }
 
@@ -99,19 +171,35 @@ class ShareViewController: UIViewController {
 
         let defaults = UserDefaults(suiteName: appGroupId)
 
-        defaults?.set(url, forKey: "shared_url")
+        var urls = defaults?.stringArray(forKey: "shared_url") ?? []
+        urls.append(url)
 
-        openMainApp()
+        defaults?.set(urls, forKey: "shared_url")
+        defaults?.synchronize()
 
+        showSavedState()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            self.extensionContext?.completeRequest(returningItems: nil)
+        }
     }
 
-    func openMainApp() {
+    func showSavedState() {
 
-        if let url = URL(string: "archive://share") {
-            extensionContext?.open(url, completionHandler: nil)
+        saveButton.setTitle("Saved ✓", for: .normal)
+        saveButton.backgroundColor = .systemGreen
+        saveButton.isEnabled = false
+
+        UIView.animate(withDuration: 0.2) {
+            self.saveButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }
+    }
 
-        extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+    // MARK: Cancel
+
+    @objc func cancelTapped() {
+
+        extensionContext?.completeRequest(returningItems: nil)
     }
 
 }

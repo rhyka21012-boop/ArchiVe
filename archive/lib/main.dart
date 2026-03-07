@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:shared_preference_app_group/shared_preference_app_group.dart';
 
 import 'theme_provider.dart';
 import 'launch_gate.dart';
@@ -127,11 +128,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<String?> getSharedURL() async {
-    final prefs = await SharedPreferences.getInstance();
-    final url = prefs.getString("shared_url");
+    await SharedPreferenceAppGroup.setAppGroup(
+      "group.com.walkinggoblins.archive",
+    );
+
+    final url = await SharedPreferenceAppGroup.getString("shared_url");
 
     if (url != null) {
-      await prefs.remove("shared_url"); // 一度取得したら削除
+      await SharedPreferenceAppGroup.remove("shared_url");
     }
 
     return url;
