@@ -9,9 +9,9 @@ import UniformTypeIdentifiers
 class ShareViewController: UIViewController {
 
     let titleLabel = UILabel()
-    let domainLabel = UILabel()
     let saveButton = UIButton(type: .system)
     let cancelButton = UIButton(type: .system)
+    let handleBar = UIView()
 
     let appGroupId = "group.com.walkinggoblins.archive"
 
@@ -20,7 +20,7 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        preferredContentSize = CGSize(width: 0, height: 180)
+        preferredContentSize = CGSize(width: 0, height: 220)
 
         setupUI()
         fetchSharedURL()
@@ -30,42 +30,70 @@ class ShareViewController: UIViewController {
 
     func setupUI() {
 
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .systemBackground
 
+        // ドラッグバー
+        handleBar.backgroundColor = .systemGray4
+        handleBar.layer.cornerRadius = 2.5
+        handleBar.translatesAutoresizingMaskIntoConstraints = false
+
+        // タイトル
+        titleLabel.text = "保存しますか？"
         titleLabel.font = .boldSystemFont(ofSize: 20)
         titleLabel.textAlignment = .center
 
-        domainLabel.font = .systemFont(ofSize: 15)
-        domainLabel.textColor = .secondaryLabel
-        domainLabel.textAlignment = .center
-
-        saveButton.backgroundColor = UIColor(red: 1.0, green: 0.45, blue: 0.0, alpha: 1.0)
+        // 保存ボタン
+        saveButton.setTitle("保存", for: .normal)
+        saveButton.backgroundColor = UIColor(red: 0.10, green: 0.65, blue: 0.70, alpha: 1.0)
         saveButton.tintColor = .white
         saveButton.layer.cornerRadius = 12
-        saveButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 40, bottom: 12, right: 40)
+        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
 
-        cancelButton.setTitleColor(.secondaryLabel, for: .normal)
+        // キャンセルボタン
+        cancelButton.setTitle("キャンセル", for: .normal)
+        cancelButton.backgroundColor = .systemGray5
+        cancelButton.tintColor = .label
+        cancelButton.layer.cornerRadius = 12
+        cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
 
+        // ボタンStack
+        let buttonStack = UIStackView(arrangedSubviews: [
+            cancelButton,
+            saveButton
+        ])
+
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 16
+        buttonStack.distribution = .fillEqually
+
+        // メインStack
         let mainStack = UIStackView(arrangedSubviews: [
-            domainLabel,
             titleLabel,
-            saveButton,
-            cancelButton
+            buttonStack
         ])
 
         mainStack.axis = .vertical
-        mainStack.spacing = 14
-        mainStack.alignment = .center
+        mainStack.spacing = 28
         mainStack.translatesAutoresizingMaskIntoConstraints = false
 
+        view.addSubview(handleBar)
         view.addSubview(mainStack)
 
+        handleBar.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        handleBar.heightAnchor.constraint(equalToConstant: 5).isActive = true
+        handleBar.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        handleBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 8).isActive = true
+
         NSLayoutConstraint.activate([
-            mainStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            mainStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+
+            mainStack.topAnchor.constraint(equalTo: handleBar.bottomAnchor, constant: 30),
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24)
+
         ])
+
+        saveButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        cancelButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
     }
 
     // MARK: Fetch URL
@@ -85,10 +113,7 @@ class ShareViewController: UIViewController {
                     DispatchQueue.main.async {
 
                         if let url = item as? URL {
-
                             self.sharedURL = url
-
-                            self.domainLabel.text = url.host ?? "Link"
                         }
 
                     }
@@ -106,7 +131,6 @@ class ShareViewController: UIViewController {
         guard let url = sharedURL else { return }
 
         saveURL(url.absoluteString)
-
     }
 
     func saveURL(_ url: String) {
@@ -131,10 +155,6 @@ class ShareViewController: UIViewController {
         saveButton.setTitle("Saved ✓", for: .normal)
         saveButton.backgroundColor = .systemGreen
         saveButton.isEnabled = false
-
-        UIView.animate(withDuration: 0.2) {
-            self.saveButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }
     }
 
     // MARK: Cancel
