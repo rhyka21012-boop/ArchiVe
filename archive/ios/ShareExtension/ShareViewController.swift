@@ -89,8 +89,6 @@ class ShareViewController: UIViewController {
                             self.sharedURL = url
 
                             self.domainLabel.text = url.host ?? "Link"
-
-                            self.urlLabel.text = url.absoluteString
                         }
 
                     }
