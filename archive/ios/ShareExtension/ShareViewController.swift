@@ -22,6 +22,10 @@ class ShareViewController: UIViewController {
 
         preferredContentSize = CGSize(width: 0, height: 220)
 
+        if let sheet = self.presentationController as? UISheetPresentationController {
+            sheet.detents = [.custom(resolver: { _ in 220 })]
+        }
+
         setupUI()
         fetchSharedURL()
     }
@@ -38,19 +42,19 @@ class ShareViewController: UIViewController {
         handleBar.translatesAutoresizingMaskIntoConstraints = false
 
         // タイトル
-        titleLabel.text = "保存しますか？"
+        titleLabel.text = NSLocalizedString("save_title", comment: "")
         titleLabel.font = .boldSystemFont(ofSize: 20)
         titleLabel.textAlignment = .center
 
         // 保存ボタン
-        saveButton.setTitle("保存", for: .normal)
-        saveButton.backgroundColor = UIColor(red: 0.10, green: 0.65, blue: 0.70, alpha: 1.0)
+        saveButton.setTitle(NSLocalizedString("save_button", comment: ""), for: .normal)
+        saveButton.backgroundColor = UIColor(red: 0.984, green: 0.549, blue: 0.0, alpha: 1.0)
         saveButton.tintColor = .white
         saveButton.layer.cornerRadius = 12
         saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
 
         // キャンセルボタン
-        cancelButton.setTitle("キャンセル", for: .normal)
+        cancelButton.setTitle(NSLocalizedString("cancel_button", comment: ""), for: .normal)
         cancelButton.backgroundColor = .systemGray5
         cancelButton.tintColor = .label
         cancelButton.layer.cornerRadius = 12
@@ -152,7 +156,7 @@ class ShareViewController: UIViewController {
 
     func showSavedState() {
 
-        saveButton.setTitle("Saved ✓", for: .normal)
+        saveButton.setTitle(NSLocalizedString("saved", comment: ""), for: .normal)
         saveButton.backgroundColor = .systemGreen
         saveButton.isEnabled = false
     }

@@ -75,7 +75,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 200));
-      checkShare();
+      loadSharedUrls();
     });
   }
 
@@ -83,7 +83,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      checkShare();
+      loadSharedUrls();
     }
   }
 
@@ -137,24 +137,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 
-  void checkShare() async {
-    final url = await getSharedURL();
+  //共有されたURLを取得
+  Future<List<String>> getSharedUrls() async {
+    final urls =
+        await SharedPreferenceAppGroup.getStringList("shared_url") ?? [];
 
-    if (url != null) {
-      print("Shared URL: $url");
-
-      await saveUrlAuto(url);
-    }
+    return urls;
   }
 
-  Future<String?> getSharedURL() async {
-    final url = await SharedPreferenceAppGroup.getString("shared_url");
+  //共有されたURLをまとめて保存
+  Future<void> loadSharedUrls() async {
+    final urls =
+        await SharedPreferenceAppGroup.getStringList("shared_url") ?? [];
 
-    if (url != null) {
-      await SharedPreferenceAppGroup.remove("shared_url");
+    if (urls.isEmpty) return;
+
+    for (final url in urls) {
+      await saveUrlAuto(url);
     }
 
-    return url;
+    await SharedPreferenceAppGroup.remove("shared_url");
+
+    setState(() {});
   }
 
   //タイトル取得
