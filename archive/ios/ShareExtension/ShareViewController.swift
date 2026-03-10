@@ -202,20 +202,19 @@ class ShareViewController: UIViewController {
 
     debugLog("saveURL called: \(url)")
 
-    let defaults = UserDefaults(suiteName: appGroupId)
+    let encoded = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? url
 
-    var urls = defaults?.stringArray(forKey: "shared_url") ?? []
-    urls.append(url)
+    let scheme = "archive://share?url=\(encoded)"
 
-    defaults?.set(urls, forKey: "shared_url")
+    if let shareURL = URL(string: scheme) {
 
-    debugLog("saved urls count: \(urls.count)")
-    debugLog("AppGroup write complete")
+        debugLog("Opening app with scheme")
 
-    showSavedState()
+        UIApplication.shared.open(shareURL)
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-        self.debugLog("Extension closing")
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
         self.extensionContext?.completeRequest(returningItems: nil)
     }
 }

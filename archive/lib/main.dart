@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preference_app_group/shared_preference_app_group.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'theme_provider.dart';
 import 'launch_gate.dart';
@@ -67,6 +68,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _initialized = false;
 
+  StreamSubscription<List<SharedMediaFile>>? _intentSub;
+
   @override
   void initState() {
     super.initState();
@@ -74,9 +77,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(const Duration(milliseconds: 200));
-      loadSharedUrls();
+    // 起動時に共有されたデータ
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
+      if (value.isNotEmpty) {
+        final url = value.first.path;
+
+        DebugLogService.add("receive_sharing_intent 初期URL: $url");
+
+        saveUrlAuto(url);
+      }
+    });
+
+    // アプリ起動中に共有
+    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+      if (value.isNotEmpty) {
+        final url = value.first.path;
+
+        DebugLogService.add("receive_sharing_intent 共有URL: $url");
+
+        saveUrlAuto(url);
+      }
     });
   }
 
@@ -90,6 +110,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _intentSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

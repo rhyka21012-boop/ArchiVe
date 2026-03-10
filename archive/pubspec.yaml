@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.8.2+29
+version: 1.8.2+30
 
 environment:
   sdk: ^3.7.2
@@ -44,6 +44,7 @@ dependencies:
   package_info_plus: ^9.0.0
   pub_semver: ^2.2.0
   shared_preference_app_group: ^1.1.1
+  receive_sharing_intent: ^1.8.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

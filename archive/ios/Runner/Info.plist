@@ -60,5 +60,18 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+    <array>
+    	<dict>
+	    	<key>CFBundleTypeRole</key>
+		    <string>Editor</string>
+		    <key>CFBundleURLName</key>
+		    <string>archive</string>
+		    <key>CFBundleURLSchemes</key>
+		    <array>
+			    <string>archive</string>
+		    </array>
+	    </dict>
+    </array>
 </dict>
 </plist>
