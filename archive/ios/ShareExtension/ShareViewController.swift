@@ -20,7 +20,7 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        debugLog("ShareExtension opened") // DEBUG
+        debugLog("ShareExtension opened v2") // DEBUG
 
         preferredContentSize = CGSize(width: 0, height: 220)
 
@@ -124,42 +124,65 @@ class ShareViewController: UIViewController {
 
     func fetchSharedURL() {
 
-        debugLog("fetchSharedURL called") // DEBUG
+    debugLog("fetchSharedURL called")
 
-        guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem else {
-            debugLog("No extension item") // DEBUG
+    guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem else {
+        debugLog("No extension item")
+        return
+    }
+
+    guard let attachments = extensionItem.attachments else {
+        debugLog("No attachments")
+        return
+    }
+
+    for itemProvider in attachments {
+
+        // URL
+        if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+
+            debugLog("URL type detected")
+
+            itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
+
+                DispatchQueue.main.async {
+
+                    if let url = item as? URL {
+                        self.sharedURL = url
+                        self.debugLog("URL received: \(url.absoluteString)")
+                    }
+
+                }
+            }
+
             return
         }
 
-        guard let attachments = extensionItem.attachments else { 
-            debugLog("No attachments") // DEBUG
-            return 
-        }
+        // TEXT (ここが重要)
+        if itemProvider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
 
-        for itemProvider in attachments {
+            debugLog("Text type detected")
 
-            if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+            itemProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
 
-                debugLog("URL type detected") // DEBUG
+                DispatchQueue.main.async {
 
-                itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
+                    if let text = item as? String,
+                       let url = URL(string: text) {
 
-                    DispatchQueue.main.async {
-
-                        if let url = item as? URL {
-                            self.sharedURL = url
-                            self.debugLog("URL received: \(url.absoluteString)") // DEBUG
-                        } else {
-                            self.debugLog("URL cast failed") // DEBUG
-                        }
-
+                        self.sharedURL = url
+                        self.debugLog("URL from text: \(url.absoluteString)")
                     }
-                }
 
-                break
+                }
             }
+
+            return
         }
     }
+
+    debugLog("No compatible type found")
+}
 
     // MARK: Save
 
