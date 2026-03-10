@@ -5,7 +5,6 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate {
 
   let appGroupId = "group.com.walkinggoblins.archive"
-  let channelName = "share_channel"
 
   override func application(
     _ application: UIApplication,
@@ -14,39 +13,44 @@ import UIKit
 
     GeneratedPluginRegistrant.register(with: self)
 
-    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+    let controller = window?.rootViewController as! FlutterViewController
 
-    let channel = FlutterMethodChannel(
-      name: channelName,
+    /// Debug Log Channel
+    let debugChannel = FlutterMethodChannel(
+      name: "debug_log_channel",
       binaryMessenger: controller.binaryMessenger
     )
 
-    channel.setMethodCallHandler { (call, result) in
+    debugChannel.setMethodCallHandler { (call, result) in
 
-      if call.method == "getSharedUrl" {
+      let defaults = UserDefaults(suiteName: self.appGroupId)
 
-        let defaults = UserDefaults(suiteName: self.appGroupId)
-        let url = defaults?.string(forKey: "shared_url")
+      if call.method == "getLogs" {
 
-        if let sharedUrl = url {
+        let logs = defaults?.stringArray(forKey: "debug_logs") ?? []
+        result(logs)
 
-          result(sharedUrl)
+      } else if call.method == "clearLogs" {
 
-          // 取得後は削除（次回起動時に残らないように）
-          defaults?.removeObject(forKey: "shared_url")
+        defaults?.removeObject(forKey: "debug_logs")
+        result(true)
 
-        } else {
+      } else if call.method == "addLog" {
 
-          result(nil)
+        if let args = call.arguments as? [String: Any],
+           let message = args["message"] as? String {
 
+          var logs = defaults?.stringArray(forKey: "debug_logs") ?? []
+          logs.append(message)
+          defaults?.set(logs, forKey: "debug_logs")
         }
+
+        result(true)
 
       } else {
 
         result(FlutterMethodNotImplemented)
-
       }
-
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

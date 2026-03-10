@@ -17,6 +17,7 @@ import 'package:shared_preference_app_group/shared_preference_app_group.dart';
 import 'theme_provider.dart';
 import 'launch_gate.dart';
 import 'l10n/app_localizations.dart';
+import 'debug_log_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -142,23 +143,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     final urls =
         await SharedPreferenceAppGroup.getStringList("shared_url") ?? [];
 
+    DebugLogService.add("受信URL一覧: $urls");
+
     return urls;
   }
 
   //共有されたURLをまとめて保存
   Future<void> loadSharedUrls() async {
-    final urls =
-        await SharedPreferenceAppGroup.getStringList("shared_url") ?? [];
+    for (int i = 0; i < 5; i++) {
+      final urls =
+          await SharedPreferenceAppGroup.getStringList("shared_url") ?? [];
 
-    if (urls.isEmpty) return;
+      if (urls.isNotEmpty) {
+        DebugLogService.add("ShareExtensionから取得: $urls");
 
-    for (final url in urls) {
-      await saveUrlAuto(url);
+        for (final url in urls) {
+          await saveUrlAuto(url);
+        }
+
+        await SharedPreferenceAppGroup.remove("shared_url");
+        return;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 300));
     }
 
-    await SharedPreferenceAppGroup.remove("shared_url");
-
-    setState(() {});
+    DebugLogService.add("共有URLなし");
   }
 
   //タイトル取得
@@ -278,6 +288,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   //自動保存
   Future<void> saveUrlAuto(String url) async {
+    DebugLogService.add("自動保存開始: $url");
+
     final prefs = await SharedPreferences.getInstance();
 
     final results = await Future.wait([
@@ -324,7 +336,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     await prefs.setStringList('saved_metadata', updatedList);
 
-    print("saved complete");
+    DebugLogService.add("保存完了: $url");
   }
 }
 

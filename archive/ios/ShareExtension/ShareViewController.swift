@@ -20,6 +20,8 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        debugLog("ShareExtension opened") // DEBUG
+
         preferredContentSize = CGSize(width: 0, height: 220)
 
         if let sheet = self.presentationController as? UISheetPresentationController {
@@ -28,6 +30,24 @@ class ShareViewController: UIViewController {
 
         setupUI()
         fetchSharedURL()
+    }
+
+    // MARK: DEBUG LOG
+
+    func debugLog(_ message: String) {
+
+        let defaults = UserDefaults(suiteName: appGroupId)
+
+        var logs = defaults?.stringArray(forKey: "debug_logs") ?? []
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+
+        let time = formatter.string(from: Date())
+
+        logs.append("[\(time)] \(message)")
+
+        defaults?.set(logs, forKey: "debug_logs")
     }
 
     // MARK: UI
@@ -104,13 +124,23 @@ class ShareViewController: UIViewController {
 
     func fetchSharedURL() {
 
-        guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem else { return }
+        debugLog("fetchSharedURL called") // DEBUG
 
-        guard let attachments = extensionItem.attachments else { return }
+        guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem else {
+            debugLog("No extension item") // DEBUG
+            return
+        }
+
+        guard let attachments = extensionItem.attachments else { 
+            debugLog("No attachments") // DEBUG
+            return 
+        }
 
         for itemProvider in attachments {
 
             if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+
+                debugLog("URL type detected") // DEBUG
 
                 itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
 
@@ -118,6 +148,9 @@ class ShareViewController: UIViewController {
 
                         if let url = item as? URL {
                             self.sharedURL = url
+                            self.debugLog("URL received: \(url.absoluteString)") // DEBUG
+                        } else {
+                            self.debugLog("URL cast failed") // DEBUG
                         }
 
                     }
@@ -132,27 +165,37 @@ class ShareViewController: UIViewController {
 
     @objc func saveTapped() {
 
-        guard let url = sharedURL else { return }
+        debugLog("Save button tapped") // DEBUG
+
+        guard let url = sharedURL else { 
+            debugLog("sharedURL is nil") // DEBUG
+            return 
+        }
 
         saveURL(url.absoluteString)
     }
 
     func saveURL(_ url: String) {
 
-        let defaults = UserDefaults(suiteName: appGroupId)
+    debugLog("saveURL called: \(url)")
 
-        var urls = defaults?.stringArray(forKey: "shared_url") ?? []
-        urls.append(url)
+    let defaults = UserDefaults(suiteName: appGroupId)
 
-        defaults?.set(urls, forKey: "shared_url")
-        defaults?.synchronize()
+    var urls = defaults?.stringArray(forKey: "shared_url") ?? []
+    urls.append(url)
 
-        showSavedState()
+    defaults?.set(urls, forKey: "shared_url")
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            self.extensionContext?.completeRequest(returningItems: nil)
-        }
+    debugLog("saved urls count: \(urls.count)")
+    debugLog("AppGroup write complete")
+
+    showSavedState()
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        self.debugLog("Extension closing")
+        self.extensionContext?.completeRequest(returningItems: nil)
     }
+}
 
     func showSavedState() {
 
@@ -164,6 +207,8 @@ class ShareViewController: UIViewController {
     // MARK: Cancel
 
     @objc func cancelTapped() {
+
+        debugLog("Cancel tapped") // DEBUG
 
         extensionContext?.completeRequest(returningItems: nil)
     }
