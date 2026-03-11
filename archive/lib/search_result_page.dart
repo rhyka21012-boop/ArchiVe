@@ -134,13 +134,6 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..setNavigationDelegate(
             NavigationDelegate(
-              onNavigationRequest: (request) async {
-                if (!request.isMainFrame) {
-                  await _controller.loadRequest(Uri.parse(request.url));
-                  return NavigationDecision.prevent;
-                }
-                return NavigationDecision.navigate;
-              },
               onProgress: (progress) {
                 setState(() {
                   _progress = progress;
