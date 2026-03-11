@@ -17,6 +17,7 @@ import 'list_page.dart';
 import 'search_page.dart';
 import 'analitics_page.dart';
 import 'setting_page.dart';
+import 'my_ad_widget.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'home_tab_index_provider.dart';

@@ -1,24 +1,20 @@
+import 'home_tab_index_provider.dart';
+import 'list_tab_index_provider.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'theme_provider.dart';
 //import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'thumbnail_setting_provider.dart';
 import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
-
-import 'home_tab_index_provider.dart';
-import 'list_tab_index_provider.dart';
-import 'thumbnail_setting_provider.dart';
-import 'theme_provider.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'tutorial_slide.dart';
-import 'debug_log_service.dart';
-import 'debug_log_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -391,20 +387,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ListTile(
             title: Text(L10n.of(context)!.settings_page_app_version),
             subtitle: Text(L10n.of(context)!.version),
-          ),
-          ListTile(
-            leading: const Icon(Icons.bug_report),
-            title: const Text("デバッグログ"),
-            onTap: () async {
-              final logs = await DebugLogService.getLogs();
-
-              if (!context.mounted) return;
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => DebugLogPage(logs: logs)),
-              );
-            },
           ),
         ],
       ),
