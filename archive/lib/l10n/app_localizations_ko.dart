@@ -398,6 +398,12 @@ class L10nKo extends L10n {
   String get search_page_add_favorite => '즐겨찾기 사이트 추가';
 
   @override
+  String get search_page_random_loading => '오늘의 추천을 선택하는 중…';
+
+  @override
+  String get search_page_random_this => '오늘의 추천!';
+
+  @override
   String get search_result_page_site_saved => '사이트가 저장되었습니다';
 
   @override
@@ -615,25 +621,10 @@ class L10nKo extends L10n {
   String get random_image_delete_list_confirm => '삭제';
 
   @override
-  String get premium_detail_purchase_complete => '프리미엄 구매가 완료되었습니다!';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      '구매는 완료되었지만 프리미엄이 활성화되지 않았습니다';
-
-  @override
-  String get premium_detail_no_item => '구매 가능한 상품이 없습니다';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return '구매 오류: $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => '저장 슬롯 무제한';
+  String get premium_detail_premium_item01 => '무제한 저장';
 
   @override
   String get premium_detail_premium_item02 => '테마 색상 자유 변경';
@@ -645,16 +636,37 @@ class L10nKo extends L10n {
   String get premium_detail_premium_item04 => '여러 태그로 빠른 검색';
 
   @override
-  String get premium_detail_premium_item05 => '장르 및 평가 통계 시각화';
+  String get premium_detail_premium_item05 => '장르 및 평점별 데이터 시각화 통계';
 
   @override
   String get premium_detail_premium_item06 => '광고 제거';
 
   @override
-  String get premium_detail_price => '월 ₩1,100.00부터 시작';
+  String get premium_detail_note =>
+      '1개월 무료 체험 후 자동으로 구독이 갱신됩니다.\n언제든지 취소할 수 있습니다.';
 
   @override
-  String get premium_detail_note => '언제든지 해지 가능';
+  String get premium_detail_restore_not_found => '구매 내역을 찾을 수 없습니다';
+
+  @override
+  String get premium_detail_free_trial_badge => '1개월 무료';
+
+  @override
+  String get premium_detail_start_trial => '1개월 무료로 시작';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return '이후 $price / 월';
+  }
+
+  @override
+  String get premium_detail_restore_button => '구매 복원';
+
+  @override
+  String get premium_detail_purchase_complete => '프리미엄 구매가 완료되었습니다!';
+
+  @override
+  String get premium_detail_restart_message => '프리미엄 기능이 활성화되었습니다.\n앱이 재시작됩니다.';
 
   @override
   String get tutorial => '튜토리얼';

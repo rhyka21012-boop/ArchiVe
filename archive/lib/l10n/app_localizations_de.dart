@@ -405,6 +405,13 @@ class L10nDe extends L10n {
   String get search_page_add_favorite => 'Website zu Favoriten hinzufügen';
 
   @override
+  String get search_page_random_loading =>
+      'Heutige Empfehlung wird ausgewählt…';
+
+  @override
+  String get search_page_random_this => 'Heutige Empfehlung!';
+
+  @override
   String get search_result_page_site_saved => 'Website wurde gespeichert';
 
   @override
@@ -627,47 +634,55 @@ class L10nDe extends L10n {
   String get random_image_delete_list_confirm => 'Löschen';
 
   @override
-  String get premium_detail_purchase_complete => 'Premium erfolgreich gekauft!';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      'Kauf abgeschlossen, aber Premium wurde nicht aktiviert';
-
-  @override
-  String get premium_detail_no_item => 'Keine kaufbaren Pläne gefunden';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return 'Kauffehler: $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => 'Unbegrenzte Speicherplätze';
+  String get premium_detail_premium_item01 => 'Unbegrenzte Speicherungen';
 
   @override
-  String get premium_detail_premium_item02 => 'Designfarben frei ändern';
+  String get premium_detail_premium_item02 => 'Designfarben frei anpassen';
 
   @override
   String get premium_detail_premium_item03 => 'Bilder frei hinzufügen';
 
   @override
-  String get premium_detail_premium_item04 => 'Schnellsuche mit mehreren Tags';
+  String get premium_detail_premium_item04 =>
+      'Schnelle Suche mit mehreren Tags';
 
   @override
   String get premium_detail_premium_item05 =>
-      'Statistiken nach Genre und Bewertung visualisieren';
+      'Statistiken zur Visualisierung nach Genre und Bewertung';
 
   @override
   String get premium_detail_premium_item06 => 'Werbung entfernen';
 
   @override
-  String get premium_detail_price => 'Start ab €0.99 / Monat';
+  String get premium_detail_note =>
+      'Nach der 1-monatigen kostenlosen Testphase wird das Abonnement automatisch verlängert.\nJederzeit kündbar.';
 
   @override
-  String get premium_detail_note => 'Jederzeit kündbar';
+  String get premium_detail_restore_not_found => 'Keine Kaufhistorie gefunden';
+
+  @override
+  String get premium_detail_free_trial_badge => '1 Monat kostenlos';
+
+  @override
+  String get premium_detail_start_trial => '1 Monat kostenlos starten';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return 'Danach $price / Monat';
+  }
+
+  @override
+  String get premium_detail_restore_button => 'Käufe wiederherstellen';
+
+  @override
+  String get premium_detail_purchase_complete => 'Premium erfolgreich gekauft!';
+
+  @override
+  String get premium_detail_restart_message =>
+      'Premium-Funktionen wurden aktiviert.\nDie App wird neu gestartet.';
 
   @override
   String get tutorial => 'Tutorial';

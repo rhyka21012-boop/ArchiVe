@@ -314,6 +314,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     await _saveChanges(exitEditMode: false);
   }
 
+  //****サムネイル取得処理****
   Future<String?> fetchThumbnailByWebView(String url) async {
     final Completer<String?> completer = Completer();
 

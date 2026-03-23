@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 1.8.2+32
+version: 1.8.3+33
 
 environment:
   sdk: ^3.7.2
@@ -44,6 +44,8 @@ dependencies:
   video_player: ^2.8.2
   package_info_plus: ^9.0.0
   pub_semver: ^2.2.0
+  #vibration: ^1.8.4
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -79,5 +81,8 @@ flutter:
     - family: NotoSerifJP
       fonts:
         - asset: assets/fonts/NotoSerifJP-VariableFont_wght.ttf
+    - family: FlutterIcon
+      fonts:
+        - asset: assets/fonts/MyFlutterApp.ttf
 
   uses-material-design: true

@@ -403,6 +403,13 @@ class L10nFr extends L10n {
   String get search_page_add_favorite => 'Ajouter un site favori';
 
   @override
+  String get search_page_random_loading =>
+      'Sélection de la recommandation du jour…';
+
+  @override
+  String get search_page_random_this => 'La recommandation du jour !';
+
+  @override
   String get search_result_page_site_saved => 'Site enregistré';
 
   @override
@@ -626,33 +633,17 @@ class L10nFr extends L10n {
   String get random_image_delete_list_confirm => 'Supprimer';
 
   @override
-  String get premium_detail_purchase_complete => 'Premium acheté avec succès !';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      'Achat terminé, mais Premium non activé';
-
-  @override
-  String get premium_detail_no_item => 'Aucun plan disponible';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return 'Erreur d’achat : $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 =>
-      'Emplacements d’enregistrement illimités';
+  String get premium_detail_premium_item01 => 'Sauvegardes illimitées';
 
   @override
   String get premium_detail_premium_item02 =>
-      'Changer librement les couleurs du thème';
+      'Personnaliser les couleurs du thème';
 
   @override
-  String get premium_detail_premium_item03 => 'Ajouter des images librement';
+  String get premium_detail_premium_item03 => 'Ajouter librement des images';
 
   @override
   String get premium_detail_premium_item04 =>
@@ -660,16 +651,40 @@ class L10nFr extends L10n {
 
   @override
   String get premium_detail_premium_item05 =>
-      'Visualiser les statistiques par genre et évaluation';
+      'Statistiques pour visualiser les données par genre et évaluation';
 
   @override
   String get premium_detail_premium_item06 => 'Supprimer les publicités';
 
   @override
-  String get premium_detail_price => 'À partir de €0.99 / mois';
+  String get premium_detail_note =>
+      'Après l’essai gratuit d’un mois, l’abonnement sera renouvelé automatiquement.\nAnnulation possible à tout moment.';
 
   @override
-  String get premium_detail_note => 'Annulable à tout moment';
+  String get premium_detail_restore_not_found =>
+      'Aucun historique d’achat trouvé';
+
+  @override
+  String get premium_detail_free_trial_badge => '1 mois gratuit';
+
+  @override
+  String get premium_detail_start_trial =>
+      'Commencer l’essai gratuit d’un mois';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return 'Puis $price / mois';
+  }
+
+  @override
+  String get premium_detail_restore_button => 'Restaurer les achats';
+
+  @override
+  String get premium_detail_purchase_complete => 'Premium acheté avec succès !';
+
+  @override
+  String get premium_detail_restart_message =>
+      'Les fonctionnalités Premium ont été activées.\nL’application va redémarrer.';
 
   @override
   String get tutorial => 'Tutoriel';

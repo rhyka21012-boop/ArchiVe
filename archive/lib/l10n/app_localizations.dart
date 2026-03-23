@@ -872,6 +872,18 @@ abstract class L10n {
   /// **'お気に入りサイトを追加'**
   String get search_page_add_favorite;
 
+  /// No description provided for @search_page_random_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'今日のおすすめを選んでいます…'**
+  String get search_page_random_loading;
+
+  /// No description provided for @search_page_random_this.
+  ///
+  /// In ja, this message translates to:
+  /// **'今日のおすすめはこれ！'**
+  String get search_page_random_this;
+
   /// No description provided for @search_result_page_site_saved.
   ///
   /// In ja, this message translates to:
@@ -1274,30 +1286,6 @@ abstract class L10n {
   /// **'削除'**
   String get random_image_delete_list_confirm;
 
-  /// No description provided for @premium_detail_purchase_complete.
-  ///
-  /// In ja, this message translates to:
-  /// **'プレミアムを購入しました！'**
-  String get premium_detail_purchase_complete;
-
-  /// No description provided for @premium_detail_purchase_incomplete.
-  ///
-  /// In ja, this message translates to:
-  /// **'購入は完了しましたが、プレミアムが有効化されませんでした'**
-  String get premium_detail_purchase_incomplete;
-
-  /// No description provided for @premium_detail_no_item.
-  ///
-  /// In ja, this message translates to:
-  /// **'購入可能なプランが見つかりません'**
-  String get premium_detail_no_item;
-
-  /// No description provided for @premium_detail_ex.
-  ///
-  /// In ja, this message translates to:
-  /// **'購入エラー: {ex}'**
-  String premium_detail_ex(Object ex);
-
   /// No description provided for @premium_detail_premium_title.
   ///
   /// In ja, this message translates to:
@@ -1340,17 +1328,53 @@ abstract class L10n {
   /// **'広告の非表示'**
   String get premium_detail_premium_item06;
 
-  /// No description provided for @premium_detail_price.
-  ///
-  /// In ja, this message translates to:
-  /// **'¥170 / 月で始める'**
-  String get premium_detail_price;
-
   /// No description provided for @premium_detail_note.
   ///
   /// In ja, this message translates to:
-  /// **'いつでもキャンセル可能'**
+  /// **'1ヶ月の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。'**
   String get premium_detail_note;
+
+  /// No description provided for @premium_detail_restore_not_found.
+  ///
+  /// In ja, this message translates to:
+  /// **'購入履歴が見つかりませんでした'**
+  String get premium_detail_restore_not_found;
+
+  /// No description provided for @premium_detail_free_trial_badge.
+  ///
+  /// In ja, this message translates to:
+  /// **'1ヶ月無料'**
+  String get premium_detail_free_trial_badge;
+
+  /// No description provided for @premium_detail_start_trial.
+  ///
+  /// In ja, this message translates to:
+  /// **'1ヶ月無料で開始'**
+  String get premium_detail_start_trial;
+
+  /// No description provided for @premium_detail_price_after_trial.
+  ///
+  /// In ja, this message translates to:
+  /// **'その後 {price} / 月'**
+  String premium_detail_price_after_trial(Object price);
+
+  /// No description provided for @premium_detail_restore_button.
+  ///
+  /// In ja, this message translates to:
+  /// **'購入を復元'**
+  String get premium_detail_restore_button;
+
+  /// No description provided for @premium_detail_purchase_complete.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアムを購入しました！'**
+  String get premium_detail_purchase_complete;
+
+  /// No description provided for @premium_detail_restart_message.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアム機能が有効になりました。\nアプリを再起動します。'**
+  String get premium_detail_restart_message;
 
   /// No description provided for @tutorial.
   ///

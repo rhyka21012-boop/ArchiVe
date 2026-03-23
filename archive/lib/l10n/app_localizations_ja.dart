@@ -398,6 +398,12 @@ class L10nJa extends L10n {
   String get search_page_add_favorite => 'お気に入りサイトを追加';
 
   @override
+  String get search_page_random_loading => '今日のおすすめを選んでいます…';
+
+  @override
+  String get search_page_random_this => '今日のおすすめはこれ！';
+
+  @override
   String get search_result_page_site_saved => 'サイトを保存しました';
 
   @override
@@ -614,21 +620,6 @@ class L10nJa extends L10n {
   String get random_image_delete_list_confirm => '削除';
 
   @override
-  String get premium_detail_purchase_complete => 'プレミアムを購入しました！';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      '購入は完了しましたが、プレミアムが有効化されませんでした';
-
-  @override
-  String get premium_detail_no_item => '購入可能なプランが見つかりません';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return '購入エラー: $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
@@ -650,10 +641,30 @@ class L10nJa extends L10n {
   String get premium_detail_premium_item06 => '広告の非表示';
 
   @override
-  String get premium_detail_price => '¥170 / 月で始める';
+  String get premium_detail_note => '1ヶ月の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。';
 
   @override
-  String get premium_detail_note => 'いつでもキャンセル可能';
+  String get premium_detail_restore_not_found => '購入履歴が見つかりませんでした';
+
+  @override
+  String get premium_detail_free_trial_badge => '1ヶ月無料';
+
+  @override
+  String get premium_detail_start_trial => '1ヶ月無料で開始';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return 'その後 $price / 月';
+  }
+
+  @override
+  String get premium_detail_restore_button => '購入を復元';
+
+  @override
+  String get premium_detail_purchase_complete => 'プレミアムを購入しました！';
+
+  @override
+  String get premium_detail_restart_message => 'プレミアム機能が有効になりました。\nアプリを再起動します。';
 
   @override
   String get tutorial => 'チュートリアル';

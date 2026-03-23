@@ -1,11 +1,18 @@
+import 'dart:math';
+import 'dart:convert';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'search_result_page.dart';
-import 'grid_page.dart';
-import 'l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:palette_generator/palette_generator.dart';
+//import 'package:confetti/confetti.dart';
+
+import 'search_result_page.dart';
+import 'grid_page.dart';
+import 'detail_page.dart';
+import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
 import 'search_tab_index_provider.dart';
 
@@ -118,62 +125,83 @@ class SearchPageState extends ConsumerState<SearchPage> {
           title: Padding(
             padding: const EdgeInsets.only(right: 8),
             //セグメントボタン
-            child: SegmentedButton<bool>(
-              style: ButtonStyle(
-                elevation: MaterialStateProperty.all(0),
-                visualDensity: VisualDensity.standard,
-                padding: MaterialStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                shape: MaterialStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SegmentedButton<bool>(
+                  style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
+                    visualDensity: VisualDensity.standard,
+                    padding: MaterialStateProperty.all(
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    side: MaterialStateProperty.resolveWith((states) {
+                      return BorderSide.none; // 枠線を消す
+                    }),
+                    backgroundColor: MaterialStateProperty.resolveWith((
+                      states,
+                    ) {
+                      if (states.contains(MaterialState.selected)) {
+                        return colorScheme.primary;
+                      }
+                      return Colors.grey[300];
+                    }),
+                    foregroundColor: MaterialStateProperty.resolveWith((
+                      states,
+                    ) {
+                      if (states.contains(MaterialState.selected)) {
+                        return Colors.white;
+                      }
+                      return Colors.black;
+                    }),
                   ),
+                  segments: [
+                    ButtonSegment(
+                      value: false,
+                      label: Text(
+                        L10n.of(context)!.search_page_segment_button_app, //アプリ内
+                      ), //アプリ内
+                      icon: Icon(Icons.apps),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      label: Text(
+                        L10n.of(context)!.search_page_segment_button_web, //Web
+                      ), //Web
+                      icon: Icon(Icons.public),
+                    ),
+                  ],
+                  selected: {isWeb},
+                  onSelectionChanged: (value) {
+                    ref.read(searchTabIndexProvider.notifier).state =
+                        value.first ? 0 : 1;
+                  },
                 ),
-                side: MaterialStateProperty.resolveWith((states) {
-                  return BorderSide.none; // 枠線を消す
-                }),
-                backgroundColor: MaterialStateProperty.resolveWith((states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return colorScheme.primary;
-                  }
-                  return Colors.grey[300];
-                }),
-                foregroundColor: MaterialStateProperty.resolveWith((states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return Colors.white;
-                  }
-                  return Colors.black;
-                }),
-              ),
-              segments: [
-                ButtonSegment(
-                  value: false,
-                  label: Text(
-                    L10n.of(context)!.search_page_segment_button_app, //アプリ内
-                  ), //アプリ内
-                  icon: Icon(Icons.apps),
-                ),
-                ButtonSegment(
-                  value: true,
-                  label: Text(
-                    L10n.of(context)!.search_page_segment_button_web, //Web
-                  ), //Web
-                  icon: Icon(Icons.public),
+
+                /// ルーレットボタン
+                IconButton(
+                  icon: Icon(
+                    IconData(0xea5c, fontFamily: 'FlutterIcon'),
+                    size: 24,
+                  ),
+                  tooltip: "Random",
+                  onPressed: () {
+                    if (_savedItems.isEmpty) return;
+
+                    _showRouletteModal();
+                  },
                 ),
               ],
-              selected: {isWeb},
-              onSelectionChanged: (value) {
-                ref.read(searchTabIndexProvider.notifier).state =
-                    value.first ? 0 : 1;
-              },
             ),
           ),
           //backgroundColor: Color(0xFF121212),
         ),
-        body: //Center(
-        //child:
-        Padding(
+        body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
             child: Column(
@@ -319,7 +347,6 @@ class SearchPageState extends ConsumerState<SearchPage> {
             ),
           ),
         ),
-        //),
       ),
     );
   }
@@ -786,9 +813,9 @@ class SearchPageState extends ConsumerState<SearchPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isTablet ? 4 : 3,
+                crossAxisCount: isTablet ? 5 : 4,
                 crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                mainAxisSpacing: 50,
                 childAspectRatio: isTablet ? 1.3 : 1.2, // iPad少し広め
               ),
               itemCount: favorites.length + 1,
@@ -835,74 +862,46 @@ class SearchPageState extends ConsumerState<SearchPage> {
       onLongPress: () {
         _showFavoriteActionSheet(site, index);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          /// アイコンカード
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Center(
+              child: FittedBox(
+                child: Image.network(
+                  faviconUrl,
+                  width: 30,
+                  height: 30,
+                  errorBuilder:
+                      (_, __, ___) => const Icon(Icons.public, size: 26),
+                ),
+              ),
             ),
-          ],
-          border:
-              isSelected
-                  ? Border.all(
-                    color: colorScheme.primary.withOpacity(0.5),
-                    width: 1.5,
-                  )
-                  : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              /// 丸背景 + favicon（Edge風）
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      isDark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.grey.shade100,
-                ),
-                child: Center(
-                  child: Image.network(
-                    faviconUrl,
-                    width: 28,
-                    height: 28,
-                    errorBuilder:
-                        (_, __, ___) => const Icon(Icons.public, size: 26),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              /// タイトル
-              Text(
-                site['title'] ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      isSelected
-                          ? colorScheme.primary
-                          : (isDark ? Colors.white : Colors.black87),
-                ),
-              ),
-            ],
           ),
-        ),
+
+          const SizedBox(height: 4),
+
+          /// タイトル（カード外）
+          SizedBox(
+            width: 72,
+            child: Text(
+              site['title'] ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color:
+                    isSelected
+                        ? colorScheme.primary
+                        : (isDark ? Colors.white : Colors.black87),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1202,17 +1201,354 @@ class SearchPageState extends ConsumerState<SearchPage> {
     return 'https://www.google.com/search?q=$siteQuery&tbm=vid&safe=off';
   }
 
-  /*
-  //お気に入りサイト - 初期化処理
-  Future<void> initializeFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
+  //当たり枠点滅管理
+  bool blink = false;
+  int blinkCount = 0;
 
-    final stored = prefs.getString('favorite_sites');
+  //タイトル表示管理
+  bool showResult = false;
 
-    if (stored == null) {
-      // 初回起動：YouTubeを追加
-      await prefs.setString('favorite_sites', jsonEncode(defaultFavorites));
-    }
+  //スクロール管理
+  final ScrollController _rouletteController = ScrollController();
+
+  //ルーレット機能 - モーダル表示
+  void _showRouletteModal() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: "",
+      barrierColor: Colors.black.withOpacity(0.65),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        Map<String, dynamic>? rouletteItem;
+        Color borderColor = Colors.white;
+        bool started = false;
+        bool isRunning = true;
+
+        //紙吹雪コントローラー
+        /*
+        final confettiController = ConfettiController(
+          duration: const Duration(seconds: 1),
+        );
+        */
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            const cardWidth = 240.0;
+            final screenWidth = MediaQuery.of(context).size.width;
+            final spacing = (screenWidth - cardWidth) / 2;
+
+            //サムネから色を抽出
+            Future<Color> _extractColor(String imageUrl) async {
+              final imageProvider = NetworkImage(imageUrl);
+
+              final paletteGenerator = await PaletteGenerator.fromImageProvider(
+                imageProvider,
+              );
+
+              return paletteGenerator.vibrantColor?.color ??
+                  paletteGenerator.dominantColor?.color ??
+                  Colors.white;
+            }
+
+            Future<void> startRoulette() async {
+              //アイテム一覧を更新
+              _loadSavedMetadata();
+
+              //ルーレット開始時にタイトルなどを非表示
+              setModalState(() {
+                showResult = false;
+                rouletteItem = null;
+              });
+
+              /// スクロール位置リセット
+              _rouletteController.jumpTo(0);
+
+              final random = Random();
+              final stopIndex = random.nextInt(_savedItems.length);
+
+              //サムネから色を抽出
+              final imageUrl = _savedItems[stopIndex]['image'];
+              Future<Color> colorFuture = _extractColor(imageUrl);
+
+              final itemWidth = cardWidth + spacing * 2;
+
+              final target =
+                  (stopIndex + (_savedItems.length * 10)) * itemWidth;
+
+              await _rouletteController.animateTo(
+                target.toDouble(),
+                duration: const Duration(milliseconds: 1500),
+                curve: Curves.decelerate,
+              );
+
+              //回転終了時に色を取得
+              final dominantColor = await colorFuture;
+
+              setModalState(() {
+                rouletteItem = _savedItems[stopIndex];
+                borderColor = dominantColor;
+                isRunning = false;
+                showResult = true;
+                blink = true;
+                blinkCount = 0;
+              });
+
+              for (int i = 0; i < 6; i++) {
+                await Future.delayed(const Duration(milliseconds: 250));
+
+                setModalState(() {
+                  blink = !blink;
+                });
+              }
+
+              //紙吹雪
+              //confettiController.play();
+            }
+
+            /// 初回のみ開始
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!started) {
+                started = true;
+                startRoulette();
+              }
+            });
+
+            return SafeArea(
+              child: Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      //説明ラベル
+                      Text(
+                        isRunning
+                            ? L10n.of(context)!.search_page_random_loading
+                            : L10n.of(context)!.search_page_random_this,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+
+                      /// ルーレットUI
+                      SizedBox(
+                        height: 240 * 9 / 16,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            /// 紙吹雪
+                            /*
+                            ConfettiWidget(
+                              confettiController: confettiController,
+                              blastDirectionality:
+                                  BlastDirectionality.explosive,
+                              shouldLoop: false,
+                              numberOfParticles: 100,
+                              gravity: 0.1,
+                              //colors: [colorScheme.onPrimary],
+                            ),
+                            */
+
+                            /// 当たり枠
+                            IgnorePointer(
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 300),
+                                opacity: blink ? 0.3 : 1,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 1000),
+                                  width: cardWidth,
+                                  height: cardWidth * 9 / 16,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color:
+                                          isRunning
+                                              ? Colors.transparent
+                                              : borderColor,
+                                      width: 4,
+                                    ),
+                                    boxShadow:
+                                        isRunning
+                                            ? []
+                                            : [
+                                              BoxShadow(
+                                                color: borderColor.withOpacity(
+                                                  0.9,
+                                                ),
+                                                blurRadius: 25,
+                                                spreadRadius: 3,
+                                              ),
+                                            ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            /// スロット
+                            ListView.builder(
+                              controller: _rouletteController,
+                              scrollDirection: Axis.horizontal,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _savedItems.length * 20,
+                              itemBuilder: (context, index) {
+                                final item =
+                                    _savedItems[index % _savedItems.length];
+
+                                return Container(
+                                  width: 240,
+                                  height: 240 * (9 / 16),
+                                  margin: EdgeInsets.symmetric(
+                                    horizontal: spacing,
+                                  ),
+                                  child: rouletteCard(context, item),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      /// タイトル
+                      AnimatedOpacity(
+                        opacity: showResult ? 1 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            rouletteItem?['title'] ?? "",
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      /// ボタン
+                      /*AnimatedOpacity(
+                        opacity: showResult ? 1 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: */
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          //ブラウザで開く
+                          IconButton(
+                            icon: const Icon(
+                              Icons.open_in_new,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              final url = rouletteItem?['url'];
+                              if (url != null) {
+                                launchUrl(Uri.parse(url));
+                              }
+                            },
+                          ),
+
+                          const SizedBox(width: 20),
+
+                          //リロード
+                          IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setModalState(() {
+                                rouletteItem = null;
+                                isRunning = true;
+                                showResult = false;
+                              });
+                              startRoulette();
+                            },
+                          ),
+
+                          const SizedBox(width: 20),
+
+                          //閉じる
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              L10n.of(context)!.close,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      //),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
-  */
+
+  //カードUI
+  Widget rouletteCard(BuildContext context, Map<String, dynamic> item) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: 240,
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
+          color:
+              colorScheme.brightness == Brightness.light
+                  ? Colors.grey[200]
+                  : const Color(0xFF2C2C2C),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => DetailPage(
+                        listName: item['listName'],
+                        url: item['url'],
+                        title: item['title'],
+                        image: item['image'],
+                        cast: item['cast'] ?? '',
+                        genre: item['genre'] ?? '',
+                        series: item['series'] ?? '',
+                        label: item['label'] ?? '',
+                        maker: item['maker'] ?? '',
+                        rating: item['rating'],
+                        memo: item['memo'],
+                        isReadOnly: true,
+                      ),
+                ),
+              );
+            },
+            child: Image.network(item['image'], fit: BoxFit.cover),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -400,6 +400,12 @@ class L10nEn extends L10n {
   String get search_page_add_favorite => 'Add favorite site';
 
   @override
+  String get search_page_random_loading => 'Picking today\'s recommendation…';
+
+  @override
+  String get search_page_random_this => 'Today\'s recommendation!';
+
+  @override
   String get search_result_page_site_saved => 'Site has been saved';
 
   @override
@@ -620,29 +626,13 @@ class L10nEn extends L10n {
   String get random_image_delete_list_confirm => 'Delete';
 
   @override
-  String get premium_detail_purchase_complete =>
-      'Premium purchased successfully!';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      'Purchase completed, but Premium was not activated';
-
-  @override
-  String get premium_detail_no_item => 'No purchasable plans found';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return 'Purchase error: $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => 'Unlimited save slots';
+  String get premium_detail_premium_item01 => 'Unlimited saves';
 
   @override
-  String get premium_detail_premium_item02 => 'Freely change theme colors';
+  String get premium_detail_premium_item02 => 'Customize theme colors';
 
   @override
   String get premium_detail_premium_item03 => 'Add images freely';
@@ -652,16 +642,39 @@ class L10nEn extends L10n {
 
   @override
   String get premium_detail_premium_item05 =>
-      'Visualize statistics by genre and rating';
+      'Statistics to visualize data by genre and rating';
 
   @override
   String get premium_detail_premium_item06 => 'Remove ads';
 
   @override
-  String get premium_detail_price => 'Start for \$0.99 / month';
+  String get premium_detail_note =>
+      'After the 1-month free trial, the subscription will renew automatically.\nCancel anytime.';
 
   @override
-  String get premium_detail_note => 'Cancel anytime';
+  String get premium_detail_restore_not_found => 'No purchase history found';
+
+  @override
+  String get premium_detail_free_trial_badge => '1-month free';
+
+  @override
+  String get premium_detail_start_trial => 'Start 1-month free trial';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return 'Then $price / month';
+  }
+
+  @override
+  String get premium_detail_restore_button => 'Restore purchases';
+
+  @override
+  String get premium_detail_purchase_complete =>
+      'Premium purchased successfully!';
+
+  @override
+  String get premium_detail_restart_message =>
+      'Premium features have been activated.\nThe app will restart.';
 
   @override
   String get tutorial => 'tutorial';

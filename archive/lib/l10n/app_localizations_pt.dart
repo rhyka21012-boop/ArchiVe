@@ -400,6 +400,12 @@ class L10nPt extends L10n {
   String get search_page_add_favorite => 'Adicionar site aos favoritos';
 
   @override
+  String get search_page_random_loading => 'Escolhendo a recomendação de hoje…';
+
+  @override
+  String get search_page_random_this => 'Recomendação de hoje!';
+
+  @override
   String get search_result_page_site_saved => 'O site foi guardado';
 
   @override
@@ -623,52 +629,56 @@ class L10nPt extends L10n {
   String get random_image_delete_list_confirm => 'Eliminar';
 
   @override
-  String get premium_detail_purchase_complete =>
-      'Premium adquirido com sucesso!';
-
-  @override
-  String get premium_detail_purchase_incomplete =>
-      'Compra concluída, mas o Premium não foi ativado';
-
-  @override
-  String get premium_detail_no_item =>
-      'Não foram encontrados planos disponíveis';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return 'Erro na compra: $ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 =>
-      'Espaços de armazenamento ilimitados';
+  String get premium_detail_premium_item01 => 'Salvamentos ilimitados';
 
   @override
-  String get premium_detail_premium_item02 =>
-      'Alterar livremente as cores do tema';
+  String get premium_detail_premium_item02 => 'Personalize as cores do tema';
 
   @override
-  String get premium_detail_premium_item03 => 'Adicionar imagens livremente';
+  String get premium_detail_premium_item03 => 'Adicione imagens livremente';
 
   @override
-  String get premium_detail_premium_item04 =>
-      'Pesquisa rápida com várias etiquetas';
+  String get premium_detail_premium_item04 => 'Busca rápida com várias tags';
 
   @override
   String get premium_detail_premium_item05 =>
-      'Visualizar estatísticas por género e avaliação';
+      'Estatísticas para visualizar dados por gênero e avaliação';
 
   @override
   String get premium_detail_premium_item06 => 'Remover anúncios';
 
   @override
-  String get premium_detail_price => 'A partir de €0.99 / mês';
+  String get premium_detail_note =>
+      'Após o teste gratuito de 1 mês, a assinatura será renovada automaticamente.\nCancele a qualquer momento.';
 
   @override
-  String get premium_detail_note => 'Cancelar a qualquer momento';
+  String get premium_detail_restore_not_found =>
+      'Nenhum histórico de compra encontrado';
+
+  @override
+  String get premium_detail_free_trial_badge => '1 mês grátis';
+
+  @override
+  String get premium_detail_start_trial => 'Iniciar teste gratuito de 1 mês';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return 'Depois $price / mês';
+  }
+
+  @override
+  String get premium_detail_restore_button => 'Restaurar compras';
+
+  @override
+  String get premium_detail_purchase_complete =>
+      'Premium adquirido com sucesso!';
+
+  @override
+  String get premium_detail_restart_message =>
+      'Os recursos Premium foram ativados.\nO aplicativo será reiniciado.';
 
   @override
   String get tutorial => 'Tutorial';

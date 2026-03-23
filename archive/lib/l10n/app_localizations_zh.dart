@@ -396,6 +396,12 @@ class L10nZh extends L10n {
   String get search_page_add_favorite => '添加收藏网站';
 
   @override
+  String get search_page_random_loading => '正在选择今日推荐…';
+
+  @override
+  String get search_page_random_this => '今日推荐！';
+
+  @override
   String get search_result_page_site_saved => '网站已保存';
 
   @override
@@ -612,24 +618,10 @@ class L10nZh extends L10n {
   String get random_image_delete_list_confirm => '删除';
 
   @override
-  String get premium_detail_purchase_complete => '高级版购买成功！';
-
-  @override
-  String get premium_detail_purchase_incomplete => '购买已完成，但高级版未激活';
-
-  @override
-  String get premium_detail_no_item => '没有可购买的方案';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return '购买错误：$ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => '保存名额无限制';
+  String get premium_detail_premium_item01 => '无限保存';
 
   @override
   String get premium_detail_premium_item02 => '自由更改主题颜色';
@@ -638,19 +630,39 @@ class L10nZh extends L10n {
   String get premium_detail_premium_item03 => '自由添加图片';
 
   @override
-  String get premium_detail_premium_item04 => '多标签快速搜索';
+  String get premium_detail_premium_item04 => '使用多个标签快速搜索';
 
   @override
-  String get premium_detail_premium_item05 => '按类型和评分可视化统计';
+  String get premium_detail_premium_item05 => '按类别和评分可视化数据的统计功能';
 
   @override
-  String get premium_detail_premium_item06 => '移除广告';
+  String get premium_detail_premium_item06 => '去除广告';
 
   @override
-  String get premium_detail_price => '每月 ￥8.00 起';
+  String get premium_detail_note => '1个月免费试用结束后，将自动续订。\n您可以随时取消。';
 
   @override
-  String get premium_detail_note => '可随时取消';
+  String get premium_detail_restore_not_found => '未找到购买记录';
+
+  @override
+  String get premium_detail_free_trial_badge => '1个月免费';
+
+  @override
+  String get premium_detail_start_trial => '开始1个月免费试用';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return '之后 $price / 月';
+  }
+
+  @override
+  String get premium_detail_restore_button => '恢复购买';
+
+  @override
+  String get premium_detail_purchase_complete => '高级版购买成功！';
+
+  @override
+  String get premium_detail_restart_message => '高级功能已启用。\n应用将重新启动。';
 
   @override
   String get tutorial => '教程';
@@ -1138,6 +1150,12 @@ class L10nZhHans extends L10nZh {
   String get search_page_add_favorite => '添加收藏网站';
 
   @override
+  String get search_page_random_loading => '正在选择今日推荐…';
+
+  @override
+  String get search_page_random_this => '今日推荐！';
+
+  @override
   String get search_result_page_site_saved => '网站已保存';
 
   @override
@@ -1354,24 +1372,10 @@ class L10nZhHans extends L10nZh {
   String get random_image_delete_list_confirm => '删除';
 
   @override
-  String get premium_detail_purchase_complete => '高级版购买成功！';
-
-  @override
-  String get premium_detail_purchase_incomplete => '购买已完成，但高级版未激活';
-
-  @override
-  String get premium_detail_no_item => '没有可购买的方案';
-
-  @override
-  String premium_detail_ex(Object ex) {
-    return '购买错误：$ex';
-  }
-
-  @override
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => '保存名额无限制';
+  String get premium_detail_premium_item01 => '无限保存';
 
   @override
   String get premium_detail_premium_item02 => '自由更改主题颜色';
@@ -1380,19 +1384,39 @@ class L10nZhHans extends L10nZh {
   String get premium_detail_premium_item03 => '自由添加图片';
 
   @override
-  String get premium_detail_premium_item04 => '多标签快速搜索';
+  String get premium_detail_premium_item04 => '使用多个标签快速搜索';
 
   @override
-  String get premium_detail_premium_item05 => '按类型和评分可视化统计';
+  String get premium_detail_premium_item05 => '按类别和评分可视化数据的统计功能';
 
   @override
-  String get premium_detail_premium_item06 => '移除广告';
+  String get premium_detail_premium_item06 => '去除广告';
 
   @override
-  String get premium_detail_price => '每月 ￥8.00 起';
+  String get premium_detail_note => '1个月免费试用结束后，将自动续订。\n您可以随时取消。';
 
   @override
-  String get premium_detail_note => '可随时取消';
+  String get premium_detail_restore_not_found => '未找到购买记录';
+
+  @override
+  String get premium_detail_free_trial_badge => '1个月免费';
+
+  @override
+  String get premium_detail_start_trial => '开始1个月免费试用';
+
+  @override
+  String premium_detail_price_after_trial(Object price) {
+    return '之后 $price / 月';
+  }
+
+  @override
+  String get premium_detail_restore_button => '恢复购买';
+
+  @override
+  String get premium_detail_purchase_complete => '高级版购买成功！';
+
+  @override
+  String get premium_detail_restart_message => '高级功能已启用。\n应用将重新启动。';
 
   @override
   String get tutorial => '教程';
