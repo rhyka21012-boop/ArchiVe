@@ -185,7 +185,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
                 /// ルーレットボタン
                 IconButton(
-                  icon: Icon(
+                  icon: const Icon(
                     IconData(0xea5c, fontFamily: 'FlutterIcon'),
                     size: 24,
                   ),
