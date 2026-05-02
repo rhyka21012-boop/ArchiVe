@@ -756,6 +756,12 @@ class L10nZh extends L10n {
 
   @override
   String get tutorial_slide_start => '开始使用';
+
+  @override
+  String get share_saved => '已从分享中保存';
+
+  @override
+  String get share_already_saved => '该URL已保存';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1510,4 +1516,10 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get tutorial_slide_start => '开始使用';
+
+  @override
+  String get share_saved => '已从分享中保存';
+
+  @override
+  String get share_already_saved => '该URL已保存';
 }

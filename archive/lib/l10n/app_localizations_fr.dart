@@ -788,4 +788,10 @@ class L10nFr extends L10n {
 
   @override
   String get tutorial_slide_start => 'Commencer';
+
+  @override
+  String get share_saved => 'Sauvegardé depuis le partage';
+
+  @override
+  String get share_already_saved => 'Cette URL est déjà sauvegardée';
 }

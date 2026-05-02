@@ -258,6 +258,7 @@
   "tutorial_slide_dict_06": "Build your own personal video collection!",
   "tutorial_slide_image_06": "assets/tutorial/english06.png",
   "tutorial_slide_next": "Next",
-  "tutorial_slide_start": "Get Started"
-
+  "tutorial_slide_start": "Get Started",
+  "share_saved": "Saved from share",
+  "share_already_saved": "This URL is already saved"
 }

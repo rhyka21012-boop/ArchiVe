@@ -781,4 +781,10 @@ class L10nPt extends L10n {
 
   @override
   String get tutorial_slide_start => 'Começar';
+
+  @override
+  String get share_saved => 'Salvo do compartilhamento';
+
+  @override
+  String get share_already_saved => 'Este URL já está salvo';
 }

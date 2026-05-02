@@ -775,4 +775,10 @@ class L10nEn extends L10n {
 
   @override
   String get tutorial_slide_start => 'Get Started';
+
+  @override
+  String get share_saved => 'Saved from share';
+
+  @override
+  String get share_already_saved => 'This URL is already saved';
 }

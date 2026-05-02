@@ -258,6 +258,7 @@
   "tutorial_slide_dict_06": "Erstellen Sie Ihre eigene persönliche Videosammlung!",
   "tutorial_slide_image_06": "assets/tutorial/english06.png",
   "tutorial_slide_next": "Weiter",
-  "tutorial_slide_start": "Loslegen"
-
+  "tutorial_slide_start": "Loslegen",
+  "share_saved": "Aus Freigabe gespeichert",
+  "share_already_saved": "Diese URL ist bereits gespeichert"
 }

@@ -22,6 +22,9 @@ import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'home_tab_index_provider.dart';
 import 'save_limit_helper.dart';
+import 'app_group_service.dart';
+import 'random_image_reload_provider.dart';
+import 'list_reload_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -31,7 +34,7 @@ class MainPage extends ConsumerStatefulWidget {
 }
 
 class _MainPageState extends ConsumerState<MainPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   //late TabController _tabController;
   int _selectedIndex = 0;
   bool _isPremium = false; //サブスク購入状態を保持
@@ -92,9 +95,11 @@ class _MainPageState extends ConsumerState<MainPage>
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await AppTrackingTransparency.requestTrackingAuthorization();
       checkAppVersion(context);
+      await _processPendingShare();
     });
     _checkSubscriptionStatus();
 
@@ -103,9 +108,72 @@ class _MainPageState extends ConsumerState<MainPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     //_tabController.dispose();
     _rewardedAd?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _processPendingShare();
+    }
+  }
+
+  // Share Extension から渡された pending データを処理して saved_metadata に保存する
+  Future<void> _processPendingShare() async {
+    final pending = await AppGroupService.getPendingShare();
+    if (pending == null) return;
+
+    final url = (pending['url'] as String? ?? '').trim();
+    if (url.isEmpty) return;
+
+    await AppGroupService.clearPendingShare();
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+
+    // 重複チェック
+    final isDuplicate = savedList.any((item) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      return map['url'] == url;
+    });
+
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.share_already_saved)),
+        );
+      }
+      return;
+    }
+
+    final data = <String, dynamic>{
+      'url': url,
+      'title': pending['title'] ?? '',
+      'listName': pending['listName'] ?? '',
+      'image': '',
+      'cast': '',
+      'genre': '',
+      'series': '',
+      'label': '',
+      'maker': '',
+      'memo': '',
+      'rating': null,
+    };
+
+    savedList.add(jsonEncode(data));
+    await prefs.setStringList('saved_metadata', savedList);
+
+    ref.read(randomImageReloadProvider.notifier).state++;
+    ref.read(listReloadProvider.notifier).state++;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.share_saved)),
+      );
+    }
   }
 
   // BottomNavigationBarのタップイベント

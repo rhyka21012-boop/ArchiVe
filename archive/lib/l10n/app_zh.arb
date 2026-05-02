@@ -258,6 +258,7 @@
   "tutorial_slide_dict_06": "打造属于你的个人视频收藏！",
   "tutorial_slide_image_06": "assets/tutorial/english06.png",
   "tutorial_slide_next": "下一步",
-  "tutorial_slide_start": "开始使用"
-
+  "tutorial_slide_start": "开始使用",
+  "share_saved": "已从分享中保存",
+  "share_already_saved": "该URL已保存"
 }

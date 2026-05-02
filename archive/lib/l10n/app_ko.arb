@@ -258,6 +258,7 @@
   "tutorial_slide_dict_06": "나만의 영상 컬렉션을 만들어 보세요!",
   "tutorial_slide_image_06": "assets/tutorial/english06.png",
   "tutorial_slide_next": "다음",
-  "tutorial_slide_start": "시작하기"
-
+  "tutorial_slide_start": "시작하기",
+  "share_saved": "공유에서 저장했습니다",
+  "share_already_saved": "이 URL은 이미 저장되어 있습니다"
 }

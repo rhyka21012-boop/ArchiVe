@@ -758,4 +758,10 @@ class L10nJa extends L10n {
 
   @override
   String get tutorial_slide_start => '開始する';
+
+  @override
+  String get share_saved => '共有から保存しました';
+
+  @override
+  String get share_already_saved => 'このURLはすでに保存されています';
 }

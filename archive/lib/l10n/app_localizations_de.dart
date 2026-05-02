@@ -788,4 +788,10 @@ class L10nDe extends L10n {
 
   @override
   String get tutorial_slide_start => 'Loslegen';
+
+  @override
+  String get share_saved => 'Aus Freigabe gespeichert';
+
+  @override
+  String get share_already_saved => 'Diese URL ist bereits gespeichert';
 }

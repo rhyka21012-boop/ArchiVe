@@ -1561,6 +1561,18 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'開始する'**
   String get tutorial_slide_start;
+
+  /// No description provided for @share_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有から保存しました'**
+  String get share_saved;
+
+  /// No description provided for @share_already_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'このURLはすでに保存されています'**
+  String get share_already_saved;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

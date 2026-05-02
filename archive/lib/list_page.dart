@@ -1,4 +1,5 @@
 import 'my_ad_widget_rect.dart';
+import 'app_group_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -86,6 +87,9 @@ class ListPageState extends ConsumerState<ListPage>
     setState(() {
       _listNames = prefs.getStringList('all_lists') ?? [];
     });
+
+    // Share Extension がリスト一覧を読めるよう App Groups に同期する
+    AppGroupService.syncAllLists(_listNames);
   }
 
   /// サブスクリプション状態を確認

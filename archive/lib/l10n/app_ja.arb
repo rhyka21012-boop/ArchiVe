@@ -258,5 +258,7 @@
   "tutorial_slide_dict_06": "自分だけの動画コレクションを作ろう！",
   "tutorial_slide_image_06": "assets/tutorial/japanese06.png",
   "tutorial_slide_next": "次へ",
-  "tutorial_slide_start": "開始する"
+  "tutorial_slide_start": "開始する",
+  "share_saved": "共有から保存しました",
+  "share_already_saved": "このURLはすでに保存されています"
 }

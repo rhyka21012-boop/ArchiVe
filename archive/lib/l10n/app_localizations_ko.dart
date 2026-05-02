@@ -760,4 +760,10 @@ class L10nKo extends L10n {
 
   @override
   String get tutorial_slide_start => '시작하기';
+
+  @override
+  String get share_saved => '공유에서 저장했습니다';
+
+  @override
+  String get share_already_saved => '이 URL은 이미 저장되어 있습니다';
 }
