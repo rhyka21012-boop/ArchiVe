@@ -26,7 +26,7 @@ buildscript {
         mavenCentral()     // ✅ これも推奨
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.2.1")
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.google.gms:google-services:4.3.15") // ✅ これが必要
     }
 }

@@ -1,7 +1,7 @@
 {
   "@@locale": "ko",
   "app_title": "ArchiVe",
-  "version": "v1.8",
+  "version": "v2.0",
 
   "critical": "크리티컬",
   "normal": "노멀",
@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod}회 조회",
   "analytics_page_no_title": "제목 없음",
   "analytics_page_item_count_top5": "항목 수 TOP 5",
+  "analytics_page_kpi_saved_count": "저장 수",
+  "analytics_page_kpi_total_view_count": "총 시청 횟수",
+  "analytics_page_kpi_rating_rate": "평가율",
+  "analytics_page_most_watched": "최다 시청",
+  "analytics_page_view_times": "{count}회 시청",
+  "analytics_page_total_view_subtitle": "총 시청 횟수: {count}회",
+  "analytics_page_rated_subtitle": "평가됨 {ratedCount} / {total}개",
+  "analytics_page_unit_items": "개",
+  "analytics_page_ranked_row_stat": "{percent}%  {count}개",
+  "analytics_page_times_unit": "{count}회",
+  "analytics_page_view_count_by_rating": "평가별 시청 횟수",
+  "analytics_page_saved_by_list": "리스트별 저장 수",
+  "analytics_page_list_count_subtitle": "{count}개 리스트",
+  "analytics_page_type_count_subtitle": "{count}종류",
 
   "settings": "설정",
   "settings_page_dark_mode": "다크 모드",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "다음",
   "tutorial_slide_start": "시작하기",
   "share_saved": "공유에서 저장했습니다",
-  "share_already_saved": "이 URL은 이미 저장되어 있습니다"
+  "share_already_saved": "이 URL은 이미 저장되어 있습니다",
+  "share_dialog_title": "ArchiVe에 저장",
+  "share_list_section": "저장할 목록",
+  "share_title_hint": "제목을 입력",
+  "clipboard_dialog_title": "클립보드의 URL을 추가하시겠습니까?"
 }

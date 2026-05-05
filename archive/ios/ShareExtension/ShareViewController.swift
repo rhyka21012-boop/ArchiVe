@@ -12,6 +12,7 @@ struct ShareView: View {
     let url: String
 
     @State private var titleText: String = ""
+    @State private var imageUrl: String = ""
     @State private var selectedList: String = ""
     @State private var allLists: [String] = []
     @State private var isFetchingTitle: Bool = true
@@ -65,7 +66,7 @@ struct ShareView: View {
         }
         .onAppear {
             loadLists()
-            fetchTitle()
+            fetchMeta()
         }
     }
 
@@ -79,8 +80,8 @@ struct ShareView: View {
         allLists = lists
     }
 
-    // URL から og:title / <title> を取得
-    private func fetchTitle() {
+    // URL から og:title / <title> / og:image を一度に取得
+    private func fetchMeta() {
         guard let targetURL = URL(string: url) else {
             isFetchingTitle = false
             return
@@ -103,6 +104,10 @@ struct ShareView: View {
             let extracted = extractOgTitle(html: html) ?? extractTitleTag(html: html)
             if let title = extracted, !title.isEmpty {
                 DispatchQueue.main.async { titleText = title }
+            }
+
+            if let img = extractOgImage(html: html), !img.isEmpty {
+                DispatchQueue.main.async { imageUrl = img }
             }
         }.resume()
     }
@@ -133,6 +138,23 @@ struct ShareView: View {
         return htmlDecode(String(html[range]).trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    // og:image を抽出（属性の順序が逆のケースも対応）
+    private func extractOgImage(html: String) -> String? {
+        let patterns = [
+            #"<meta[^>]+property=["']og:image["'][^>]+content=["']([^"'<>]+)["']"#,
+            #"<meta[^>]+content=["']([^"'<>]+)["'][^>]+property=["']og:image["']"#,
+        ]
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                  let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+                  let range = Range(match.range(at: 1), in: html)
+            else { continue }
+            let img = String(html[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !img.isEmpty { return img }
+        }
+        return nil
+    }
+
     // HTML エンティティのデコード
     private func htmlDecode(_ string: String) -> String {
         var result = string
@@ -152,6 +174,7 @@ struct ShareView: View {
             "url": url,
             "title": titleText,
             "listName": selectedList,
+            "image": imageUrl,
         ]
         guard let data = try? JSONEncoder().encode(item),
               let jsonString = String(data: data, encoding: .utf8),

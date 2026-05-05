@@ -119,7 +119,7 @@ abstract class L10n {
   /// No description provided for @version.
   ///
   /// In ja, this message translates to:
-  /// **'v1.8'**
+  /// **'v2.0'**
   String get version;
 
   /// No description provided for @critical.
@@ -1082,6 +1082,90 @@ abstract class L10n {
   /// **'アイテム数 TOP5'**
   String get analytics_page_item_count_top5;
 
+  /// No description provided for @analytics_page_kpi_saved_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存数'**
+  String get analytics_page_kpi_saved_count;
+
+  /// No description provided for @analytics_page_kpi_total_view_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'総視聴回数'**
+  String get analytics_page_kpi_total_view_count;
+
+  /// No description provided for @analytics_page_kpi_rating_rate.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価率'**
+  String get analytics_page_kpi_rating_rate;
+
+  /// No description provided for @analytics_page_most_watched.
+  ///
+  /// In ja, this message translates to:
+  /// **'最多視聴'**
+  String get analytics_page_most_watched;
+
+  /// No description provided for @analytics_page_view_times.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}回 視聴'**
+  String analytics_page_view_times(Object count);
+
+  /// No description provided for @analytics_page_total_view_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'総視聴回数: {count}回'**
+  String analytics_page_total_view_subtitle(Object count);
+
+  /// No description provided for @analytics_page_rated_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価済み {ratedCount} / {total}件'**
+  String analytics_page_rated_subtitle(Object ratedCount, Object total);
+
+  /// No description provided for @analytics_page_unit_items.
+  ///
+  /// In ja, this message translates to:
+  /// **'件'**
+  String get analytics_page_unit_items;
+
+  /// No description provided for @analytics_page_ranked_row_stat.
+  ///
+  /// In ja, this message translates to:
+  /// **'{percent}%  {count}件'**
+  String analytics_page_ranked_row_stat(Object count, Object percent);
+
+  /// No description provided for @analytics_page_times_unit.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}回'**
+  String analytics_page_times_unit(Object count);
+
+  /// No description provided for @analytics_page_view_count_by_rating.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価別 視聴回数'**
+  String get analytics_page_view_count_by_rating;
+
+  /// No description provided for @analytics_page_saved_by_list.
+  ///
+  /// In ja, this message translates to:
+  /// **'リスト別保存数'**
+  String get analytics_page_saved_by_list;
+
+  /// No description provided for @analytics_page_list_count_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}リスト'**
+  String analytics_page_list_count_subtitle(Object count);
+
+  /// No description provided for @analytics_page_type_count_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}種類'**
+  String analytics_page_type_count_subtitle(Object count);
+
   /// No description provided for @settings.
   ///
   /// In ja, this message translates to:
@@ -1573,6 +1657,30 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'このURLはすでに保存されています'**
   String get share_already_saved;
+
+  /// No description provided for @share_dialog_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ArchiVe に保存'**
+  String get share_dialog_title;
+
+  /// No description provided for @share_list_section.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存先リスト'**
+  String get share_list_section;
+
+  /// No description provided for @share_title_hint.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイトルを入力'**
+  String get share_title_hint;
+
+  /// No description provided for @clipboard_dialog_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'クリップボードのURLを追加しますか？'**
+  String get clipboard_dialog_title;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

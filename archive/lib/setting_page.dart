@@ -14,7 +14,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
-import 'tutorial_slide.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);

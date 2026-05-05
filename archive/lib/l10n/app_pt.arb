@@ -174,6 +174,20 @@
   "analytics_page_toolchip_count": "{rod} visualizações",
   "analytics_page_no_title": "Sem título",
   "analytics_page_item_count_top5": "Top 5 Quantidade de Itens",
+  "analytics_page_kpi_saved_count": "Salvos",
+  "analytics_page_kpi_total_view_count": "Total de views",
+  "analytics_page_kpi_rating_rate": "Taxa de avaliação",
+  "analytics_page_most_watched": "Mais assistido",
+  "analytics_page_view_times": "Assistido {count} vezes",
+  "analytics_page_total_view_subtitle": "Total de views: {count}",
+  "analytics_page_rated_subtitle": "Avaliados {ratedCount} / {total}",
+  "analytics_page_unit_items": "itens",
+  "analytics_page_ranked_row_stat": "{percent}%  {count} itens",
+  "analytics_page_times_unit": "{count} views",
+  "analytics_page_view_count_by_rating": "Views por avaliação",
+  "analytics_page_saved_by_list": "Salvos por lista",
+  "analytics_page_list_count_subtitle": "{count} listas",
+  "analytics_page_type_count_subtitle": "{count} tipos",
 
   "settings": "Definições",
   "settings_page_dark_mode": "Modo escuro",
@@ -261,5 +275,9 @@
   "tutorial_slide_next": "Seguinte",
   "tutorial_slide_start": "Começar",
   "share_saved": "Salvo do compartilhamento",
-  "share_already_saved": "Este URL já está salvo"
+  "share_already_saved": "Este URL já está salvo",
+  "share_dialog_title": "Guardar no ArchiVe",
+  "share_list_section": "Lista",
+  "share_title_hint": "Introduzir título",
+  "clipboard_dialog_title": "Adicionar URL da área de transferência?"
 }

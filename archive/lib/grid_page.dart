@@ -16,7 +16,7 @@ import 'detail_page.dart';
 import 'random_image_reload_provider.dart';
 import 'home_tab_index_provider.dart';
 import 'search_tab_index_provider.dart';
-import 'search_result_page.dart';
+import 'playlist_player_page.dart';
 import 'save_limit_helper.dart';
 
 class GridPage extends ConsumerStatefulWidget {
@@ -1194,10 +1194,15 @@ class GridPageState extends ConsumerState<GridPage> {
 
   //動画再生処理
   void openPlayer(String url) {
+    final queue = _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
+    final index = queue.indexWhere((item) => item['url'] == url);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SearchResultPage(initialUrl: url, title: url),
+        builder: (_) => PlaylistPlayerPage(
+          items: queue,
+          initialIndex: index >= 0 ? index : 0,
+        ),
       ),
     );
   }

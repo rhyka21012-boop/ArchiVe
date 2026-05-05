@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
 
-/// iOS App Groups 経由で Share Extension とデータをやり取りするサービス。
-/// Android では全メソッドが即返却するため、呼び出し元で分岐不要。
+/// iOS App Groups / Android MethodChannel 経由で Share とデータをやり取りするサービス。
 class AppGroupService {
   static const _channel = MethodChannel('com.walkinggoblins.archive/app_groups');
+  static const _shareChannel = MethodChannel('com.walkinggoblins.archive/share');
 
   /// Share Extension が書き込んだ pending データを取得する。
   /// データがなければ null を返す。
@@ -34,6 +34,24 @@ class AppGroupService {
     if (!Platform.isIOS) return;
     try {
       await _channel.invokeMethod<void>('syncAllLists', lists);
+    } catch (_) {}
+  }
+
+  /// Android: MainActivity が受け取った共有 URL を取得する。
+  static Future<String?> getSharedUrl() async {
+    if (!Platform.isAndroid) return null;
+    try {
+      return await _shareChannel.invokeMethod<String>('getSharedUrl');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Android: 処理済みの共有 URL をクリアする。
+  static Future<void> clearSharedUrl() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _shareChannel.invokeMethod<void>('clearSharedUrl');
     } catch (_) {}
   }
 }

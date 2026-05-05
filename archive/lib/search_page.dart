@@ -790,17 +790,12 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   //Web検索のUI
   Widget _buildWebSearchSection() {
-    /*
-    if (_favoriteSites.isEmpty) {
-      return const Center(child: Text('お気に入りサイトがありません'));
-    }
-    */
-
     final favorites = ref.watch(favoriteSitesProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTablet = constraints.maxWidth >= 600;
+        final crossCount = isTablet ? 6 : 4;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -808,20 +803,20 @@ class SearchPageState extends ConsumerState<SearchPage> {
               L10n.of(context)!.search_page_select_site,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isTablet ? 5 : 4,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 50,
-                childAspectRatio: isTablet ? 1.3 : 1.2, // iPad少し広め
+                crossAxisCount: crossCount,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 20,
+                childAspectRatio: 0.82,
               ),
               itemCount: favorites.length + 1,
               itemBuilder: (context, index) {
                 if (index == favorites.length) {
-                  return _buildAddFavoriteGridItem(); // 追加「+」ボタン
+                  return _buildAddFavoriteGridItem();
                 }
                 return _buildFavoriteSiteCard(favorites[index], index);
               },
@@ -834,26 +829,64 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   //お気に入りサイト - グリッド用「+」ボタン
   Widget _buildAddFavoriteGridItem() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
+    return GestureDetector(
       onTap: _showAddFavoriteDialog,
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: const Center(child: Icon(Icons.add, size: 40)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2E2E2E) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.grey.shade400,
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.07),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.add,
+                size: 26,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            L10n.of(context)!.add,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  //お気に入りサイトUI
+  //お気に入りサイトUI（Edge モバイル風）
   Widget _buildFavoriteSiteCard(Map<String, String> site, int index) {
     final isSelected = _selectedFavoriteIndex == index;
     final faviconUrl = _faviconUrl(site['url'] ?? '');
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
+    return GestureDetector(
       onTap: () {
         setState(() {
           _selectedFavoriteIndex = isSelected ? null : index;
@@ -865,40 +898,97 @@ class SearchPageState extends ConsumerState<SearchPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          /// アイコンカード
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Center(
-              child: FittedBox(
-                child: Image.network(
-                  faviconUrl,
-                  width: 30,
-                  height: 30,
-                  errorBuilder:
-                      (_, __, ___) => const Icon(Icons.public, size: 26),
+          // ─── アイコンコンテナ ───────────────────────
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2E2E2E) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border:
+                  isSelected
+                      ? Border.all(color: colorScheme.primary, width: 2.5)
+                      : Border.all(
+                        color: Colors.grey.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: isSelected ? 0.15 : (isDark ? 0.25 : 0.07),
+                  ),
+                  blurRadius: isSelected ? 10 : 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // ファビコン
+                Center(
+                  child: Image.network(
+                    faviconUrl,
+                    width: 28,
+                    height: 28,
+                    errorBuilder:
+                        (_, __, ___) => Icon(
+                          Icons.public,
+                          size: 26,
+                          color:
+                              isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade500,
+                        ),
+                  ),
+                ),
+                // 選択チェックバッジ
+                if (isSelected)
+                  Positioned(
+                    top: -5,
+                    right: -5,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 11,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
 
-          /// タイトル（カード外）
-          SizedBox(
-            width: 72,
-            child: Text(
-              site['title'] ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color:
-                    isSelected
-                        ? colorScheme.primary
-                        : (isDark ? Colors.white : Colors.black87),
-              ),
+          // ─── サイト名 ──────────────────────────────
+          Text(
+            site['title'] ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              color:
+                  isSelected
+                      ? colorScheme.primary
+                      : (isDark ? Colors.white70 : Colors.black87),
             ),
           ),
         ],

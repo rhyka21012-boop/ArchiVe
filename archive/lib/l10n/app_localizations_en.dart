@@ -12,7 +12,7 @@ class L10nEn extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.8';
+  String get version => 'v2.0';
 
   @override
   String get critical => 'Critical';
@@ -519,6 +519,62 @@ class L10nEn extends L10n {
   String get analytics_page_item_count_top5 => 'Top 5 Item Counts';
 
   @override
+  String get analytics_page_kpi_saved_count => 'Saved Items';
+
+  @override
+  String get analytics_page_kpi_total_view_count => 'Total Views';
+
+  @override
+  String get analytics_page_kpi_rating_rate => 'Rating Rate';
+
+  @override
+  String get analytics_page_most_watched => 'Most Watched';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return 'Watched $count times';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return 'Total views: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return 'Rated $ratedCount / $total items';
+  }
+
+  @override
+  String get analytics_page_unit_items => 'items';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count items';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count views';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => 'Views by Rating';
+
+  @override
+  String get analytics_page_saved_by_list => 'Saved by List';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count lists';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count types';
+  }
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -781,4 +837,16 @@ class L10nEn extends L10n {
 
   @override
   String get share_already_saved => 'This URL is already saved';
+
+  @override
+  String get share_dialog_title => 'Save to ArchiVe';
+
+  @override
+  String get share_list_section => 'List';
+
+  @override
+  String get share_title_hint => 'Enter title';
+
+  @override
+  String get clipboard_dialog_title => 'Add URL from clipboard?';
 }

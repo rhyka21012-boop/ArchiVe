@@ -12,7 +12,7 @@ class L10nJa extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.8';
+  String get version => 'v2.0';
 
   @override
   String get critical => 'クリティカル';
@@ -514,6 +514,62 @@ class L10nJa extends L10n {
   String get analytics_page_item_count_top5 => 'アイテム数 TOP5';
 
   @override
+  String get analytics_page_kpi_saved_count => '保存数';
+
+  @override
+  String get analytics_page_kpi_total_view_count => '総視聴回数';
+
+  @override
+  String get analytics_page_kpi_rating_rate => '評価率';
+
+  @override
+  String get analytics_page_most_watched => '最多視聴';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return '$count回 視聴';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return '総視聴回数: $count回';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return '評価済み $ratedCount / $total件';
+  }
+
+  @override
+  String get analytics_page_unit_items => '件';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count件';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count回';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => '評価別 視聴回数';
+
+  @override
+  String get analytics_page_saved_by_list => 'リスト別保存数';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$countリスト';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count種類';
+  }
+
+  @override
   String get settings => '設定';
 
   @override
@@ -764,4 +820,16 @@ class L10nJa extends L10n {
 
   @override
   String get share_already_saved => 'このURLはすでに保存されています';
+
+  @override
+  String get share_dialog_title => 'ArchiVe に保存';
+
+  @override
+  String get share_list_section => '保存先リスト';
+
+  @override
+  String get share_title_hint => 'タイトルを入力';
+
+  @override
+  String get clipboard_dialog_title => 'クリップボードのURLを追加しますか？';
 }

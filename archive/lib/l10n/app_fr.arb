@@ -1,7 +1,7 @@
 {
   "@@locale": "fr",
   "app_title": "ArchiVe",
-  "version": "v1.8",
+  "version": "v2.0",
 
   "critical": "Critique",
   "normal": "Normal",
@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod} vues",
   "analytics_page_no_title": "Sans titre",
   "analytics_page_item_count_top5": "Top 5 du nombre d’éléments",
+  "analytics_page_kpi_saved_count": "Enregistrés",
+  "analytics_page_kpi_total_view_count": "Vues totales",
+  "analytics_page_kpi_rating_rate": "Taux de notation",
+  "analytics_page_most_watched": "Plus regardé",
+  "analytics_page_view_times": "Vu {count} fois",
+  "analytics_page_total_view_subtitle": "Vues totales: {count}",
+  "analytics_page_rated_subtitle": "Notés {ratedCount} / {total}",
+  "analytics_page_unit_items": "élém.",
+  "analytics_page_ranked_row_stat": "{percent}%  {count} élém.",
+  "analytics_page_times_unit": "{count} vues",
+  "analytics_page_view_count_by_rating": "Vues par note",
+  "analytics_page_saved_by_list": "Enregistrés par liste",
+  "analytics_page_list_count_subtitle": "{count} listes",
+  "analytics_page_type_count_subtitle": "{count} types",
 
   "settings": "Paramètres",
   "settings_page_dark_mode": "Mode sombre",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "Suivant",
   "tutorial_slide_start": "Commencer",
   "share_saved": "Sauvegardé depuis le partage",
-  "share_already_saved": "Cette URL est déjà sauvegardée"
+  "share_already_saved": "Cette URL est déjà sauvegardée",
+  "share_dialog_title": "Enregistrer dans ArchiVe",
+  "share_list_section": "Liste",
+  "share_title_hint": "Saisir le titre",
+  "clipboard_dialog_title": "Ajouter l'URL du presse-papiers ?"
 }

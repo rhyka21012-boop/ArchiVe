@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   "app_title": "ArchiVe",
-  "version": "v1.8",
+  "version": "v2.0",
 
   "critical": "Critical",
   "normal": "Normal",
@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod} views",
   "analytics_page_no_title": "No title",
   "analytics_page_item_count_top5": "Top 5 Item Counts",
+  "analytics_page_kpi_saved_count": "Saved Items",
+  "analytics_page_kpi_total_view_count": "Total Views",
+  "analytics_page_kpi_rating_rate": "Rating Rate",
+  "analytics_page_most_watched": "Most Watched",
+  "analytics_page_view_times": "Watched {count} times",
+  "analytics_page_total_view_subtitle": "Total views: {count}",
+  "analytics_page_rated_subtitle": "Rated {ratedCount} / {total} items",
+  "analytics_page_unit_items": "items",
+  "analytics_page_ranked_row_stat": "{percent}%  {count} items",
+  "analytics_page_times_unit": "{count} views",
+  "analytics_page_view_count_by_rating": "Views by Rating",
+  "analytics_page_saved_by_list": "Saved by List",
+  "analytics_page_list_count_subtitle": "{count} lists",
+  "analytics_page_type_count_subtitle": "{count} types",
 
   "settings": "Settings",
   "settings_page_dark_mode": "Dark mode",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "Next",
   "tutorial_slide_start": "Get Started",
   "share_saved": "Saved from share",
-  "share_already_saved": "This URL is already saved"
+  "share_already_saved": "This URL is already saved",
+  "share_dialog_title": "Save to ArchiVe",
+  "share_list_section": "List",
+  "share_title_hint": "Enter title",
+  "clipboard_dialog_title": "Add URL from clipboard?"
 }

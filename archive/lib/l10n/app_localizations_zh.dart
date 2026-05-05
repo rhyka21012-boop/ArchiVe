@@ -512,6 +512,62 @@ class L10nZh extends L10n {
   String get analytics_page_item_count_top5 => '项目数量前5名';
 
   @override
+  String get analytics_page_kpi_saved_count => '收藏數';
+
+  @override
+  String get analytics_page_kpi_total_view_count => '總觀看次數';
+
+  @override
+  String get analytics_page_kpi_rating_rate => '評價率';
+
+  @override
+  String get analytics_page_most_watched => '最多播放';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return '觀看 $count 次';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return '總觀看次數: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return '已評價 $ratedCount / $total 件';
+  }
+
+  @override
+  String get analytics_page_unit_items => '件';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count件';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count次';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => '按評價的觀看次數';
+
+  @override
+  String get analytics_page_saved_by_list => '依列表保存數';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count個列表';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count種類';
+  }
+
+  @override
   String get settings => '设置';
 
   @override
@@ -762,6 +818,18 @@ class L10nZh extends L10n {
 
   @override
   String get share_already_saved => '该URL已保存';
+
+  @override
+  String get share_dialog_title => '保存到 ArchiVe';
+
+  @override
+  String get share_list_section => '保存列表';
+
+  @override
+  String get share_title_hint => '输入标题';
+
+  @override
+  String get clipboard_dialog_title => '是否添加剪贴板中的URL？';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1272,6 +1340,62 @@ class L10nZhHans extends L10nZh {
   String get analytics_page_item_count_top5 => '项目数量前5名';
 
   @override
+  String get analytics_page_kpi_saved_count => '收藏数';
+
+  @override
+  String get analytics_page_kpi_total_view_count => '总观看次数';
+
+  @override
+  String get analytics_page_kpi_rating_rate => '评价率';
+
+  @override
+  String get analytics_page_most_watched => '最多播放';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return '观看 $count 次';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return '总观看次数: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return '已评价 $ratedCount / $total 件';
+  }
+
+  @override
+  String get analytics_page_unit_items => '件';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count件';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count次';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => '按评价的观看次数';
+
+  @override
+  String get analytics_page_saved_by_list => '按列表保存数';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count个列表';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count种类';
+  }
+
+  @override
   String get settings => '设置';
 
   @override
@@ -1522,4 +1646,16 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get share_already_saved => '该URL已保存';
+
+  @override
+  String get share_dialog_title => '保存到 ArchiVe';
+
+  @override
+  String get share_list_section => '保存列表';
+
+  @override
+  String get share_title_hint => '输入标题';
+
+  @override
+  String get clipboard_dialog_title => '是否添加剪贴板中的URL？';
 }

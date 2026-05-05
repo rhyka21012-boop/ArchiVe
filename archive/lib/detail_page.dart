@@ -23,7 +23,7 @@ import 'premium_detail.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'random_image_reload_provider.dart';
-import 'search_result_page.dart';
+import 'playlist_player_page.dart';
 import "save_limit_helper.dart";
 
 class DetailPage extends ConsumerStatefulWidget {
@@ -2080,11 +2080,31 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     await prefs.setInt('save_count', saveCount + 1);
 
-    // 例：10件目で1回だけ表示
+    // 初回: 10件目で表示
     if (!alreadyReviewed && saveCount + 1 >= 10) {
       await prefs.setBool('review_prompted', true);
+      await prefs.setInt('review_last_prompted_ms', DateTime.now().millisecondsSinceEpoch);
       if (!mounted) return;
       await showReviewPrompt(context);
+      return;
+    }
+
+    // 2ヶ月ごとの再表示
+    if (alreadyReviewed) {
+      final now = DateTime.now();
+      final lastMs = prefs.getInt('review_last_prompted_ms');
+      if (lastMs == null) {
+        // 既存ユーザー移行時: 今日を起点にセットして今回はスキップ
+        await prefs.setInt('review_last_prompted_ms', now.millisecondsSinceEpoch);
+        return;
+      }
+      final lastDate = DateTime.fromMillisecondsSinceEpoch(lastMs);
+      final twoMonthsLater = DateTime(lastDate.year, lastDate.month + 2, lastDate.day);
+      if (now.isAfter(twoMonthsLater)) {
+        await prefs.setInt('review_last_prompted_ms', now.millisecondsSinceEpoch);
+        if (!mounted) return;
+        await showReviewPrompt(context);
+      }
     }
   }
 
@@ -2141,11 +2161,39 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
 
   //サムネクリック時の処理
-  void openPlayer(String url) {
+  Future<void> openPlayer(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = prefs.getStringList('saved_metadata') ?? [];
+    final allItems = jsonList
+        .map((s) {
+          try {
+            return Map<String, dynamic>.from(jsonDecode(s));
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    final List<Map<String, dynamic>> queue;
+    if (widget.listName != null && widget.listName!.isNotEmpty) {
+      final filtered = allItems
+          .where((item) => item['listName'] == widget.listName)
+          .toList();
+      queue = filtered.isNotEmpty ? filtered : allItems;
+    } else {
+      queue = allItems;
+    }
+
+    final index = queue.indexWhere((item) => item['url'] == url);
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SearchResultPage(initialUrl: url, title: url),
+        builder: (_) => PlaylistPlayerPage(
+          items: queue,
+          initialIndex: index >= 0 ? index : 0,
+        ),
       ),
     );
   }

@@ -519,6 +519,62 @@ class L10nPt extends L10n {
   String get analytics_page_item_count_top5 => 'Top 5 Quantidade de Itens';
 
   @override
+  String get analytics_page_kpi_saved_count => 'Salvos';
+
+  @override
+  String get analytics_page_kpi_total_view_count => 'Total de views';
+
+  @override
+  String get analytics_page_kpi_rating_rate => 'Taxa de avaliação';
+
+  @override
+  String get analytics_page_most_watched => 'Mais assistido';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return 'Assistido $count vezes';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return 'Total de views: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return 'Avaliados $ratedCount / $total';
+  }
+
+  @override
+  String get analytics_page_unit_items => 'itens';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count itens';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count views';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => 'Views por avaliação';
+
+  @override
+  String get analytics_page_saved_by_list => 'Salvos por lista';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count listas';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count tipos';
+  }
+
+  @override
   String get settings => 'Definições';
 
   @override
@@ -787,4 +843,17 @@ class L10nPt extends L10n {
 
   @override
   String get share_already_saved => 'Este URL já está salvo';
+
+  @override
+  String get share_dialog_title => 'Guardar no ArchiVe';
+
+  @override
+  String get share_list_section => 'Lista';
+
+  @override
+  String get share_title_hint => 'Introduzir título';
+
+  @override
+  String get clipboard_dialog_title =>
+      'Adicionar URL da área de transferência?';
 }

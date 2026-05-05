@@ -1,7 +1,7 @@
 {
   "@@locale": "es",
   "app_title": "ArchiVe",
-  "version": "v1.8",
+  "version": "v2.0",
 
   "critical": "Crítico",
   "normal": "Normal",
@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod} vistas",
   "analytics_page_no_title": "Sin título",
   "analytics_page_item_count_top5": "Top 5 por número de elementos",
+  "analytics_page_kpi_saved_count": "Guardados",
+  "analytics_page_kpi_total_view_count": "Vistas totales",
+  "analytics_page_kpi_rating_rate": "Tasa de calificación",
+  "analytics_page_most_watched": "Más visto",
+  "analytics_page_view_times": "Visto {count} veces",
+  "analytics_page_total_view_subtitle": "Vistas totales: {count}",
+  "analytics_page_rated_subtitle": "Calificados {ratedCount} / {total}",
+  "analytics_page_unit_items": "ítems",
+  "analytics_page_ranked_row_stat": "{percent}%  {count} ítems",
+  "analytics_page_times_unit": "{count} veces",
+  "analytics_page_view_count_by_rating": "Vistas por calificación",
+  "analytics_page_saved_by_list": "Guardados por lista",
+  "analytics_page_list_count_subtitle": "{count} listas",
+  "analytics_page_type_count_subtitle": "{count} tipos",
 
   "settings": "Ajustes",
   "settings_page_dark_mode": "Modo oscuro",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "Siguiente",
   "tutorial_slide_start": "Comenzar",
   "share_saved": "Guardado desde compartir",
-  "share_already_saved": "Esta URL ya está guardada"
+  "share_already_saved": "Esta URL ya está guardada",
+  "share_dialog_title": "Guardar en ArchiVe",
+  "share_list_section": "Lista",
+  "share_title_hint": "Introduce el título",
+  "clipboard_dialog_title": "¿Añadir URL del portapapeles?"
 }

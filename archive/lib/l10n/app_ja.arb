@@ -1,7 +1,7 @@
 {
   "@@locale": "ja",
   "app_title": "ArchiVe",
-  "version": "v1.8",
+  "version": "v2.0",
 
   "critical": "クリティカル",
   "normal": "ノーマル",
@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod}回",
   "analytics_page_no_title": "タイトルなし",
   "analytics_page_item_count_top5": "アイテム数 TOP5",
+  "analytics_page_kpi_saved_count": "保存数",
+  "analytics_page_kpi_total_view_count": "総視聴回数",
+  "analytics_page_kpi_rating_rate": "評価率",
+  "analytics_page_most_watched": "最多視聴",
+  "analytics_page_view_times": "{count}回 視聴",
+  "analytics_page_total_view_subtitle": "総視聴回数: {count}回",
+  "analytics_page_rated_subtitle": "評価済み {ratedCount} / {total}件",
+  "analytics_page_unit_items": "件",
+  "analytics_page_ranked_row_stat": "{percent}%  {count}件",
+  "analytics_page_times_unit": "{count}回",
+  "analytics_page_view_count_by_rating": "評価別 視聴回数",
+  "analytics_page_saved_by_list": "リスト別保存数",
+  "analytics_page_list_count_subtitle": "{count}リスト",
+  "analytics_page_type_count_subtitle": "{count}種類",
 
   "settings": "設定",
   "settings_page_dark_mode": "ダークモード",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "次へ",
   "tutorial_slide_start": "開始する",
   "share_saved": "共有から保存しました",
-  "share_already_saved": "このURLはすでに保存されています"
+  "share_already_saved": "このURLはすでに保存されています",
+  "share_dialog_title": "ArchiVe に保存",
+  "share_list_section": "保存先リスト",
+  "share_title_hint": "タイトルを入力",
+  "clipboard_dialog_title": "クリップボードのURLを追加しますか？"
 }

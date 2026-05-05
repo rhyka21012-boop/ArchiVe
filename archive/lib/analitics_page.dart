@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
-//import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,157 +16,94 @@ class AnalyticsPage extends StatefulWidget {
 }
 
 class AnalyticsPageState extends State<AnalyticsPage> {
-  List<int> hourBuckets = List.filled(8, 0);
-
-  Map<String, int> ratingCounts = {'critical': 0, 'normal': 0, 'maniac': 0};
+  // ─── State ────────────────────────────────────────────────────
+  Map<String, int> ratingCounts = {
+    'critical': 0,
+    'normal': 0,
+    'maniac': 0,
+    'unrated': 0,
+  };
   Map<String, int> castCounts = {};
   Map<String, int> genreCounts = {};
   Map<String, int> seriesCounts = {};
   Map<String, int> labelCounts = {};
   Map<String, int> makerCounts = {};
+  Map<String, int> listCounts = {};
 
-  bool _isPremium = false;
-
-  bool isDebug = false; //デバッグ用切り替え箇所
-
-  int pieTopN = 5;
-
-  //総数
   int totalWorks = 0;
-
-  //最後に追加したアイテム
+  int totalViewCount = 0;
   List<Map<String, dynamic>> recentItems = [];
 
-  Color getTopColor(int index) {
-    return Colors.primaries[index % Colors.primaries.length];
+  bool _isPremium = false;
+  bool _debugBypassPremium = false;
+
+  Map<String, int> viewingCountByRating = {
+    'critical': 0,
+    'normal': 0,
+    'maniac': 0,
+    'unrated': 0,
+  };
+  Map<String, String> urlToTitleMap = {};
+  Map<String, String> urlToImageMap = {};
+  List<MapEntry<String, int>> top5Viewings = [];
+
+  // ─── カラー定数 ────────────────────────────────────────────────
+  static const _ratingColors = <String, Color>{
+    'critical': Color(0xFFE53935),
+    'normal': Color(0xFFFB8C00),
+    'maniac': Color(0xFF8E24AA),
+    'unrated': Color(0xFF9E9E9E),
+  };
+
+  Color _topColor(int index) {
+    const palette = [
+      Color(0xFF2196F3),
+      Color(0xFF4CAF50),
+      Color(0xFFFF9800),
+      Color(0xFF9C27B0),
+      Color(0xFFF44336),
+    ];
+    return palette[index % palette.length];
   }
 
-  /// Map → TOP5 + その他（PieChart用）
-  List<PieChartSectionData> buildTopPieSections(Map<String, int> source) {
-    if (source.isEmpty) return [];
-
-    final sorted =
-        source.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
-    final top = sorted.take(pieTopN).toList();
-    final others = sorted.skip(pieTopN);
-
-    final total = source.values.fold<int>(0, (a, b) => a + b);
-    if (total == 0) return [];
-
-    final otherTotal = others.fold<int>(0, (a, b) => a + b.value);
-
-    final sections = <PieChartSectionData>[];
-
-    for (var i = 0; i < top.length; i++) {
-      final e = top[i];
-      final percent = e.value / total * 100;
-
-      sections.add(
-        PieChartSectionData(
-          value: e.value.toDouble(),
-          title:
-              '${_shortenTitle(e.key, maxLength: 6)}\n${percent.toStringAsFixed(1)}%',
-          color: getTopColor(i),
-          radius: 110,
-          titleStyle: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    if (otherTotal > 0) {
-      final percent = otherTotal / total * 100;
-      sections.add(
-        PieChartSectionData(
-          value: otherTotal.toDouble(),
-          title: L10n.of(
-            context,
-          )!.analytics_page_piechart_others(percent.toStringAsFixed(1)),
-          color: Colors.grey,
-          radius: 110,
-          titleStyle: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    return sections;
-  }
-
+  // ─── Init ─────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _loadAllStats();
-    _loadViewingCountByRating();
-    _loadTop5ViewingStats();
+    _loadAll();
     _checkSubscriptionStatus();
   }
 
-  Future<void> _loadAllStats() async {
-    setState(() {
-      hourBuckets = List.filled(8, 0);
-      ratingCounts = {'critical': 0, 'normal': 0, 'maniac': 0, 'unrated': 0};
-      castCounts.clear();
-      genreCounts.clear();
-      seriesCounts.clear();
-      labelCounts.clear();
-      makerCounts.clear();
-    });
-
-    //await _loadWatchHistory(); // Firebaseから読み込み
-    await _loadSharedPrefStats(); // SharedPreferencesから読み込み
+  void _loadAll() {
+    _loadSharedPrefStats();
+    _loadViewingCountByRating();
+    _loadTop5ViewingStats();
   }
 
-  /// サブスクリプション状態を確認
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final isActive =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
-      setState(() {
-        _isPremium = isActive;
-      });
+      setState(() => _isPremium = isActive);
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
     }
   }
 
-  /*
-  Future<void> _loadWatchHistory() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('watch_history')
-            .get();
-
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final timestamp = data['timestamp'];
-      if (timestamp is Timestamp) {
-        final hour = timestamp.toDate().hour;
-        final bucketIndex = hour ~/ 3;
-        if (bucketIndex >= 0 && bucketIndex < 8) {
-          hourBuckets[bucketIndex]++;
-        }
-      }
-    }
-  }
-  */
-
   Future<void> _loadSharedPrefStats() async {
+    ratingCounts = {'critical': 0, 'normal': 0, 'maniac': 0, 'unrated': 0};
+    castCounts.clear();
+    genreCounts.clear();
+    seriesCounts.clear();
+    labelCounts.clear();
+    makerCounts.clear();
+    listCounts.clear();
+
     final prefs = await SharedPreferences.getInstance();
     final savedList = prefs.getStringList('saved_metadata') ?? [];
+
+    final tempRecent = <Map<String, dynamic>>[];
 
     for (final item in savedList) {
       final map = jsonDecode(item) as Map<String, dynamic>;
@@ -176,268 +112,1027 @@ class AnalyticsPageState extends State<AnalyticsPage> {
       final rating = map['rating'];
       final validRating =
           ['critical', 'normal', 'maniac'].contains(rating)
-              ? rating
+              ? rating as String
               : 'unrated';
       ratingCounts[validRating] = (ratingCounts[validRating] ?? 0) + 1;
 
-      // 出演
-      final cast = map['cast']?.toString().trim();
-      if (cast != null && cast.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final castList = cast
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in castList) {
-          castCounts[name] = (castCounts[name] ?? 0) + 1;
-        }
-      }
-      /*
-      final cast = map['cast']?.toString().trim();
-      if (cast != null && cast.isNotEmpty) {
-        castCounts[cast] = (castCounts[cast] ?? 0) + 1;
-      }
-      */
-
-      // ジャンル
-      final genre = map['genre']?.toString().trim();
-      if (genre != null && genre.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final genreList = genre
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in genreList) {
-          genreCounts[name] = (genreCounts[name] ?? 0) + 1;
+      // '#' 区切りフィールドを集計するヘルパー
+      void countField(String? raw, Map<String, int> target) {
+        if (raw == null || raw.trim().isEmpty) return;
+        for (final name
+            in raw.split('#').map((e) => e.trim()).where((e) => e.isNotEmpty)) {
+          target[name] = (target[name] ?? 0) + 1;
         }
       }
 
-      // シリーズ
-      final series = map['series']?.toString().trim();
-      if (series != null && series.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final seriesList = series
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in seriesList) {
-          seriesCounts[name] = (seriesCounts[name] ?? 0) + 1;
-        }
+      countField(map['cast']?.toString(), castCounts);
+      countField(map['genre']?.toString(), genreCounts);
+      countField(map['series']?.toString(), seriesCounts);
+      countField(map['maker']?.toString(), makerCounts);
+      countField(map['label']?.toString(), labelCounts);
+
+      final listName = map['listName']?.toString().trim();
+      if (listName != null && listName.isNotEmpty) {
+        listCounts[listName] = (listCounts[listName] ?? 0) + 1;
       }
 
-      // メーカー
-      final maker = map['maker']?.toString().trim();
-      if (maker != null && maker.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final makerList = maker
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in makerList) {
-          makerCounts[name] = (makerCounts[name] ?? 0) + 1;
-        }
-      }
-
-      // レーベル
-      final label = map['label']?.toString().trim();
-      if (label != null && label.isNotEmpty) {
-        // #で分割してからでない文字列だけを対象にする
-        final labelList = label
-            .split('#')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty);
-        for (final name in labelList) {
-          labelCounts[name] = (labelCounts[name] ?? 0) + 1;
-        }
-      }
-
-      // ===== 総数 =====
-      totalWorks = savedList.length;
-
-      // ===== 最近追加 =====
-      recentItems.clear();
-
-      for (final item in savedList) {
-        final map = jsonDecode(item) as Map<String, dynamic>;
-        recentItems.add(map);
-      }
-
-      // 保存順が「古い→新しい」なら reverse でOK
-      recentItems = recentItems.reversed.toList();
+      tempRecent.add(map);
     }
+
+    setState(() {
+      totalWorks = savedList.length;
+      recentItems = tempRecent.reversed.toList();
+    });
   }
 
+  Future<void> _loadViewingCountByRating() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final Map<String, int> tempMap = {
+      'critical': 0,
+      'normal': 0,
+      'maniac': 0,
+      'unrated': 0,
+    };
+
+    for (final item in savedList) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      final url = map['url']?.toString();
+      if (url == null || url.isEmpty) continue;
+      final rating = (map['rating'] ?? 'unrated').toString().toLowerCase();
+      final validRating =
+          ['critical', 'normal', 'maniac'].contains(rating)
+              ? rating
+              : 'unrated';
+      final count = prefs.getInt(url) ?? 0;
+      tempMap[validRating] = tempMap[validRating]! + count;
+    }
+
+    setState(() => viewingCountByRating = tempMap);
+  }
+
+  Future<void> _loadTop5ViewingStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    final allKeys = prefs.getKeys();
+    final viewCounts = <String, int>{};
+    int total = 0;
+
+    for (final key in allKeys) {
+      final raw = prefs.get(key);
+      if (raw is int && raw > 0 && key.startsWith('http')) {
+        viewCounts[key] = raw;
+        total += raw;
+      }
+    }
+
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    for (final item in savedList) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      final url = map['url']?.toString();
+      final title = map['title']?.toString();
+      final image = map['image']?.toString();
+      if (url != null && title != null) {
+        urlToTitleMap[url] = title;
+        if (image != null) urlToImageMap[url] = image;
+      }
+    }
+
+    final sorted =
+        viewCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    setState(() {
+      top5Viewings = sorted.take(5).toList();
+      totalViewCount = total;
+    });
+  }
+
+  // ─── Build ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(L10n.of(context)!.analytics),
         actions: [
+          if (kDebugMode)
+            IconButton(
+              icon: Icon(
+                _debugBypassPremium ? Icons.lock_open : Icons.lock,
+                color: _debugBypassPremium ? Colors.green : null,
+              ),
+              tooltip: 'Debug: Premium toggle',
+              onPressed: () => setState(() => _debugBypassPremium = !_debugBypassPremium),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _loadAllStats();
-              _loadViewingCountByRating();
-              _loadTop5ViewingStats();
-            },
+            onPressed: _loadAll,
           ),
         ],
       ),
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
-              //概要
-              _section(
-                icon: Icons.inventory_2,
-                title: L10n.of(context)!.analytics_page_summary,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.of(context)!.analytics_page_item_count(totalWorks),
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      L10n.of(context)!.analytics_page_recent_additions,
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    const SizedBox(height: 12),
-                    buildRecentList(),
-                  ],
-                ),
-              ),
-              //視聴回数TOP5
-              _section(
-                icon: Icons.bar_chart,
-                title: L10n.of(context)!.analytics_page_view_count_top5,
-                child: SizedBox(
-                  height: 300,
-                  child:
-                      top5Viewings.isEmpty
-                          ? Center(
-                            child: Text(
-                              L10n.of(context)!.analytics_page_no_data,
-                            ),
-                          )
-                          : BarChart(top5ViewingBarChartData()),
-                ),
-              ),
-              //評価
-              _section(
-                icon: Icons.star,
-                title: L10n.of(context)!.analytics_page_evaluation,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 260,
-                      child: PieChart(ratingPieChartData()),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      height: 220,
-                      child: BarChart(viewingCountBarChartData()),
-                    ),
-                  ],
-                ),
-              ),
-              //出演
-              buildPieSection(
+              _buildSummarySection(),
+              _buildTop5ViewSection(),
+              _buildRatingSection(),
+              if (listCounts.isNotEmpty) _buildListCountSection(),
+              _buildTagSection(
                 title: L10n.of(context)!.analytics_page_cast,
+                icon: Icons.person,
                 data: castCounts,
-                top5List: buildTop5CastList(),
+                accentColor: const Color(0xFF2196F3),
               ),
-              buildPieSection(
+              _buildTagSection(
                 title: L10n.of(context)!.analytics_page_genre,
+                icon: Icons.category,
                 data: genreCounts,
-                top5List: buildTop5GenreList(),
+                accentColor: const Color(0xFF4CAF50),
               ),
-              buildPieSection(
+              _buildTagSection(
                 title: L10n.of(context)!.analytics_page_series,
+                icon: Icons.movie_filter,
                 data: seriesCounts,
-                top5List: buildTop5SeriesList(),
+                accentColor: const Color(0xFFFF9800),
               ),
-              buildPieSection(
+              _buildTagSection(
                 title: L10n.of(context)!.analytics_page_maker,
+                icon: Icons.business,
                 data: makerCounts,
-                top5List: buildTop5MakerList(),
+                accentColor: const Color(0xFF9C27B0),
               ),
-              buildPieSection(
+              _buildTagSection(
                 title: L10n.of(context)!.analytics_page_label,
+                icon: Icons.label,
                 data: labelCounts,
-                top5List: buildTop5LabelList(),
+                accentColor: const Color(0xFFF44336),
               ),
-
-              const SizedBox(height: 120),
             ],
           ),
-          if (!_isPremium) ...[
-            //if (!isDebug) ...[
+          if (!_isPremium && !_debugBypassPremium) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.black26),
             ),
-            Center(child: _buildPremiumDialog(context)),
+            Center(child: _buildPremiumDialog()),
           ],
         ],
       ),
     );
   }
 
+  // ─── Section wrapper ────────────────────────────────────────────
   Widget _section({
     required IconData icon,
     required String title,
+    required Color accentColor,
     required Widget child,
+    String? subtitle,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 32),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color:
-            colorScheme.brightness == Brightness.light
-                ? Colors.grey[200]
-                : const Color(0xFF2C2C2C),
-      ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      elevation: 0,
+      color: isDark ? const Color(0xFF2E2E2E) : Colors.grey.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  accentColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                  accentColor.withValues(alpha: isDark ? 0.05 : 0.02),
+                ],
               ),
-            ],
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: accentColor, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          child,
+          Padding(padding: const EdgeInsets.all(16), child: child),
         ],
       ),
     );
   }
 
-  //====================
-  //プレミアム購入ダイアログ
-  //====================
-  Widget _buildPremiumDialog(BuildContext context) {
+  // ─── KPI Card ───────────────────────────────────────────────────
+  Widget _kpiCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Card(
+        elevation: 0,
+        color: colorScheme.brightness == Brightness.dark ? Colors.grey.shade800 : colorScheme.surface,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.55)),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Ranked progress row ────────────────────────────────────────
+  Widget _rankedRow(
+    int rank,
+    String name,
+    int count,
+    int total,
+    Color barColor,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final percent = total > 0 ? count / total : 0.0;
+    const badgeColors = [
+      Color(0xFFFFD700),
+      Color(0xFFB0BEC5),
+      Color(0xFFCD7F32),
+    ];
+    final badgeBg =
+        rank <= 3 ? badgeColors[rank - 1] : colorScheme.surfaceContainerHighest;
+    final badgeFg = rank <= 3 ? Colors.white : colorScheme.onSurface;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: badgeBg),
+            child: Center(
+              child: Text(
+                '$rank',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: badgeFg,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      L10n.of(context)!.analytics_page_ranked_row_stat((percent * 100).toStringAsFixed(1), count),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percent,
+                    backgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+                    valueColor: AlwaysStoppedAnimation(barColor),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Summary section ────────────────────────────────────────────
+  Widget _buildSummarySection() {
+    final ratedCount = totalWorks - (ratingCounts['unrated'] ?? 0);
+    final ratingRate =
+        totalWorks > 0
+            ? '${(ratedCount / totalWorks * 100).toStringAsFixed(0)}%'
+            : '-%';
+
+    return _section(
+      icon: Icons.inventory_2,
+      title: L10n.of(context)!.analytics_page_summary,
+      accentColor: const Color(0xFF2196F3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _kpiCard(
+                L10n.of(context)!.analytics_page_kpi_saved_count,
+                '$totalWorks',
+                Icons.video_library,
+                const Color(0xFF2196F3),
+              ),
+              _kpiCard(
+                L10n.of(context)!.analytics_page_kpi_total_view_count,
+                '$totalViewCount',
+                Icons.play_circle,
+                const Color(0xFF4CAF50),
+              ),
+              _kpiCard(
+                L10n.of(context)!.analytics_page_kpi_rating_rate,
+                ratingRate,
+                Icons.star,
+                const Color(0xFFFF9800),
+              ),
+            ],
+          ),
+          if (top5Viewings.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _buildMostWatchedCard(),
+          ],
+          const SizedBox(height: 20),
+          Text(
+            L10n.of(context)!.analytics_page_recent_additions,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          _buildRecentList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMostWatchedCard() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final top = top5Viewings.first;
+    final url = top.key;
+    final count = top.value;
+    final title = urlToTitleMap[url] ?? L10n.of(context)!.analytics_page_no_title;
+    final imageUrl = urlToImageMap[url];
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF2196F3).withValues(alpha: 0.15),
+            const Color(0xFF2196F3).withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child:
+                imageUrl != null
+                    ? Image.network(
+                      imageUrl,
+                      width: 56,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, __, ___) =>
+                              const Icon(Icons.broken_image, size: 56),
+                    )
+                    : const Icon(Icons.image_not_supported, size: 56),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.emoji_events,
+                      color: Color(0xFFFFD700),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      L10n.of(context)!.analytics_page_most_watched,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface.withValues(alpha: 0.65),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  L10n.of(context)!.analytics_page_view_times(count),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF2196F3),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentList() {
+    final top3 = recentItems.take(3).toList();
+    if (top3.isEmpty) {
+      return Center(child: Text(L10n.of(context)!.analytics_page_no_data));
+    }
+
+    return Column(
+      children:
+          top3.map((item) {
+            final title = item['title'] ?? '';
+            final image = item['image'];
+            final rating = item['rating']?.toString();
+            final ratingColor = _ratingColors[rating];
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).colorScheme.brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child:
+                        image != null
+                            ? Image.network(
+                              image,
+                              width: 48,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      const Icon(Icons.broken_image, size: 48),
+                            )
+                            : const Icon(Icons.image_not_supported, size: 48),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        if (ratingColor != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ratingColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _ratingLabel(rating),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: ratingColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  String _ratingLabel(String? rating) {
+    switch (rating) {
+      case 'critical':
+        return L10n.of(context)!.critical;
+      case 'normal':
+        return L10n.of(context)!.normal;
+      case 'maniac':
+        return L10n.of(context)!.maniac;
+      default:
+        return L10n.of(context)!.unrated;
+    }
+  }
+
+  // ─── Top5 view count section ────────────────────────────────────
+  Widget _buildTop5ViewSection() {
+    return _section(
+      icon: Icons.bar_chart,
+      title: L10n.of(context)!.analytics_page_view_count_top5,
+      subtitle: L10n.of(context)!.analytics_page_total_view_subtitle(totalViewCount),
+      accentColor: const Color(0xFF4CAF50),
+      child: SizedBox(
+        height: 300,
+        child:
+            top5Viewings.isEmpty
+                ? Center(child: Text(L10n.of(context)!.analytics_page_no_data))
+                : BarChart(_top5BarChartData()),
+      ),
+    );
+  }
+
+  BarChartData _top5BarChartData() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final maxY =
+        top5Viewings
+            .map((e) => e.value)
+            .reduce((a, b) => a > b ? a : b)
+            .toDouble() +
+        1;
+
+    const barShades = [
+      Color(0xFF2E7D32),
+      Color(0xFF388E3C),
+      Color(0xFF43A047),
+      Color(0xFF66BB6A),
+      Color(0xFF81C784),
+    ];
+
+    return BarChartData(
+      maxY: maxY,
+      barGroups: List.generate(top5Viewings.length, (i) {
+        return BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: top5Viewings[i].value.toDouble(),
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  barShades[i % barShades.length],
+                  barShades[i % barShades.length].withValues(alpha: 0.5),
+                ],
+              ),
+              width: 32,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(6),
+              ),
+            ),
+          ],
+        );
+      }),
+      titlesData: FlTitlesData(
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 80,
+            getTitlesWidget: (value, _) {
+              final index = value.toInt();
+              if (index < 0 || index >= top5Viewings.length) {
+                return const SizedBox();
+              }
+              final url = top5Viewings[index].key;
+              final imageUrl = urlToImageMap[url];
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 44,
+                    width: 44,
+                    child:
+                        imageUrl != null
+                            ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                width: 44,
+                                height: 44,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, __, ___) => const Icon(
+                                      Icons.broken_image,
+                                      size: 40,
+                                    ),
+                              ),
+                            )
+                            : const Icon(
+                              Icons.image_not_supported,
+                              size: 40,
+                            ),
+                  ),
+                  const SizedBox(height: 2),
+                  SizedBox(
+                    width: 60,
+                    child: Text(
+                      _shortenTitle(
+                        urlToTitleMap[url] ??
+                            L10n.of(context)!.analytics_page_no_title,
+                      ),
+                      style: const TextStyle(fontSize: 9),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 36,
+            getTitlesWidget: (value, _) {
+              if (value == 0) {
+                return Text(
+                  L10n.of(context)!.analytics_page_count,
+                  style: const TextStyle(fontSize: 11),
+                );
+              }
+              return Text(
+                '${value.toInt()}',
+                style: const TextStyle(fontSize: 11),
+              );
+            },
+          ),
+        ),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      ),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: (maxY / 5).ceilToDouble(),
+        getDrawingHorizontalLine:
+            (value) => FlLine(
+              color: colorScheme.onSurface.withValues(alpha: 0.1),
+              strokeWidth: 1,
+            ),
+      ),
+      borderData: FlBorderData(show: false),
+      barTouchData: BarTouchData(
+        touchTooltipData: BarTouchTooltipData(
+          tooltipBgColor: Colors.black87,
+          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+            return BarTooltipItem(
+              L10n.of(context)!.analytics_page_toolchip_count(
+                rod.toY.toInt(),
+              ),
+              const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ─── Rating section ────────────────────────────────────────────
+  Widget _buildRatingSection() {
+    final total = ratingCounts.values.fold(0, (a, b) => a + b);
+    final ratedCount = total - (ratingCounts['unrated'] ?? 0);
+
+    return _section(
+      icon: Icons.star,
+      title: L10n.of(context)!.analytics_page_evaluation,
+      subtitle: L10n.of(context)!.analytics_page_rated_subtitle(ratedCount, total),
+      accentColor: const Color(0xFFFF9800),
+      child:
+          total == 0
+              ? Center(child: Text(L10n.of(context)!.analytics_page_no_data))
+              : Column(
+                children: [
+                  const SizedBox(height: 16),
+                  SizedBox(height: 200, child: _buildRatingDonut(total)),
+                  const SizedBox(height: 28),
+                  _buildRatingLegend(total),
+                  const SizedBox(height: 20),
+                  _buildViewingByRatingRows(),
+                ],
+              ),
+    );
+  }
+
+  Widget _buildRatingDonut(int total) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final sections =
+        ratingCounts.entries.where((e) => e.value > 0).map((entry) {
+          return PieChartSectionData(
+            value: entry.value.toDouble(),
+            title: '',
+            color: _ratingColors[entry.key],
+            radius: 72,
+          );
+        }).toList();
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        PieChart(
+          PieChartData(
+            sections: sections,
+            centerSpaceRadius: 52,
+            sectionsSpace: 2,
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$total',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              L10n.of(context)!.analytics_page_unit_items,
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.55)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingLegend(int total) {
+    const keys = ['critical', 'normal', 'maniac', 'unrated'];
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children:
+          keys.map((key) {
+            final count = ratingCounts[key] ?? 0;
+            if (count == 0) return const SizedBox.shrink();
+            final percent =
+                total > 0
+                    ? (count / total * 100).toStringAsFixed(1)
+                    : '0.0';
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _ratingColors[key],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${_ratingLabel(key)}  $count件 ($percent%)',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildViewingByRatingRows() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final total = viewingCountByRating.values.fold(0, (a, b) => a + b);
+    if (total == 0) return const SizedBox.shrink();
+
+    const keys = ['critical', 'normal', 'maniac', 'unrated'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          L10n.of(context)!.analytics_page_view_count_by_rating,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface.withValues(alpha: 0.65),
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...keys.map((key) {
+          final count = viewingCountByRating[key] ?? 0;
+          final percent = total > 0 ? count / total : 0.0;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _ratingColors[key],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 74,
+                  child: Text(
+                    _ratingLabel(key),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: percent,
+                      backgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+                      valueColor: AlwaysStoppedAnimation(_ratingColors[key]!),
+                      minHeight: 6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  L10n.of(context)!.analytics_page_times_unit(count),
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.65)),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // ─── List count section (新規) ──────────────────────────────────
+  Widget _buildListCountSection() {
+    final total = listCounts.values.fold(0, (a, b) => a + b);
+    final sorted =
+        listCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final top5 = sorted.take(5).toList();
+
+    return _section(
+      icon: Icons.folder,
+      title: L10n.of(context)!.analytics_page_saved_by_list,
+      subtitle: L10n.of(context)!.analytics_page_list_count_subtitle(listCounts.length),
+      accentColor: const Color(0xFF00BCD4),
+      child: Column(
+        children: List.generate(
+          top5.length,
+          (i) => _rankedRow(
+            i + 1,
+            top5[i].key,
+            top5[i].value,
+            total,
+            const Color(0xFF00BCD4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Tag sections（出演/ジャンル/シリーズ/メーカー/レーベル）──────
+  Widget _buildTagSection({
+    required String title,
+    required IconData icon,
+    required Map<String, int> data,
+    required Color accentColor,
+  }) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    final total = data.values.fold(0, (a, b) => a + b);
+    final sorted =
+        data.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final top5 = sorted.take(5).toList();
+
+    return _section(
+      icon: icon,
+      title: title,
+      subtitle: L10n.of(context)!.analytics_page_type_count_subtitle(data.length),
+      accentColor: accentColor,
+      child: Column(
+        children: List.generate(
+          top5.length,
+          (i) => _rankedRow(
+            i + 1,
+            top5[i].key,
+            top5[i].value,
+            total,
+            _topColor(i),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Premium dialog ────────────────────────────────────────────
+  Widget _buildPremiumDialog() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      elevation: 12,
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -446,7 +1141,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           children: [
             Text(
               L10n.of(context)!.analytics_page_premium_title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFB8860B),
@@ -460,14 +1155,13 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             const SizedBox(height: 24),
             TextButton.icon(
               style: ButtonStyle(
-                elevation: MaterialStateProperty.all(0),
-                backgroundColor: MaterialStateProperty.all(
+                elevation: WidgetStateProperty.all(0),
+                backgroundColor: WidgetStateProperty.all(
                   colorScheme.brightness == Brightness.light
                       ? Colors.black
                       : Colors.white,
                 ),
-                foregroundColor: MaterialStateProperty.all(Colors.white),
-                shape: MaterialStateProperty.all(
+                shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -476,7 +1170,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
               label: Text(
                 L10n.of(context)!.analytics_page_premium_button,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color(0xFFB8860B),
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -484,10 +1178,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
               ),
               onPressed: () async {
                 if (!await PremiumGate.ensurePremium(context)) return;
-
-                setState(() {
-                  _isPremium = true;
-                });
+                setState(() => _isPremium = true);
               },
             ),
           ],
@@ -496,743 +1187,9 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  /*
-  //プレミアム購入処理
-  void _startPurchase() async {
-    try {
-      final offerings = await Purchases.getOfferings();
-      final offering = offerings.current;
-
-      if (offering != null && offering.availablePackages.isNotEmpty) {
-        final package = offering.availablePackages.first;
-
-        // 購入処理（PurchaseResultを受け取る）
-        final purchaseResult = await Purchases.purchasePackage(package);
-
-        // 最新のCustomerInfoを取得
-        final customerInfo = await Purchases.getCustomerInfo();
-
-        // RevenueCatのEntitlement IDを確認（例: "premium"）
-        if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('プレミアムを購入しました！')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('購入は完了しましたが、プレミアムが有効化されませんでした')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('購入可能なプランが見つかりません')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('購入エラー: $e')));
-    }
-  }
-  */
-
-  /*
-  Widget _buildTitle(String text) {
-    final color = Theme.of(context).colorScheme.onPrimary;
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ),
-        const SizedBox(height: 5),
-      ],
-    );
-  }
-  */
-
-  Widget buildTop5CastList() {
-    final sortedEntries =
-        castCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)); // 降順ソート
-
-    final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
-    final total = castCounts.values.fold(0, (a, b) => a + b); // 合計数
-
-    return Column(
-      children: List.generate(top5.length, (index) {
-        final entry = top5[index];
-        final percentage = (entry.value / total) * 100;
-        final color = getTopColor(index);
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero, // ★ 余白も削除
-          leading: CircleAvatar(backgroundColor: color),
-          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(
-            L10n.of(context)!.analytics_page_list_value(
-              percentage.toStringAsFixed(1),
-              entry.value,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget buildTop5GenreList() {
-    final sortedEntries =
-        genreCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)); // 降順ソート
-
-    final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
-    final total = genreCounts.values.fold(0, (a, b) => a + b); // 合計数
-
-    return Column(
-      children: List.generate(top5.length, (index) {
-        final entry = top5[index];
-        final percentage = (entry.value / total) * 100;
-        final color = getTopColor(index);
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero, // ★ 余白も削除
-          leading: CircleAvatar(backgroundColor: color),
-          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(
-            L10n.of(context)!.analytics_page_list_value(
-              percentage.toStringAsFixed(1),
-              entry.value,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget buildTop5SeriesList() {
-    final sortedEntries =
-        seriesCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)); // 降順ソート
-
-    final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
-    final total = seriesCounts.values.fold(0, (a, b) => a + b); // 合計数
-
-    return Column(
-      children: List.generate(top5.length, (index) {
-        final entry = top5[index];
-        final percentage = (entry.value / total) * 100;
-        final color = getTopColor(index);
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero, // ★ 余白も削除
-          leading: CircleAvatar(backgroundColor: color),
-          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(
-            L10n.of(context)!.analytics_page_list_value(
-              percentage.toStringAsFixed(1),
-              entry.value,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget buildTop5LabelList() {
-    final sortedEntries =
-        labelCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)); // 降順ソート
-
-    final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
-    final total = labelCounts.values.fold(0, (a, b) => a + b); // 合計数
-
-    return Column(
-      children: List.generate(top5.length, (index) {
-        final entry = top5[index];
-        final percentage = (entry.value / total) * 100;
-        final color = getTopColor(index);
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero, // ★ 余白も削除
-          leading: CircleAvatar(backgroundColor: color),
-          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(
-            L10n.of(context)!.analytics_page_list_value(
-              percentage.toStringAsFixed(1),
-              entry.value,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget buildTop5MakerList() {
-    final sortedEntries =
-        makerCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)); // 降順ソート
-
-    final top5 = sortedEntries.take(5).toList(); // 上位5件を取得
-    final total = makerCounts.values.fold(0, (a, b) => a + b); // 合計数
-
-    return Column(
-      children: List.generate(top5.length, (index) {
-        final entry = top5[index];
-        final percentage = (entry.value / total) * 100;
-        final color = getTopColor(index);
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero, // ★ 余白も削除
-          leading: CircleAvatar(backgroundColor: color),
-          title: Text(entry.key, maxLines: 2, overflow: TextOverflow.ellipsis),
-          trailing: Text(
-            L10n.of(context)!.analytics_page_list_value(
-              percentage.toStringAsFixed(1),
-              entry.value,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        );
-      }),
-    );
-  }
-
-  BarChartData makerBarChartData() {
-    final sorted =
-        makerCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-    final top5 = sorted.take(5).toList();
-
-    return BarChartData(
-      barGroups: List.generate(top5.length, (i) {
-        return BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: top5[i].value.toDouble(),
-              color: Colors.teal,
-              width: 14,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        );
-      }),
-      titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            getTitlesWidget: (value, _) {
-              final label = top5[value.toInt()].key;
-              return Text(label, style: const TextStyle(fontSize: 8));
-            },
-          ),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: true, reservedSize: 30),
-        ),
-      ),
-      gridData: FlGridData(show: true),
-      borderData: FlBorderData(show: false),
-    );
-  }
-
-  //============================
-  //評価の統計
-  //============================
-  //評価毎のグラフデータ
-  PieChartData ratingPieChartData() {
-    // データセット（未評価も含む）
-    final ratingMap = {
-      'critical': ratingCounts['critical'] ?? 0,
-      'normal': ratingCounts['normal'] ?? 0,
-      'maniac': ratingCounts['maniac'] ?? 0,
-      'unrated': ratingCounts['unrated'] ?? 0, // 未評価も集計されている想定
-    };
-
-    final total = ratingMap.values.fold(0, (a, b) => a + b);
-    if (total == 0) {
-      return PieChartData(sections: []);
-    }
-
-    final labelsJP = {
-      'critical': L10n.of(context)!.critical,
-      'normal': L10n.of(context)!.normal,
-      'maniac': L10n.of(context)!.maniac,
-      'unrated': L10n.of(context)!.unrated,
-    };
-
-    final colors = {
-      'critical': Colors.red,
-      'normal': Colors.yellow[700]!,
-      'maniac': Colors.purple,
-      'unrated': Colors.grey,
-    };
-
-    final sections =
-        ratingMap.entries.where((e) => e.value > 0).map((entry) {
-          final key = entry.key;
-          final count = entry.value;
-          final percentage = (count / total) * 100;
-          return PieChartSectionData(
-            value: count.toDouble(),
-            title: '${labelsJP[key]} (${percentage.toStringAsFixed(1)}%)',
-            color: colors[key],
-            radius: 130,
-            titleStyle: const TextStyle(fontSize: 12, color: Colors.white),
-          );
-        }).toList();
-
-    return PieChartData(
-      sections: sections,
-      centerSpaceRadius: 0,
-      sectionsSpace: 2,
-    );
-  }
-
-  //評価ごとの視聴回数集計
-  Map<String, int> viewingCountByRating = {
-    'critical': 0,
-    'normal': 0,
-    'maniac': 0,
-    'unrated': 0,
-  };
-
-  //視聴回数の集計
-  Future<void> _loadViewingCountByRating() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedList = prefs.getStringList('saved_metadata') ?? [];
-
-    final Map<String, int> tempMap = {
-      'critical': 0,
-      'normal': 0,
-      'maniac': 0,
-      'unrated': 0,
-    };
-
-    for (final item in savedList) {
-      final map = jsonDecode(item) as Map<String, dynamic>;
-      final url = map['url']?.toString();
-      if (url == null || url.isEmpty) continue;
-
-      final rating = (map['rating'] ?? 'unrated').toString().toLowerCase();
-      final validRating =
-          ['critical', 'normal', 'maniac'].contains(rating)
-              ? rating
-              : 'unrated';
-
-      final count = prefs.getInt(url) ?? 0;
-      tempMap[validRating] = tempMap[validRating]! + count;
-    }
-
-    setState(() {
-      viewingCountByRating = tempMap;
-    });
-  }
-
-  //評価ごとの視聴回数合計（棒グラフ）
-  BarChartData viewingCountBarChartData() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final labels = ['critical', 'normal', 'maniac', 'unrated'];
-    final colors = [Colors.red, Colors.yellow, Colors.purple, Colors.grey];
-    final maxY =
-        viewingCountByRating.values.reduce((a, b) => a > b ? a : b).toDouble() +
-        1;
-
-    final maxCount = ratingCounts.values.reduce((a, b) => a > b ? a : b);
-
-    // グリッド線間隔を動的に決定
-    int interval;
-    if (maxCount < 6) {
-      interval = 1;
-    } else if (maxCount < 10) {
-      interval = maxY.ceil();
-    } else {
-      interval = (maxY / 5).ceil(); // 約5本にする
-    }
-
-    //maxYより小さく補正
-    if (interval >= maxY) {
-      interval = (maxY / 2).ceil();
-    }
-
-    //棒グラフデータ
-    return BarChartData(
-      maxY: maxY,
-      barGroups: List.generate(labels.length, (i) {
-        final label = labels[i];
-        return BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: viewingCountByRating[label]!.toDouble(),
-              color: colors[i],
-              width: 30,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        );
-      }),
-      titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            getTitlesWidget: (value, _) {
-              return Text(
-                [
-                  L10n.of(context)!.critical,
-                  L10n.of(context)!.normal,
-                  L10n.of(context)!.maniac,
-                  L10n.of(context)!.unrated,
-                ][value.toInt()],
-                style: const TextStyle(fontSize: 12),
-              );
-            },
-          ),
-        ),
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        //leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 40, // 少し余白を確保
-            getTitlesWidget: (value, meta) {
-              if (value == 0) {
-                // 左下の位置だけ「(回)」と表示
-                return Text(
-                  L10n.of(context)!.analytics_page_count,
-                  style: TextStyle(fontSize: 16),
-                );
-              } else {
-                return Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(fontSize: 16),
-                );
-              }
-            },
-          ),
-        ),
-
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      borderData: FlBorderData(show: false),
-      gridData: FlGridData(
-        show: true,
-        drawHorizontalLine: true, // 横線を描画するか
-        drawVerticalLine: false, // 縦線を描画するか（棒グラフでは通常false）
-        //horizontalInterval: interval, // 横線の間隔（Y軸）
-        horizontalInterval: null, //自動調整
-        verticalInterval: 1.0, // 縦線の間隔（X軸）
-        getDrawingHorizontalLine:
-            (value) => FlLine(
-              color: colorScheme.onPrimary, // 線の色
-              strokeWidth: 0.5, // 線の太さ
-              dashArray: [1, 0], // 点線にする（省略可）
-            ),
-      ),
-      barTouchData: BarTouchData(
-        enabled: true,
-        touchTooltipData: BarTouchTooltipData(
-          tooltipBgColor: Colors.black87, // 背景色（任意）
-          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-            return BarTooltipItem(
-              L10n.of(context)!.analytics_page_toolchip_count(rod.toY.toInt()),
-              TextStyle(
-                color: Colors.white, // ← ここがtipの文字色
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  //==================
-  //視聴数TOP5（棒グラフ）
-  //==================
-  Map<String, String> urlToTitleMap = {};
-  Map<String, String> urlToImageMap = {};
-  List<MapEntry<String, int>> top5Viewings = [];
-
-  Future<void> _loadTop5ViewingStats() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // URL→視聴回数マップ
-    final allKeys = prefs.getKeys();
-    final viewCounts = <String, int>{};
-
-    for (final key in allKeys) {
-      final raw = prefs.get(key);
-      if (raw is int && raw > 0 && key.startsWith('http')) {
-        viewCounts[key] = raw;
-      }
-    }
-
-    // URL→タイトルのマップ
-    final savedList = prefs.getStringList('saved_metadata') ?? [];
-    for (final item in savedList) {
-      final map = jsonDecode(item) as Map<String, dynamic>;
-      final url = map['url']?.toString();
-      final title = map['title']?.toString();
-      final image = map['image']?.toString();
-      if (url != null && title != null) {
-        urlToTitleMap[url] = title;
-        if (image != null) {
-          urlToImageMap[url] = image; // ← 追加
-        }
-      }
-    }
-
-    // トップ5抽出（視聴回数順）
-    final sorted =
-        viewCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    top5Viewings = sorted.take(5).toList();
-
-    setState(() {});
-  }
-
-  BarChartData top5ViewingBarChartData() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final maxY =
-        top5Viewings
-            .map((e) => e.value)
-            .reduce((a, b) => a > b ? a : b)
-            .toDouble() +
-        1;
-
-    return BarChartData(
-      maxY: maxY,
-      barGroups: List.generate(top5Viewings.length, (i) {
-        return BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: top5Viewings[i].value.toDouble(),
-              color: Colors.blueAccent,
-              width: 30,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        );
-      }),
-      titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 80,
-            getTitlesWidget: (value, _) {
-              final index = value.toInt();
-              if (index < 0 || index >= top5Viewings.length)
-                return const SizedBox();
-
-              final url = top5Viewings[value.toInt()].key;
-              final imageUrl = urlToImageMap[url];
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 10),
-                  SizedBox(
-                    height: 45,
-                    width: 45,
-                    child:
-                        imageUrl != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                imageUrl,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) => const Icon(
-                                      Icons.broken_image,
-                                      size: 40,
-                                    ),
-                              ),
-                            )
-                            : const Icon(Icons.image_not_supported, size: 40),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _shortenTitle(
-                      urlToTitleMap[url] ??
-                          L10n.of(context)!.analytics_page_no_title,
-                    ),
-                    style: const TextStyle(fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 40,
-            getTitlesWidget: (value, _) {
-              if (value == 0) {
-                return Text(
-                  L10n.of(context)!.analytics_page_count,
-                  style: TextStyle(fontSize: 12),
-                );
-              } else {
-                return Text(
-                  '${value.toInt()}',
-                  style: const TextStyle(fontSize: 10),
-                );
-              }
-            },
-          ),
-        ),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      gridData: FlGridData(
-        show: true,
-        drawHorizontalLine: true,
-        drawVerticalLine: false, // 縦線を描画するか（棒グラフでは通常false）
-        horizontalInterval: (maxY / 5).ceil().toDouble(),
-        getDrawingHorizontalLine:
-            (value) => FlLine(color: colorScheme.onPrimary, strokeWidth: 0.5),
-      ),
-      borderData: FlBorderData(show: false),
-      barTouchData: BarTouchData(
-        enabled: true,
-        touchTooltipData: BarTouchTooltipData(
-          tooltipBgColor: Colors.black87, // 背景色（任意）
-          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-            return BarTooltipItem(
-              L10n.of(context)!.analytics_page_toolchip_count(rod.toY.toInt()),
-              TextStyle(
-                color: Colors.white, // ← ここがtipの文字色
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  //タイトルを短くするメソッド（長すぎるタイトル対策）
   String _shortenTitle(String title, {int maxLength = 7}) {
     return title.length <= maxLength
         ? title
         : '${title.substring(0, maxLength)}...';
-  }
-
-  Widget buildPieSection({
-    required String title,
-    required Map<String, int> data,
-    required Widget top5List,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 32),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color:
-            colorScheme.brightness == Brightness.light
-                ? Colors.grey[200]
-                : const Color(0xFF2C2C2C),
-      ),
-      child: Column(
-        children: [
-          Text(title, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 260,
-            child: PieChart(
-              PieChartData(
-                sections: buildTopPieSections(data),
-                centerSpaceRadius: 0,
-                sectionsSpace: 2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            L10n.of(context)!.analytics_page_item_count_top5,
-            style: TextStyle(fontSize: 18),
-          ),
-          const SizedBox(height: 8),
-          top5List,
-        ],
-      ),
-    );
-  }
-
-  //概要(総数、最近の追加作品)
-  Widget buildRecentList() {
-    final top3 = recentItems.take(3).toList();
-
-    if (top3.isEmpty) {
-      return Center(child: Text(L10n.of(context)!.analytics_page_no_data));
-    }
-
-    return Column(
-      children:
-          top3.map((item) {
-            final title = item['title'] ?? '';
-            final image = item['image'];
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    image != null
-                        ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            image,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                            errorBuilder:
-                                (_, __, ___) => const Icon(Icons.broken_image),
-                          ),
-                        )
-                        : const Icon(Icons.image_not_supported, size: 56),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-    );
   }
 }

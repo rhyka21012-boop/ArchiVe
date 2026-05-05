@@ -12,7 +12,7 @@ class L10nDe extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.8';
+  String get version => 'v2.0';
 
   @override
   String get critical => 'Kritisch';
@@ -526,6 +526,62 @@ class L10nDe extends L10n {
   String get analytics_page_item_count_top5 => 'Top 5 Eintragsanzahl';
 
   @override
+  String get analytics_page_kpi_saved_count => 'Gespeichert';
+
+  @override
+  String get analytics_page_kpi_total_view_count => 'Aufrufe gesamt';
+
+  @override
+  String get analytics_page_kpi_rating_rate => 'Bewertungsrate';
+
+  @override
+  String get analytics_page_most_watched => 'Meistgesehen';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return '$count Mal angesehen';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return 'Aufrufe gesamt: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return 'Bewertet $ratedCount / $total';
+  }
+
+  @override
+  String get analytics_page_unit_items => 'Eintr.';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count Eintr.';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count Aufrufe';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => 'Aufrufe nach Bewertung';
+
+  @override
+  String get analytics_page_saved_by_list => 'Gespeichert nach Liste';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count Listen';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count Typen';
+  }
+
+  @override
   String get settings => 'Einstellungen';
 
   @override
@@ -794,4 +850,16 @@ class L10nDe extends L10n {
 
   @override
   String get share_already_saved => 'Diese URL ist bereits gespeichert';
+
+  @override
+  String get share_dialog_title => 'In ArchiVe speichern';
+
+  @override
+  String get share_list_section => 'Liste';
+
+  @override
+  String get share_title_hint => 'Titel eingeben';
+
+  @override
+  String get clipboard_dialog_title => 'URL aus der Zwischenablage hinzufügen?';
 }

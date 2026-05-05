@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter/services.dart' show Clipboard;
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart';
@@ -46,6 +47,7 @@ class _MainPageState extends ConsumerState<MainPage>
       GlobalKey<AnalyticsPageState>();
 
   RewardedAd? _rewardedAd;
+  String? _lastCheckedClipboardUrl;
 
   //保存済みバージョン保存用キー
   static const _shownVersionKey = 'last_shown_update_version';
@@ -100,6 +102,7 @@ class _MainPageState extends ConsumerState<MainPage>
       await AppTrackingTransparency.requestTrackingAuthorization();
       checkAppVersion(context);
       await _processPendingShare();
+      await _checkClipboard();
     });
     _checkSubscriptionStatus();
 
@@ -117,12 +120,73 @@ class _MainPageState extends ConsumerState<MainPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _processPendingShare();
+      _processPendingShare().then((_) => _checkClipboard());
     }
   }
 
-  // Share Extension から渡された pending データを処理して saved_metadata に保存する
+  Future<void> _checkClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = (data?.text ?? '').trim();
+    if (!text.startsWith('http://') && !text.startsWith('https://')) return;
+    if (text == _lastCheckedClipboardUrl) return;
+    _lastCheckedClipboardUrl = text;
+
+    if (!mounted) return;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx)!.clipboard_dialog_title),
+        content: Text(
+          text,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.55)),
+        ),
+        actions: [
+          TextButton(
+            style: ButtonStyle(
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor: WidgetStateProperty.all(Colors.grey[300]),
+              foregroundColor: WidgetStateProperty.all(Colors.black),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(L10n.of(ctx)!.cancel),
+          ),
+          TextButton(
+            style: ButtonStyle(
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor: WidgetStateProperty.all(colorScheme.primary),
+              foregroundColor: WidgetStateProperty.all(Colors.white),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(L10n.of(ctx)!.ok),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetailPage(url: text, listName: '選択なし')),
+    );
+  }
+
+  // Share Extension (iOS) / Share Intent (Android) からのデータを処理して saved_metadata に保存する
   Future<void> _processPendingShare() async {
+    if (Platform.isAndroid) {
+      await _processAndroidShare();
+      return;
+    }
+
     final pending = await AppGroupService.getPendingShare();
     if (pending == null) return;
 
@@ -153,7 +217,171 @@ class _MainPageState extends ConsumerState<MainPage>
       'url': url,
       'title': pending['title'] ?? '',
       'listName': pending['listName'] ?? '',
-      'image': '',
+      'image': pending['image'] ?? '',
+      'cast': '',
+      'genre': '',
+      'series': '',
+      'label': '',
+      'maker': '',
+      'memo': '',
+      'rating': null,
+    };
+
+    savedList.add(jsonEncode(data));
+    await prefs.setStringList('saved_metadata', savedList);
+
+    ref.read(randomImageReloadProvider.notifier).state++;
+    ref.read(listReloadProvider.notifier).state++;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.share_saved)),
+      );
+    }
+  }
+
+  // Android: 共有インテントで受け取った URL のダイアログを表示して保存する
+  Future<void> _processAndroidShare() async {
+    final url = await AppGroupService.getSharedUrl();
+    if (url == null || url.isEmpty) return;
+    await AppGroupService.clearSharedUrl();
+
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+
+    final isDuplicate = savedList.any((item) {
+      try {
+        final map = jsonDecode(item) as Map<String, dynamic>;
+        return map['url'] == url;
+      } catch (_) {
+        return false;
+      }
+    });
+
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.share_already_saved)),
+        );
+      }
+      return;
+    }
+
+    final allLists = prefs.getStringList('all_lists') ?? [];
+    final titleController = TextEditingController();
+    bool isFetchingTitle = true;
+    String selectedList = '';
+    bool fetchStarted = false;
+    String fetchedImageUrl = '';
+
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          if (!fetchStarted) {
+            fetchStarted = true;
+            _fetchPageMeta(url).then((meta) {
+              if (meta.title != null && titleController.text.isEmpty) {
+                titleController.text = meta.title!;
+              }
+              fetchedImageUrl = meta.image ?? '';
+              setDialogState(() => isFetchingTitle = false);
+            });
+          }
+          return AlertDialog(
+            title: Text(L10n.of(context)!.share_dialog_title),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'URL',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    url,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text(
+                        L10n.of(ctx)!.title,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      if (isFetchingTitle) ...[
+                        const SizedBox(width: 8),
+                        const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
+                    ],
+                  ),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      hintText: L10n.of(ctx)!.share_title_hint,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    L10n.of(ctx)!.share_list_section,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  DropdownButton<String>(
+                    value: selectedList,
+                    isExpanded: true,
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(L10n.of(ctx)!.no_select),
+                      ),
+                      ...allLists.map(
+                        (l) => DropdownMenuItem(value: l, child: Text(l)),
+                      ),
+                    ],
+                    onChanged: (v) =>
+                        setDialogState(() => selectedList = v ?? ''),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(L10n.of(ctx)!.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(L10n.of(ctx)!.save),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final titleText = titleController.text.trim();
+    titleController.dispose();
+
+    if (confirmed != true) return;
+
+    final data = <String, dynamic>{
+      'url': url,
+      'title': titleText,
+      'listName': selectedList,
+      'image': fetchedImageUrl,
       'cast': '',
       'genre': '',
       'series': '',
@@ -438,3 +666,80 @@ class _MainPageState extends ConsumerState<MainPage>
     );
   }
 }
+
+Future<({String? title, String? image})> _fetchPageMeta(String url) async {
+  try {
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36',
+          },
+        )
+        .timeout(const Duration(seconds: 8));
+    if (response.statusCode != 200) return (title: null, image: null);
+
+    final html = utf8.decode(response.bodyBytes, allowMalformed: true);
+
+    // og:title (attribute order variants)
+    String? title;
+    for (final pattern in [
+      RegExp(
+        r'''<meta[^>]+property=["']og:title["'][^>]+content=["']([^"'<>]+)["']''',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'''<meta[^>]+content=["']([^"'<>]+)["'][^>]+property=["']og:title["']''',
+        caseSensitive: false,
+      ),
+    ]) {
+      final m = pattern.firstMatch(html);
+      if (m != null) {
+        final t = _decodeHtmlEntities(m.group(1) ?? '');
+        if (t.isNotEmpty) { title = t; break; }
+      }
+    }
+    if (title == null) {
+      final m = RegExp(
+        r'<title[^>]*>([^<]+)</title>',
+        caseSensitive: false,
+      ).firstMatch(html);
+      if (m != null) {
+        final t = _decodeHtmlEntities(m.group(1)?.trim() ?? '');
+        if (t.isNotEmpty) title = t;
+      }
+    }
+
+    // og:image (attribute order variants)
+    String? image;
+    for (final pattern in [
+      RegExp(
+        r'''<meta[^>]+property=["']og:image["'][^>]+content=["']([^"'<>]+)["']''',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'''<meta[^>]+content=["']([^"'<>]+)["'][^>]+property=["']og:image["']''',
+        caseSensitive: false,
+      ),
+    ]) {
+      final m = pattern.firstMatch(html);
+      if (m != null) {
+        final img = m.group(1)?.trim() ?? '';
+        if (img.isNotEmpty) { image = img; break; }
+      }
+    }
+
+    return (title: title, image: image);
+  } catch (_) {
+    return (title: null, image: null);
+  }
+}
+
+String _decodeHtmlEntities(String s) => s
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&nbsp;', ' ');

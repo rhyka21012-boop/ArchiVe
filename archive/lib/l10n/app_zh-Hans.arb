@@ -173,6 +173,20 @@
   "analytics_page_toolchip_count": "{rod} 次浏览",
   "analytics_page_no_title": "无标题",
   "analytics_page_item_count_top5": "项目数量前5名",
+  "analytics_page_kpi_saved_count": "收藏数",
+  "analytics_page_kpi_total_view_count": "总观看次数",
+  "analytics_page_kpi_rating_rate": "评价率",
+  "analytics_page_most_watched": "最多播放",
+  "analytics_page_view_times": "观看 {count} 次",
+  "analytics_page_total_view_subtitle": "总观看次数: {count}",
+  "analytics_page_rated_subtitle": "已评价 {ratedCount} / {total} 件",
+  "analytics_page_unit_items": "件",
+  "analytics_page_ranked_row_stat": "{percent}%  {count}件",
+  "analytics_page_times_unit": "{count}次",
+  "analytics_page_view_count_by_rating": "按评价的观看次数",
+  "analytics_page_saved_by_list": "按列表保存数",
+  "analytics_page_list_count_subtitle": "{count}个列表",
+  "analytics_page_type_count_subtitle": "{count}种类",
 
   "settings": "设置",
   "settings_page_dark_mode": "深色模式",
@@ -260,5 +274,9 @@
   "tutorial_slide_next": "下一步",
   "tutorial_slide_start": "开始使用",
   "share_saved": "已从分享中保存",
-  "share_already_saved": "该URL已保存"
+  "share_already_saved": "该URL已保存",
+  "share_dialog_title": "保存到 ArchiVe",
+  "share_list_section": "保存列表",
+  "share_title_hint": "输入标题",
+  "clipboard_dialog_title": "是否添加剪贴板中的URL？"
 }

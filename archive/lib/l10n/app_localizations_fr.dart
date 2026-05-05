@@ -12,7 +12,7 @@ class L10nFr extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.8';
+  String get version => 'v2.0';
 
   @override
   String get critical => 'Critique';
@@ -523,6 +523,62 @@ class L10nFr extends L10n {
   String get analytics_page_item_count_top5 => 'Top 5 du nombre d’éléments';
 
   @override
+  String get analytics_page_kpi_saved_count => 'Enregistrés';
+
+  @override
+  String get analytics_page_kpi_total_view_count => 'Vues totales';
+
+  @override
+  String get analytics_page_kpi_rating_rate => 'Taux de notation';
+
+  @override
+  String get analytics_page_most_watched => 'Plus regardé';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return 'Vu $count fois';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return 'Vues totales: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return 'Notés $ratedCount / $total';
+  }
+
+  @override
+  String get analytics_page_unit_items => 'élém.';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count élém.';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count vues';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => 'Vues par note';
+
+  @override
+  String get analytics_page_saved_by_list => 'Enregistrés par liste';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count listes';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count types';
+  }
+
+  @override
   String get settings => 'Paramètres';
 
   @override
@@ -794,4 +850,16 @@ class L10nFr extends L10n {
 
   @override
   String get share_already_saved => 'Cette URL est déjà sauvegardée';
+
+  @override
+  String get share_dialog_title => 'Enregistrer dans ArchiVe';
+
+  @override
+  String get share_list_section => 'Liste';
+
+  @override
+  String get share_title_hint => 'Saisir le titre';
+
+  @override
+  String get clipboard_dialog_title => 'Ajouter l\'URL du presse-papiers ?';
 }

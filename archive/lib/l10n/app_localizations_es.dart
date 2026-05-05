@@ -12,7 +12,7 @@ class L10nEs extends L10n {
   String get app_title => 'ArchiVe';
 
   @override
-  String get version => 'v1.8';
+  String get version => 'v2.0';
 
   @override
   String get critical => 'Crítico';
@@ -526,6 +526,62 @@ class L10nEs extends L10n {
   String get analytics_page_item_count_top5 => 'Top 5 por número de elementos';
 
   @override
+  String get analytics_page_kpi_saved_count => 'Guardados';
+
+  @override
+  String get analytics_page_kpi_total_view_count => 'Vistas totales';
+
+  @override
+  String get analytics_page_kpi_rating_rate => 'Tasa de calificación';
+
+  @override
+  String get analytics_page_most_watched => 'Más visto';
+
+  @override
+  String analytics_page_view_times(Object count) {
+    return 'Visto $count veces';
+  }
+
+  @override
+  String analytics_page_total_view_subtitle(Object count) {
+    return 'Vistas totales: $count';
+  }
+
+  @override
+  String analytics_page_rated_subtitle(Object ratedCount, Object total) {
+    return 'Calificados $ratedCount / $total';
+  }
+
+  @override
+  String get analytics_page_unit_items => 'ítems';
+
+  @override
+  String analytics_page_ranked_row_stat(Object count, Object percent) {
+    return '$percent%  $count ítems';
+  }
+
+  @override
+  String analytics_page_times_unit(Object count) {
+    return '$count veces';
+  }
+
+  @override
+  String get analytics_page_view_count_by_rating => 'Vistas por calificación';
+
+  @override
+  String get analytics_page_saved_by_list => 'Guardados por lista';
+
+  @override
+  String analytics_page_list_count_subtitle(Object count) {
+    return '$count listas';
+  }
+
+  @override
+  String analytics_page_type_count_subtitle(Object count) {
+    return '$count tipos';
+  }
+
+  @override
   String get settings => 'Ajustes';
 
   @override
@@ -797,4 +853,16 @@ class L10nEs extends L10n {
 
   @override
   String get share_already_saved => 'Esta URL ya está guardada';
+
+  @override
+  String get share_dialog_title => 'Guardar en ArchiVe';
+
+  @override
+  String get share_list_section => 'Lista';
+
+  @override
+  String get share_title_hint => 'Introduce el título';
+
+  @override
+  String get clipboard_dialog_title => '¿Añadir URL del portapapeles?';
 }
