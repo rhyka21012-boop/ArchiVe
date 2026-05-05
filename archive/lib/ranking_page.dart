@@ -6,6 +6,7 @@ import 'detail_page.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'my_flutter_app_icons.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -175,25 +176,18 @@ class _RankingPageState extends State<RankingPage> {
   Widget _buildRankCard(int index) {
     final item = _rankingItems[index];
     final isTop3 = index < 3;
-    final isFirst = index == 0;
     final color = _rankColor(index);
-    final rating = item['rating'] as String?;
-
-    // サムネイルサイズ: 1位 > 2・3位 > 4位以降
-    final imgW = isFirst ? 64.0 : (isTop3 ? 56.0 : 48.0);
-    final imgH = isFirst ? 80.0 : (isTop3 ? 68.0 : 58.0);
+    const imgW = 72.0;
+    const imgH = 64.0;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       key: ValueKey('rank_${item['title']}_$index'),
-      margin: EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: isFirst ? 6 : (isTop3 ? 4 : 3),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       elevation: 0,
-      color: isFirst
-          ? colorScheme.surfaceContainerHighest
-          : (isTop3 ? colorScheme.surfaceContainerHigh : colorScheme.surfaceContainerLow),
+      color: colorScheme.brightness == Brightness.light
+          ? Colors.grey[200]
+          : const Color(0xFF2C2C2C),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
@@ -259,48 +253,16 @@ class _RankingPageState extends State<RankingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // 1位にクラウンラベル
-                            if (isFirst)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.workspace_premium,
-                                      color: _goldColor,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      '#1',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: _goldColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             Text(
                               item['title'] ??
                                   L10n.of(context)!.ranking_page_no_title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: isFirst ? 15 : (isTop3 ? 14 : 13),
-                                fontWeight:
-                                    isTop3
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            if (rating != null && rating.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 5),
-                                child: _buildRatingBadge(rating),
-                              ),
                           ],
                         ),
                       ),
@@ -329,24 +291,30 @@ class _RankingPageState extends State<RankingPage> {
 
   Widget _buildRankBadge(int index, Color color) {
     if (index < 3) {
-      return Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        child: Center(
-          child: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+      return SizedBox(
+        width: 36,
+        height: 36,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.translate(
+              offset: const Offset(-2, 0),
+              child: Icon(MyFlutterApp.crown, size: 20, color: color),
             ),
-          ),
+            Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+          ],
         ),
       );
     }
     return SizedBox(
-      width: 32,
+      width: 36,
       child: Text(
         '${index + 1}',
         textAlign: TextAlign.center,
@@ -359,54 +327,6 @@ class _RankingPageState extends State<RankingPage> {
     );
   }
 
-  Widget _buildRatingBadge(String rating) {
-    Color color;
-    String label;
-    IconData icon;
-    switch (rating) {
-      case 'critical':
-        color = Colors.red.shade700;
-        label = 'Critical';
-        icon = Icons.local_fire_department;
-        break;
-      case 'normal':
-        color = Colors.orange.shade700;
-        label = 'Normal';
-        icon = Icons.star;
-        break;
-      case 'maniac':
-        color = Colors.purple.shade600;
-        label = 'Maniac';
-        icon = Icons.auto_awesome;
-        break;
-      default:
-        return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color, width: 0.8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─── 画像ビルダー ──────────────────────────────────────────────
   Widget _buildImage(Map<String, dynamic> item, double width, double height) {

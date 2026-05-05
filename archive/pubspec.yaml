@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 2.0.0+36
+version: 2.0.0+37
 
 environment:
   sdk: ^3.7.2
@@ -85,5 +85,8 @@ flutter:
     - family: FlutterIcon
       fonts:
         - asset: assets/fonts/MyFlutterApp.ttf
+    - family: MyFlutterApp
+      fonts:
+        - asset: assets/fonts/CustomIcons.ttf
 
   uses-material-design: true

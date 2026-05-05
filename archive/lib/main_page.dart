@@ -26,6 +26,7 @@ import 'save_limit_helper.dart';
 import 'app_group_service.dart';
 import 'random_image_reload_provider.dart';
 import 'list_reload_provider.dart';
+import 'my_flutter_app_icons.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -495,7 +496,7 @@ class _MainPageState extends ConsumerState<MainPage>
                   label: '',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.whatshot),
+                  icon: Icon(MyFlutterApp.graph),
                   label: L10n.of(context)!.main_page_analytics,
                 ),
                 BottomNavigationBarItem(

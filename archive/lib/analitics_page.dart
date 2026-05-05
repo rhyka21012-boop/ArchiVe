@@ -50,7 +50,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   // ─── カラー定数 ────────────────────────────────────────────────
   static const _ratingColors = <String, Color>{
     'critical': Color(0xFFE53935),
-    'normal': Color(0xFFFB8C00),
+    'normal': Color(0xFFFFD600),
     'maniac': Color(0xFF8E24AA),
     'unrated': Color(0xFF9E9E9E),
   };
