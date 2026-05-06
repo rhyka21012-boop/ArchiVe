@@ -832,4 +832,10 @@ class L10nJa extends L10n {
 
   @override
   String get clipboard_dialog_title => 'クリップボードのURLを追加しますか？';
+
+  @override
+  String get ranking_page_add_item => 'アイテムを追加';
+
+  @override
+  String get search_page_url_cant_open => 'このURLは開けません';
 }

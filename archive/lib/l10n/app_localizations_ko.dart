@@ -834,4 +834,10 @@ class L10nKo extends L10n {
 
   @override
   String get clipboard_dialog_title => '클립보드의 URL을 추가하시겠습니까?';
+
+  @override
+  String get ranking_page_add_item => '아이템 추가';
+
+  @override
+  String get search_page_url_cant_open => '이 URL을 열 수 없습니다';
 }

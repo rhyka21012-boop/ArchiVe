@@ -1681,6 +1681,18 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'クリップボードのURLを追加しますか？'**
   String get clipboard_dialog_title;
+
+  /// No description provided for @ranking_page_add_item.
+  ///
+  /// In ja, this message translates to:
+  /// **'アイテムを追加'**
+  String get ranking_page_add_item;
+
+  /// No description provided for @search_page_url_cant_open.
+  ///
+  /// In ja, this message translates to:
+  /// **'このURLは開けません'**
+  String get search_page_url_cant_open;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

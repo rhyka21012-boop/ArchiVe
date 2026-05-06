@@ -862,4 +862,11 @@ class L10nDe extends L10n {
 
   @override
   String get clipboard_dialog_title => 'URL aus der Zwischenablage hinzufügen?';
+
+  @override
+  String get ranking_page_add_item => 'Element hinzufügen';
+
+  @override
+  String get search_page_url_cant_open =>
+      'Diese URL kann nicht geöffnet werden';
 }

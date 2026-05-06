@@ -278,5 +278,7 @@
   "share_dialog_title": "ArchiVe に保存",
   "share_list_section": "保存先リスト",
   "share_title_hint": "タイトルを入力",
-  "clipboard_dialog_title": "クリップボードのURLを追加しますか？"
+  "clipboard_dialog_title": "クリップボードのURLを追加しますか？",
+  "ranking_page_add_item": "アイテムを追加",
+  "search_page_url_cant_open": "このURLは開けません"
 }

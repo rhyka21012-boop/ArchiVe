@@ -1054,9 +1054,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
     if (uri == null) return;
 
     if (!await canLaunchUrl(uri)) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('このURLは開けません')));
+      ).showSnackBar(SnackBar(content: Text(L10n.of(context)!.search_page_url_cant_open)));
       return;
     }
 

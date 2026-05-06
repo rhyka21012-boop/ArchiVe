@@ -278,5 +278,7 @@
   "share_dialog_title": "Save to ArchiVe",
   "share_list_section": "List",
   "share_title_hint": "Enter title",
-  "clipboard_dialog_title": "Add URL from clipboard?"
+  "clipboard_dialog_title": "Add URL from clipboard?",
+  "ranking_page_add_item": "Add Item",
+  "search_page_url_cant_open": "Cannot open this URL"
 }

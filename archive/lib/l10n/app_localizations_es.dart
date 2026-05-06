@@ -865,4 +865,10 @@ class L10nEs extends L10n {
 
   @override
   String get clipboard_dialog_title => '¿Añadir URL del portapapeles?';
+
+  @override
+  String get ranking_page_add_item => 'Añadir elemento';
+
+  @override
+  String get search_page_url_cant_open => 'No se puede abrir esta URL';
 }

@@ -278,5 +278,7 @@
   "share_dialog_title": "保存到 ArchiVe",
   "share_list_section": "保存列表",
   "share_title_hint": "输入标题",
-  "clipboard_dialog_title": "是否添加剪贴板中的URL？"
+  "clipboard_dialog_title": "是否添加剪贴板中的URL？",
+  "ranking_page_add_item": "添加项目",
+  "search_page_url_cant_open": "无法打开此URL"
 }

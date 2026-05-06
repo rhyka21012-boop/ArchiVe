@@ -279,5 +279,7 @@
   "share_dialog_title": "Guardar no ArchiVe",
   "share_list_section": "Lista",
   "share_title_hint": "Introduzir título",
-  "clipboard_dialog_title": "Adicionar URL da área de transferência?"
+  "clipboard_dialog_title": "Adicionar URL da área de transferência?",
+  "ranking_page_add_item": "Adicionar item",
+  "search_page_url_cant_open": "Não é possível abrir este URL"
 }

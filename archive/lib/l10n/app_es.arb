@@ -278,5 +278,7 @@
   "share_dialog_title": "Guardar en ArchiVe",
   "share_list_section": "Lista",
   "share_title_hint": "Introduce el título",
-  "clipboard_dialog_title": "¿Añadir URL del portapapeles?"
+  "clipboard_dialog_title": "¿Añadir URL del portapapeles?",
+  "ranking_page_add_item": "Añadir elemento",
+  "search_page_url_cant_open": "No se puede abrir esta URL"
 }

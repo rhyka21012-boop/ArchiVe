@@ -423,7 +423,7 @@ class _RankingPageState extends State<RankingPage> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'アイテムを追加',
+                              L10n.of(context)!.ranking_page_add_item,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

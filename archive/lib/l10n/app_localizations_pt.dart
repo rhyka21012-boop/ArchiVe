@@ -856,4 +856,10 @@ class L10nPt extends L10n {
   @override
   String get clipboard_dialog_title =>
       'Adicionar URL da área de transferência?';
+
+  @override
+  String get ranking_page_add_item => 'Adicionar item';
+
+  @override
+  String get search_page_url_cant_open => 'Não é possível abrir este URL';
 }

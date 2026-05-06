@@ -849,4 +849,10 @@ class L10nEn extends L10n {
 
   @override
   String get clipboard_dialog_title => 'Add URL from clipboard?';
+
+  @override
+  String get ranking_page_add_item => 'Add Item';
+
+  @override
+  String get search_page_url_cant_open => 'Cannot open this URL';
 }

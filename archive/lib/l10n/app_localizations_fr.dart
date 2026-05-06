@@ -862,4 +862,10 @@ class L10nFr extends L10n {
 
   @override
   String get clipboard_dialog_title => 'Ajouter l\'URL du presse-papiers ?';
+
+  @override
+  String get ranking_page_add_item => 'Ajouter un élément';
+
+  @override
+  String get search_page_url_cant_open => 'Impossible d\'ouvrir cette URL';
 }

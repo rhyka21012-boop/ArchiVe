@@ -830,6 +830,12 @@ class L10nZh extends L10n {
 
   @override
   String get clipboard_dialog_title => '是否添加剪贴板中的URL？';
+
+  @override
+  String get ranking_page_add_item => '添加项目';
+
+  @override
+  String get search_page_url_cant_open => '无法打开此URL';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1658,4 +1664,10 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get clipboard_dialog_title => '是否添加剪贴板中的URL？';
+
+  @override
+  String get ranking_page_add_item => '添加项目';
+
+  @override
+  String get search_page_url_cant_open => '无法打开此URL';
 }
