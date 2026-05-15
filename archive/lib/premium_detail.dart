@@ -237,6 +237,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 20),
@@ -296,7 +297,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
               index: 5,
             ),
 
-            const Spacer(),
+            const SizedBox(height: 24),
 
             /// プラン選択
             if (annual != null) ...[
@@ -405,6 +406,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
 
             const SizedBox(height: 50),
           ],
+        ),
         ),
       ),
     );
