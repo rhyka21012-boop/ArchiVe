@@ -307,12 +307,10 @@ class L10nEn extends L10n {
   String get detail_page_url_unable => 'Invalid URL';
 
   @override
-  String get detail_page_review_confirm01 =>
-      'Are you enjoying \"ArchiVe - Favorite Video Tracker\"?';
+  String get detail_page_review_confirm01 => 'Enjoying ArchiVe?';
 
   @override
-  String get detail_page_review_confirm02 =>
-      'Thank you for using our app.\n\nYour feedback will be carefully reviewed by the developer and used to improve future updates.\n\nIf you enjoy the app, we’d really appreciate your support through a review.';
+  String get detail_page_review_confirm02 => 'A quick review would mean a lot!';
 
   @override
   String get detail_page_review_contact_support => 'Report feedback or a bug';
@@ -855,4 +853,29 @@ class L10nEn extends L10n {
 
   @override
   String get search_page_url_cant_open => 'Cannot open this URL';
+
+  @override
+  String get premium_detail_plan_monthly => 'Monthly';
+
+  @override
+  String get premium_detail_plan_annual => 'Annual';
+
+  @override
+  String get premium_detail_best_value => 'BEST VALUE';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return 'Save $percent%';
+  }
+
+  @override
+  String get premium_detail_per_month => '/ month';
+
+  @override
+  String get premium_detail_per_year => '/ year';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return 'Then $price / year';
+  }
 }

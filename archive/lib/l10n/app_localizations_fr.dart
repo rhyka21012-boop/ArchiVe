@@ -309,12 +309,10 @@ class L10nFr extends L10n {
   String get detail_page_url_unable => 'URL invalide';
 
   @override
-  String get detail_page_review_confirm01 =>
-      'Appréciez-vous \"ArchiVe - Gestionnaire de vidéos favorites\" ?';
+  String get detail_page_review_confirm01 => 'Aimez-vous ArchiVe ?';
 
   @override
-  String get detail_page_review_confirm02 =>
-      'Merci d’utiliser notre application.\n\nVos commentaires seront soigneusement examinés par le développeur et utilisés pour améliorer les futures mises à jour.\n\nSi l’application vous plaît, nous apprécierions beaucoup votre avis.';
+  String get detail_page_review_confirm02 => 'Un avis nous aiderait beaucoup !';
 
   @override
   String get detail_page_review_contact_support => 'Signaler un avis ou un bug';
@@ -868,4 +866,29 @@ class L10nFr extends L10n {
 
   @override
   String get search_page_url_cant_open => 'Impossible d\'ouvrir cette URL';
+
+  @override
+  String get premium_detail_plan_monthly => 'Mensuel';
+
+  @override
+  String get premium_detail_plan_annual => 'Annuel';
+
+  @override
+  String get premium_detail_best_value => 'MEILLEUR CHOIX';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return 'Économisez $percent%';
+  }
+
+  @override
+  String get premium_detail_per_month => '/ mois';
+
+  @override
+  String get premium_detail_per_year => '/ an';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return 'Puis $price / an';
+  }
 }

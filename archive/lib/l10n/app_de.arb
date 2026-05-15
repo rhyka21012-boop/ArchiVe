@@ -2,12 +2,10 @@
   "@@locale": "de",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "Kritisch",
   "normal": "Normal",
   "maniac": "Maniac",
   "unrated": "Unbewertet",
-
   "ok": "OK",
   "cancel": "Abbrechen",
   "back": "Zurück",
@@ -26,12 +24,10 @@
   "modify": "Bearbeiten",
   "close": "Schließen",
   "skip": "Überspringen",
-
   "save_limit_dialog_title": "Speicherlimit erreicht",
   "save_limit_dialog_status_label": "Gespeichert",
   "save_limit_dialog_premium_detail": "Premium-Details anzeigen",
   "save_limit_loading_ad": "Werbung wird geladen...",
-
   "main_page_lists": "Listen",
   "main_page_search": "Suchen & Sammeln",
   "main_page_analytics": "Analyse",
@@ -39,13 +35,11 @@
   "main_page_update_info": "Update-Hinweis",
   "main_page_update_later": "Später",
   "main_page_update_now": "Aktualisieren",
-
   "list_page_my_list": "Meine Listen",
   "list_page_my_ranking": "Meine Rankings",
   "list_page_make_list": "Liste erstellen",
   "list_page_add_list": "Liste hinzufügen",
   "list_page_input_list_name": "Listennamen eingeben",
-
   "ranking_page_dragable": "Ziehen zum Sortieren",
   "ranking_page_no_title": "(Kein Titel)",
   "ranking_page_search_title": "Titel suchen",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "Es können nur bis zu 10 Einträge hinzugefügt werden",
   "ranking_page_no_ranking_item": "Keine Einträge im Ranking",
   "ranking_page_no_ranking_item_description": "Bitte Einträge aus der Liste unten hinzufügen",
-
   "grid_page_item_count": "{length} Einträge",
   "grid_page_no_item": "Keine Einträge",
   "grid_page_add_item": "Wie möchten Sie einen Eintrag hinzufügen?",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "Wenigste Aufrufe",
   "grid_page_items_selected_delete": "{count} ausgewählte Einträge löschen?",
   "grid_page_rating_guidance": "Bewertete Einträge werden hier angezeigt",
-
   "detail_page_url_empty": "URL ist leer.",
   "detail_page_input_url": "Bitte eine URL eingeben.",
   "detail_page_url_changed": "URL wurde geändert.",
@@ -105,14 +97,13 @@
   "detail_page_delete_confirm01": "Diesen Eintrag löschen?",
   "detail_page_delete_confirm02": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "detail_page_url_unable": "Ungültige URL",
-  "detail_page_review_confirm01": "Gefällt Ihnen \"ArchiVe - Favorite Video Tracker\"?",
-  "detail_page_review_confirm02": "Vielen Dank für die Nutzung unserer App.\n\nIhr Feedback wird vom Entwickler sorgfältig geprüft und zur Verbesserung verwendet.\n\nWenn Ihnen die App gefällt, würden wir uns sehr über eine Bewertung freuen.",
+  "detail_page_review_confirm01": "Gefällt Ihnen ArchiVe?",
+  "detail_page_review_confirm02": "Eine kurze Bewertung würde uns sehr freuen!",
   "detail_page_review_contact_support": "Feedback oder Fehler melden",
   "detail_page_review_later": "Später",
   "detail_page_review_now": "Bewertung abgeben",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
   "detail_page_fetching_thumbnail": "Miniaturbild wird geladen...",
-
   "search_page_cast": "Darsteller",
   "search_page_genre": "Genre",
   "search_page_series": "Serie",
@@ -138,7 +129,6 @@
   "search_page_add_favorite": "Website zu Favoriten hinzufügen",
   "search_page_random_loading": "Heutige Empfehlung wird ausgewählt…",
   "search_page_random_this": "Heutige Empfehlung!",
-
   "search_result_page_site_saved": "Website wurde gespeichert",
   "search_result_page_saving_as_item": "Eintrag speichern",
   "search_result_page_saving_list": "Zielliste",
@@ -151,7 +141,6 @@
   "search_result_page_history": "Verlauf",
   "search_result_page_ad_remainder01": "Nach dem nächsten Speichern wird eine Anzeige angezeigt",
   "search_result_page_ad_remainder02": "Anzeige anzeigen",
-
   "analytics": "Analyse",
   "analytics_page_summary": "Übersicht",
   "analytics_page_item_count": "Gespeicherte Elemente: {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "Gespeichert nach Liste",
   "analytics_page_list_count_subtitle": "{count} Listen",
   "analytics_page_type_count_subtitle": "{count} Typen",
-
   "settings": "Einstellungen",
   "settings_page_dark_mode": "Dunkelmodus",
   "settings_page_theme_color": "Designfarbe ★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "Nutzungsbedingungen (Apple Standard EULA)",
   "settings_page_save_count_increased": "Speicherlimit um +5 erhöht",
   "setting_page_unlimited": "Unbegrenzt",
-
   "view_counter_view_count": "Aufrufe: {viewCount}",
-
   "random_image_no_image": "Bild konnte nicht geladen werden",
   "random_image_change_list_name": "Listennamen ändern",
   "random_image_change_list_name_dialog": "Listennamen ändern",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "Diese Liste löschen?",
   "random_image_delete_list_dialog_description": "Die Einträge in dieser Liste werden ebenfalls gelöscht.",
   "random_image_delete_list_confirm": "Löschen",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "Unbegrenzte Speicherungen",
   "premium_detail_premium_item02": "Designfarben frei anpassen",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "Käufe wiederherstellen",
   "premium_detail_restart_message": "Premium-Funktionen wurden aktiviert.\nDie App wird neu gestartet.",
   "premium_detail_purchase_complete": "Premium erfolgreich gekauft!",
-
   "tutorial": "Tutorial",
   "tutorial_01": "Erstellen wir zuerst eine Liste.",
   "tutorial_02": "Öffnen Sie die gerade erstellte Liste.",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "Die Schritte ab der Listenerstellung werden erneut angezeigt.",
   "completed_tutorial": "Tutorial abgeschlossen!\nGut gemacht!",
   "tutorial_list_name": "Später ansehen",
-
   "tutorial_slide_title_01": "Ein Video-Manager\nOhne Downloads",
   "tutorial_slide_dict_01": "Sammeln Sie unbegrenzt Videos ohne Speicherplatz zu verbrauchen",
   "tutorial_slide_image_01": "assets/tutorial/english01.png",
@@ -280,5 +263,12 @@
   "share_title_hint": "Titel eingeben",
   "clipboard_dialog_title": "URL aus der Zwischenablage hinzufügen?",
   "ranking_page_add_item": "Element hinzufügen",
-  "search_page_url_cant_open": "Diese URL kann nicht geöffnet werden"
+  "search_page_url_cant_open": "Diese URL kann nicht geöffnet werden",
+  "premium_detail_plan_monthly": "Monatlich",
+  "premium_detail_plan_annual": "Jährlich",
+  "premium_detail_best_value": "BESTE WAHL",
+  "premium_detail_save_percent": "{percent}% sparen",
+  "premium_detail_per_month": "/ Monat",
+  "premium_detail_per_year": "/ Jahr",
+  "premium_detail_price_after_trial_yearly": "Danach {price} / Jahr"
 }

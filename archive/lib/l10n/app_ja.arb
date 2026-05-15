@@ -2,12 +2,10 @@
   "@@locale": "ja",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "クリティカル",
   "normal": "ノーマル",
   "maniac": "マニアック",
   "unrated": "未評価",
-
   "ok": "OK",
   "cancel": "キャンセル",
   "back": "戻る",
@@ -26,12 +24,10 @@
   "modify": "編集",
   "close": "閉じる",
   "skip": "スキップ",
-
   "save_limit_dialog_title": "保存数の上限に達しました。",
   "save_limit_dialog_status_label": "保存済み",
   "save_limit_dialog_premium_detail": "プレミアムの詳細",
   "save_limit_loading_ad": "広告を読み込み中です…",
-
   "main_page_lists": "リスト",
   "main_page_search": "検索・収集",
   "main_page_analytics": "統計",
@@ -39,13 +35,11 @@
   "main_page_update_info": "アップデートのお知らせ",
   "main_page_update_later": "あとで",
   "main_page_update_now": "アップデート",
-
   "list_page_my_list": "マイリスト",
   "list_page_my_ranking": "マイランキング",
   "list_page_make_list": "リストを作成",
   "list_page_add_list": "リストを追加",
   "list_page_input_list_name": "リスト名を入力",
-
   "ranking_page_dragable": "ドラッグして順番を変更できます",
   "ranking_page_no_title": "（タイトルなし）",
   "ranking_page_search_title": "タイトルを検索",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "最大10個までしか追加できません",
   "ranking_page_no_ranking_item": "ランキングに作品がありません",
   "ranking_page_no_ranking_item_description": "下の一覧から追加してください",
-
   "grid_page_item_count": "{length}件",
   "grid_page_no_item": "アイテムがありません",
   "grid_page_add_item": "追加方法を選択してください",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "視聴回数が少ない順",
   "grid_page_items_selected_delete": "選択した{count}件を削除しますか？",
   "grid_page_rating_guidance": "作品を評価するとここに表示されます",
-
   "detail_page_url_empty": "URLが未入力です。",
   "detail_page_input_url": "URLを入力してください。",
   "detail_page_url_changed": "URLが変更されました。",
@@ -105,14 +97,13 @@
   "detail_page_delete_confirm01": "削除しますか？",
   "detail_page_delete_confirm02": "削除後は復元できません。",
   "detail_page_url_unable": "有効なURLではありません",
-  "detail_page_review_confirm01": "「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？",
-  "detail_page_review_confirm02": "いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。",
+  "detail_page_review_confirm01": "ArchiVeを気に入っていただけましたか？",
+  "detail_page_review_confirm02": "レビューでの応援が励みになります。",
   "detail_page_review_contact_support": "ご意見・不具合を報告",
   "detail_page_review_later": "あとで",
   "detail_page_review_now": "レビューする",
   "detail_page_mail_subject": "subject=ArchiVe ご意見・ご要望",
   "detail_page_fetching_thumbnail": "サムネイルを取得中...",
-
   "search_page_cast": "出演",
   "search_page_genre": "ジャンル",
   "search_page_series": "シリーズ",
@@ -138,7 +129,6 @@
   "search_page_add_favorite": "お気に入りサイトを追加",
   "search_page_random_loading": "今日のおすすめを選んでいます…",
   "search_page_random_this": "今日のおすすめはこれ！",
-
   "search_result_page_site_saved": "サイトを保存しました",
   "search_result_page_saving_as_item": "作品を保存",
   "search_result_page_saving_list": "保存先リスト",
@@ -151,7 +141,6 @@
   "search_result_page_history": "履歴",
   "search_result_page_ad_remainder01": "次の保存後に広告が表示されます",
   "search_result_page_ad_remainder02": "広告を表示します",
-
   "analytics": "統計",
   "analytics_page_summary": "概要",
   "analytics_page_item_count": "保存数: {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "リスト別保存数",
   "analytics_page_list_count_subtitle": "{count}リスト",
   "analytics_page_type_count_subtitle": "{count}種類",
-
   "settings": "設定",
   "settings_page_dark_mode": "ダークモード",
   "settings_page_theme_color": "テーマカラー★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "利用規約（Apple標準EULA）",
   "settings_page_save_count_increased": "保存枠が +5 されました",
   "setting_page_unlimited": "無制限",
-
   "view_counter_view_count": "視聴回数:{viewCount}",
-
   "random_image_no_image": "画像を読み込めません",
   "random_image_change_list_name": "リスト名を変更",
   "random_image_change_list_name_dialog": "リスト名を変更",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "このリストを削除しますか？",
   "random_image_delete_list_dialog_description": "リスト内のアイテムも削除されます。",
   "random_image_delete_list_confirm": "削除",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "無制限の保存数",
   "premium_detail_premium_item02": "テーマカラーを自由に変更",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "購入を復元",
   "premium_detail_purchase_complete": "プレミアムを購入しました！",
   "premium_detail_restart_message": "プレミアム機能が有効になりました。\nアプリを再起動します。",
-
   "tutorial": "チュートリアル",
   "tutorial_01": "まずはリストを作成しましょう。",
   "tutorial_02": "作ったリストを開きましょう。",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "リスト作成からの手順をもう一度表示します。",
   "completed_tutorial": "チュートリアル完了！\nお疲れ様でした。",
   "tutorial_list_name": "あとで見る",
-
   "tutorial_slide_title_01": "ダウンロード不要の\n動画管理アプリ",
   "tutorial_slide_dict_01": "容量を使わず好きなだけ動画を収集",
   "tutorial_slide_image_01": "assets/tutorial/japanese01.png",
@@ -280,5 +263,26 @@
   "share_title_hint": "タイトルを入力",
   "clipboard_dialog_title": "クリップボードのURLを追加しますか？",
   "ranking_page_add_item": "アイテムを追加",
-  "search_page_url_cant_open": "このURLは開けません"
+  "search_page_url_cant_open": "このURLは開けません",
+  "premium_detail_plan_monthly": "月額プラン",
+  "premium_detail_plan_annual": "年額プラン",
+  "premium_detail_best_value": "お得",
+  "premium_detail_save_percent": "{percent}% OFF",
+  "@premium_detail_save_percent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "premium_detail_per_month": "/月",
+  "premium_detail_per_year": "/年",
+  "premium_detail_price_after_trial_yearly": "その後 {price} / 年",
+  "@premium_detail_price_after_trial_yearly": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  }
 }

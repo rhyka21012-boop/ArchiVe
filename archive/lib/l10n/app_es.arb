@@ -2,12 +2,10 @@
   "@@locale": "es",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "Crítico",
   "normal": "Normal",
   "maniac": "Maníaco",
   "unrated": "Sin calificar",
-
   "ok": "Aceptar",
   "cancel": "Cancelar",
   "back": "Atrás",
@@ -26,12 +24,10 @@
   "modify": "Editar",
   "close": "Cerrar",
   "skip": "Omitir",
-
   "save_limit_dialog_title": "Límite de guardado alcanzado",
   "save_limit_dialog_status_label": "Guardado",
   "save_limit_dialog_premium_detail": "Ver detalles Premium",
   "save_limit_loading_ad": "Cargando anuncio...",
-
   "main_page_lists": "Listas",
   "main_page_search": "Buscar y guardar",
   "main_page_analytics": "Estadísticas",
@@ -39,13 +35,11 @@
   "main_page_update_info": "Aviso de actualización",
   "main_page_update_later": "Más tarde",
   "main_page_update_now": "Actualizar",
-
   "list_page_my_list": "Mis listas",
   "list_page_my_ranking": "Mi ranking",
   "list_page_make_list": "Crear lista",
   "list_page_add_list": "Añadir lista",
   "list_page_input_list_name": "Introducir nombre de la lista",
-
   "ranking_page_dragable": "Arrastra para ordenar",
   "ranking_page_no_title": "(Sin título)",
   "ranking_page_search_title": "Buscar título",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "Solo puedes añadir hasta 10 elementos",
   "ranking_page_no_ranking_item": "No hay elementos en el ranking",
   "ranking_page_no_ranking_item_description": "Añade elementos desde la lista inferior",
-
   "grid_page_item_count": "{length} elementos",
   "grid_page_no_item": "Sin elementos",
   "grid_page_add_item": "Elegir cómo añadir",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "Menos vistos",
   "grid_page_items_selected_delete": "¿Eliminar {count} elementos seleccionados?",
   "grid_page_rating_guidance": "Los elementos calificados aparecerán aquí",
-
   "detail_page_url_empty": "La URL está vacía.",
   "detail_page_input_url": "Introduce una URL.",
   "detail_page_url_changed": "La URL ha cambiado.",
@@ -105,14 +97,13 @@
   "detail_page_delete_confirm01": "¿Eliminar este elemento?",
   "detail_page_delete_confirm02": "Esta acción no se puede deshacer.",
   "detail_page_url_unable": "URL inválida",
-  "detail_page_review_confirm01": "¿Te gusta \"ArchiVe - Favorite Video Tracker\"?",
-  "detail_page_review_confirm02": "Gracias por usar nuestra app.\n\nTu opinión será revisada cuidadosamente y utilizada para mejorar futuras actualizaciones.\n\nSi te gusta la app, agradeceríamos mucho tu reseña.",
+  "detail_page_review_confirm01": "¿Te gusta ArchiVe?",
+  "detail_page_review_confirm02": "¡Una reseña nos ayudaría mucho!",
   "detail_page_review_contact_support": "Enviar comentario o reportar error",
   "detail_page_review_later": "Más tarde",
   "detail_page_review_now": "Dejar reseña",
   "detail_page_mail_subject": "subject=Comentarios ArchiVe",
   "detail_page_fetching_thumbnail": "Obteniendo miniatura...",
-
   "search_page_cast": "Reparto",
   "search_page_genre": "Género",
   "search_page_series": "Serie",
@@ -138,7 +129,6 @@
   "search_page_add_favorite": "Añadir sitio favorito",
   "search_page_random_loading": "Seleccionando la recomendación de hoy…",
   "search_page_random_this": "¡La recomendación de hoy!",
-
   "search_result_page_site_saved": "Sitio guardado",
   "search_result_page_saving_as_item": "Guardar elemento",
   "search_result_page_saving_list": "Lista de destino",
@@ -151,7 +141,6 @@
   "search_result_page_history": "Historial",
   "search_result_page_ad_remainder01": "Se mostrará un anuncio después del próximo guardado",
   "search_result_page_ad_remainder02": "Mostrar anuncio",
-
   "analytics": "Estadísticas",
   "analytics_page_summary": "Resumen",
   "analytics_page_item_count": "Elementos guardados: {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "Guardados por lista",
   "analytics_page_list_count_subtitle": "{count} listas",
   "analytics_page_type_count_subtitle": "{count} tipos",
-
   "settings": "Ajustes",
   "settings_page_dark_mode": "Modo oscuro",
   "settings_page_theme_color": "Color del tema ★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "Términos de servicio (EULA estándar de Apple)",
   "settings_page_save_count_increased": "Límite de guardado aumentado en +5",
   "setting_page_unlimited": "Ilimitado",
-
   "view_counter_view_count": "Vistas: {viewCount}",
-
   "random_image_no_image": "No se puede cargar la imagen",
   "random_image_change_list_name": "Cambiar nombre de la lista",
   "random_image_change_list_name_dialog": "Cambiar nombre de la lista",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "¿Eliminar esta lista?",
   "random_image_delete_list_dialog_description": "Los elementos de esta lista también se eliminarán.",
   "random_image_delete_list_confirm": "Eliminar",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "Guardados ilimitados",
   "premium_detail_premium_item02": "Personaliza los colores del tema",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "Restaurar compras",
   "premium_detail_restart_message": "Las funciones Premium se han activado.\nLa aplicación se reiniciará.",
   "premium_detail_purchase_complete": "¡Premium comprado con éxito!",
-
   "tutorial": "Tutorial",
   "tutorial_01": "Primero, crea una lista.",
   "tutorial_02": "Abre la lista que acabas de crear.",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "Se mostrarán nuevamente los pasos desde la creación de la lista.",
   "completed_tutorial": "¡Tutorial completado!\n¡Buen trabajo!",
   "tutorial_list_name": "Ver más tarde",
-
   "tutorial_slide_title_01": "Gestor de videos\nSin descargas",
   "tutorial_slide_dict_01": "Colecciona videos ilimitados sin usar almacenamiento",
   "tutorial_slide_image_01": "assets/tutorial/english01.png",
@@ -280,5 +263,12 @@
   "share_title_hint": "Introduce el título",
   "clipboard_dialog_title": "¿Añadir URL del portapapeles?",
   "ranking_page_add_item": "Añadir elemento",
-  "search_page_url_cant_open": "No se puede abrir esta URL"
+  "search_page_url_cant_open": "No se puede abrir esta URL",
+  "premium_detail_plan_monthly": "Mensual",
+  "premium_detail_plan_annual": "Anual",
+  "premium_detail_best_value": "MEJOR VALOR",
+  "premium_detail_save_percent": "Ahorra {percent}%",
+  "premium_detail_per_month": "/ mes",
+  "premium_detail_per_year": "/ año",
+  "premium_detail_price_after_trial_yearly": "Luego {price} / año"
 }

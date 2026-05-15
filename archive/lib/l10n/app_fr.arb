@@ -2,12 +2,10 @@
   "@@locale": "fr",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "Critique",
   "normal": "Normal",
   "maniac": "Passionné",
   "unrated": "Non évalué",
-
   "ok": "OK",
   "cancel": "Annuler",
   "back": "Retour",
@@ -26,12 +24,10 @@
   "modify": "Modifier",
   "close": "Fermer",
   "skip": "Ignorer",
-
   "save_limit_dialog_title": "Limite d’enregistrement atteinte",
   "save_limit_dialog_status_label": "Enregistré",
   "save_limit_dialog_premium_detail": "Voir les détails Premium",
   "save_limit_loading_ad": "Chargement de la publicité...",
-
   "main_page_lists": "Listes",
   "main_page_search": "Rechercher & Collecter",
   "main_page_analytics": "Statistiques",
@@ -39,13 +35,11 @@
   "main_page_update_info": "Avis de mise à jour",
   "main_page_update_later": "Plus tard",
   "main_page_update_now": "Mettre à jour",
-
   "list_page_my_list": "Mes listes",
   "list_page_my_ranking": "Mes classements",
   "list_page_make_list": "Créer une liste",
   "list_page_add_list": "Ajouter une liste",
   "list_page_input_list_name": "Entrer le nom de la liste",
-
   "ranking_page_dragable": "Glisser pour réorganiser",
   "ranking_page_no_title": "(Sans titre)",
   "ranking_page_search_title": "Rechercher un titre",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "Vous pouvez ajouter jusqu’à 10 éléments maximum",
   "ranking_page_no_ranking_item": "Aucun élément classé",
   "ranking_page_no_ranking_item_description": "Veuillez ajouter des éléments depuis la liste ci-dessous",
-
   "grid_page_item_count": "{length} éléments",
   "grid_page_no_item": "Aucun élément",
   "grid_page_add_item": "Choisissez comment ajouter un élément",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "Les moins vus",
   "grid_page_items_selected_delete": "Supprimer {count} éléments sélectionnés ?",
   "grid_page_rating_guidance": "Les éléments évalués apparaîtront ici",
-
   "detail_page_url_empty": "L’URL est vide.",
   "detail_page_input_url": "Veuillez entrer une URL.",
   "detail_page_url_changed": "L’URL a été modifiée.",
@@ -105,8 +97,8 @@
   "detail_page_delete_confirm01": "Supprimer cet élément ?",
   "detail_page_delete_confirm02": "Cette action est irréversible.",
   "detail_page_url_unable": "URL invalide",
-  "detail_page_review_confirm01": "Appréciez-vous \"ArchiVe - Gestionnaire de vidéos favorites\" ?",
-  "detail_page_review_confirm02": "Merci d’utiliser notre application.\n\nVos commentaires seront soigneusement examinés par le développeur et utilisés pour améliorer les futures mises à jour.\n\nSi l’application vous plaît, nous apprécierions beaucoup votre avis.",
+  "detail_page_review_confirm01": "Aimez-vous ArchiVe ?",
+  "detail_page_review_confirm02": "Un avis nous aiderait beaucoup !",
   "detail_page_review_contact_support": "Signaler un avis ou un bug",
   "detail_page_review_later": "Plus tard",
   "detail_page_review_now": "Laisser un avis",
@@ -115,7 +107,6 @@
   "search_result_page_history": "Historique",
   "search_result_page_ad_remainder01": "Une publicité sera affichée après le prochain enregistrement",
   "search_result_page_ad_remainder02": "Afficher la publicité",
-
   "search_page_cast": "Distribution",
   "search_page_genre": "Genre",
   "search_page_series": "Série",
@@ -141,7 +132,6 @@
   "search_page_add_favorite": "Ajouter un site favori",
   "search_page_random_loading": "Sélection de la recommandation du jour…",
   "search_page_random_this": "La recommandation du jour !",
-
   "search_result_page_site_saved": "Site enregistré",
   "search_result_page_saving_as_item": "Enregistrer l’élément",
   "search_result_page_saving_list": "Liste de destination",
@@ -151,7 +141,6 @@
   "search_result_page_new_list": "Nouvelle liste",
   "search_result_page_input_list_name": "Entrer le nom de la liste",
   "search_result_page_list_already_exists": "Une liste avec le même nom existe déjà",
-
   "analytics": "Statistiques",
   "analytics_page_summary": "Aperçu",
   "analytics_page_item_count": "Éléments enregistrés : {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "Enregistrés par liste",
   "analytics_page_list_count_subtitle": "{count} listes",
   "analytics_page_type_count_subtitle": "{count} types",
-
   "settings": "Paramètres",
   "settings_page_dark_mode": "Mode sombre",
   "settings_page_theme_color": "Couleur du thème ★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "Conditions d’utilisation (EULA standard Apple)",
   "settings_page_save_count_increased": "Limite augmentée de +5",
   "setting_page_unlimited": "Illimité",
-
   "view_counter_view_count": "Vues : {viewCount}",
-
   "random_image_no_image": "Impossible de charger l’image",
   "random_image_change_list_name": "Changer le nom de la liste",
   "random_image_change_list_name_dialog": "Changer le nom de la liste",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "Supprimer cette liste ?",
   "random_image_delete_list_dialog_description": "Les éléments de cette liste seront également supprimés.",
   "random_image_delete_list_confirm": "Supprimer",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "Sauvegardes illimitées",
   "premium_detail_premium_item02": "Personnaliser les couleurs du thème",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "Restaurer les achats",
   "premium_detail_restart_message": "Les fonctionnalités Premium ont été activées.\nL’application va redémarrer.",
   "premium_detail_purchase_complete": "Premium acheté avec succès !",
-
   "tutorial": "Tutoriel",
   "tutorial_01": "Commençons par créer une liste.",
   "tutorial_02": "Ouvrez la liste que vous venez de créer.",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "Les étapes depuis la création de la liste seront affichées à nouveau.",
   "completed_tutorial": "Tutoriel terminé !\nExcellent travail !",
   "tutorial_list_name": "À regarder plus tard",
-
   "tutorial_slide_title_01": "Un gestionnaire vidéo\nSans téléchargement",
   "tutorial_slide_dict_01": "Collectez des vidéos illimitées sans utiliser de stockage",
   "tutorial_slide_image_01": "assets/tutorial/english01.png",
@@ -280,5 +263,12 @@
   "share_title_hint": "Saisir le titre",
   "clipboard_dialog_title": "Ajouter l'URL du presse-papiers ?",
   "ranking_page_add_item": "Ajouter un élément",
-  "search_page_url_cant_open": "Impossible d'ouvrir cette URL"
+  "search_page_url_cant_open": "Impossible d'ouvrir cette URL",
+  "premium_detail_plan_monthly": "Mensuel",
+  "premium_detail_plan_annual": "Annuel",
+  "premium_detail_best_value": "MEILLEUR CHOIX",
+  "premium_detail_save_percent": "Économisez {percent}%",
+  "premium_detail_per_month": "/ mois",
+  "premium_detail_per_year": "/ an",
+  "premium_detail_price_after_trial_yearly": "Puis {price} / an"
 }

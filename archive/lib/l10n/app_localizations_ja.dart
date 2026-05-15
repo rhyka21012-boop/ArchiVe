@@ -305,12 +305,10 @@ class L10nJa extends L10n {
   String get detail_page_url_unable => '有効なURLではありません';
 
   @override
-  String get detail_page_review_confirm01 =>
-      '「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？';
+  String get detail_page_review_confirm01 => 'ArchiVeを気に入っていただけましたか？';
 
   @override
-  String get detail_page_review_confirm02 =>
-      'いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。';
+  String get detail_page_review_confirm02 => 'レビューでの応援が励みになります。';
 
   @override
   String get detail_page_review_contact_support => 'ご意見・不具合を報告';
@@ -838,4 +836,29 @@ class L10nJa extends L10n {
 
   @override
   String get search_page_url_cant_open => 'このURLは開けません';
+
+  @override
+  String get premium_detail_plan_monthly => '月額プラン';
+
+  @override
+  String get premium_detail_plan_annual => '年額プラン';
+
+  @override
+  String get premium_detail_best_value => 'お得';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return '$percent% OFF';
+  }
+
+  @override
+  String get premium_detail_per_month => '/月';
+
+  @override
+  String get premium_detail_per_year => '/年';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return 'その後 $price / 年';
+  }
 }

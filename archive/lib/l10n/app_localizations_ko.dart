@@ -305,12 +305,10 @@ class L10nKo extends L10n {
   String get detail_page_url_unable => '잘못된 URL';
 
   @override
-  String get detail_page_review_confirm01 =>
-      '\"ArchiVe - Favorite Video Tracker\"를 잘 사용하고 계신가요?';
+  String get detail_page_review_confirm01 => 'ArchiVe가 마음에 드시나요?';
 
   @override
-  String get detail_page_review_confirm02 =>
-      '항상 이용해 주셔서 감사합니다.\n\n보내주신 의견은 개발자가 확인하여 개선에 반영하겠습니다.\n\n앱이 마음에 드셨다면 리뷰로 응원해 주세요.';
+  String get detail_page_review_confirm02 => '리뷰로 응원해 주시면 큰 힘이 됩니다.';
 
   @override
   String get detail_page_review_contact_support => '의견/버그 신고';
@@ -840,4 +838,29 @@ class L10nKo extends L10n {
 
   @override
   String get search_page_url_cant_open => '이 URL을 열 수 없습니다';
+
+  @override
+  String get premium_detail_plan_monthly => '월간';
+
+  @override
+  String get premium_detail_plan_annual => '연간';
+
+  @override
+  String get premium_detail_best_value => '추천';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return '$percent% 할인';
+  }
+
+  @override
+  String get premium_detail_per_month => '/ 월';
+
+  @override
+  String get premium_detail_per_year => '/ 년';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return '이후 $price / 년';
+  }
 }

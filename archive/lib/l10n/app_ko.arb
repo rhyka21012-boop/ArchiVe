@@ -2,12 +2,10 @@
   "@@locale": "ko",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "크리티컬",
   "normal": "노멀",
   "maniac": "매니악",
   "unrated": "평가 없음",
-
   "ok": "확인",
   "cancel": "취소",
   "back": "뒤로",
@@ -26,12 +24,10 @@
   "modify": "수정",
   "close": "닫기",
   "skip": "건너뛰기",
-
   "save_limit_dialog_title": "저장 한도에 도달했습니다",
   "save_limit_dialog_status_label": "저장됨",
   "save_limit_dialog_premium_detail": "프리미엄 상세 보기",
   "save_limit_loading_ad": "광고 로딩 중...",
-
   "main_page_lists": "리스트",
   "main_page_search": "검색 & 수집",
   "main_page_analytics": "통계",
@@ -39,13 +35,11 @@
   "main_page_update_info": "업데이트 안내",
   "main_page_update_later": "나중에",
   "main_page_update_now": "업데이트",
-
   "list_page_my_list": "내 리스트",
   "list_page_my_ranking": "내 랭킹",
   "list_page_make_list": "리스트 만들기",
   "list_page_add_list": "리스트 추가",
   "list_page_input_list_name": "리스트 이름 입력",
-
   "ranking_page_dragable": "드래그하여 순서 변경",
   "ranking_page_no_title": "(제목 없음)",
   "ranking_page_search_title": "제목 검색",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "최대 10개까지 추가할 수 있습니다",
   "ranking_page_no_ranking_item": "랭킹에 항목이 없습니다",
   "ranking_page_no_ranking_item_description": "아래 리스트에서 항목을 추가하세요",
-
   "grid_page_item_count": "{length}개 항목",
   "grid_page_no_item": "항목 없음",
   "grid_page_add_item": "항목 추가 방법 선택",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "조회수 적은순",
   "grid_page_items_selected_delete": "선택한 {count}개 항목을 삭제하시겠습니까?",
   "grid_page_rating_guidance": "평가한 항목이 여기에 표시됩니다",
-
   "detail_page_url_empty": "URL이 비어 있습니다.",
   "detail_page_input_url": "URL을 입력하세요.",
   "detail_page_url_changed": "URL이 변경되었습니다.",
@@ -105,14 +97,13 @@
   "detail_page_delete_confirm01": "이 항목을 삭제하시겠습니까?",
   "detail_page_delete_confirm02": "이 작업은 되돌릴 수 없습니다.",
   "detail_page_url_unable": "잘못된 URL",
-  "detail_page_review_confirm01": "\"ArchiVe - Favorite Video Tracker\"를 잘 사용하고 계신가요?",
-  "detail_page_review_confirm02": "항상 이용해 주셔서 감사합니다.\n\n보내주신 의견은 개발자가 확인하여 개선에 반영하겠습니다.\n\n앱이 마음에 드셨다면 리뷰로 응원해 주세요.",
+  "detail_page_review_confirm01": "ArchiVe가 마음에 드시나요?",
+  "detail_page_review_confirm02": "리뷰로 응원해 주시면 큰 힘이 됩니다.",
   "detail_page_review_contact_support": "의견/버그 신고",
   "detail_page_review_later": "나중에",
   "detail_page_review_now": "리뷰 작성",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
   "detail_page_fetching_thumbnail": "썸네일을 가져오는 중...",
-
   "search_page_cast": "출연",
   "search_page_genre": "장르",
   "search_page_series": "시리즈",
@@ -138,7 +129,6 @@
   "search_page_add_favorite": "즐겨찾기 사이트 추가",
   "search_page_random_loading": "오늘의 추천을 선택하는 중…",
   "search_page_random_this": "오늘의 추천!",
-
   "search_result_page_site_saved": "사이트가 저장되었습니다",
   "search_result_page_saving_as_item": "항목 저장",
   "search_result_page_saving_list": "저장할 리스트",
@@ -151,7 +141,6 @@
   "search_result_page_history": "기록",
   "search_result_page_ad_remainder01": "다음 저장 후 광고가 표시됩니다",
   "search_result_page_ad_remainder02": "광고 표시",
-
   "analytics": "통계",
   "analytics_page_summary": "개요",
   "analytics_page_item_count": "저장된 항목: {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "리스트별 저장 수",
   "analytics_page_list_count_subtitle": "{count}개 리스트",
   "analytics_page_type_count_subtitle": "{count}종류",
-
   "settings": "설정",
   "settings_page_dark_mode": "다크 모드",
   "settings_page_theme_color": "테마 색상 ★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "이용 약관 (Apple 표준 EULA)",
   "settings_page_save_count_increased": "저장 한도가 +5 증가했습니다",
   "setting_page_unlimited": "무제한",
-
   "view_counter_view_count": "조회수: {viewCount}",
-
   "random_image_no_image": "이미지를 불러올 수 없습니다",
   "random_image_change_list_name": "리스트 이름 변경",
   "random_image_change_list_name_dialog": "리스트 이름 변경",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "이 리스트를 삭제하시겠습니까?",
   "random_image_delete_list_dialog_description": "이 리스트의 항목도 함께 삭제됩니다.",
   "random_image_delete_list_confirm": "삭제",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "무제한 저장",
   "premium_detail_premium_item02": "테마 색상 자유 변경",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "구매 복원",
   "premium_detail_restart_message": "프리미엄 기능이 활성화되었습니다.\n앱이 재시작됩니다.",
   "premium_detail_purchase_complete": "프리미엄 구매가 완료되었습니다!",
-
   "tutorial": "튜토리얼",
   "tutorial_01": "먼저 리스트를 만들어 보세요.",
   "tutorial_02": "방금 만든 리스트를 열어보세요.",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "리스트 생성 단계부터 다시 안내합니다.",
   "completed_tutorial": "튜토리얼 완료!\n수고하셨습니다!",
   "tutorial_list_name": "나중에 보기",
-
   "tutorial_slide_title_01": "다운로드 없이\n영상 관리",
   "tutorial_slide_dict_01": "저장 공간을 사용하지 않고\n무제한으로 영상 수집",
   "tutorial_slide_image_01": "assets/tutorial/english01.png",
@@ -280,5 +263,12 @@
   "share_title_hint": "제목을 입력",
   "clipboard_dialog_title": "클립보드의 URL을 추가하시겠습니까?",
   "ranking_page_add_item": "아이템 추가",
-  "search_page_url_cant_open": "이 URL을 열 수 없습니다"
+  "search_page_url_cant_open": "이 URL을 열 수 없습니다",
+  "premium_detail_plan_monthly": "월간",
+  "premium_detail_plan_annual": "연간",
+  "premium_detail_best_value": "추천",
+  "premium_detail_save_percent": "{percent}% 할인",
+  "premium_detail_per_month": "/ 월",
+  "premium_detail_per_year": "/ 년",
+  "premium_detail_price_after_trial_yearly": "이후 {price} / 년"
 }

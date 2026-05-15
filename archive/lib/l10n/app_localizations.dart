@@ -695,13 +695,13 @@ abstract class L10n {
   /// No description provided for @detail_page_review_confirm01.
   ///
   /// In ja, this message translates to:
-  /// **'「ArchiVe - お気に入り動画記録帳」を気に入っていただけましたか？'**
+  /// **'ArchiVeを気に入っていただけましたか？'**
   String get detail_page_review_confirm01;
 
   /// No description provided for @detail_page_review_confirm02.
   ///
   /// In ja, this message translates to:
-  /// **'いつもご利用ありがとうございます。\n\nいただいたご意見は開発者が責任を持って確認し、\n今後の改善に活用させていただきます。\n\nもし気に入っていただけましたら、\nレビューで応援していただけると励みになります。'**
+  /// **'レビューでの応援が励みになります。'**
   String get detail_page_review_confirm02;
 
   /// No description provided for @detail_page_review_contact_support.
@@ -1693,6 +1693,48 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'このURLは開けません'**
   String get search_page_url_cant_open;
+
+  /// No description provided for @premium_detail_plan_monthly.
+  ///
+  /// In ja, this message translates to:
+  /// **'月額プラン'**
+  String get premium_detail_plan_monthly;
+
+  /// No description provided for @premium_detail_plan_annual.
+  ///
+  /// In ja, this message translates to:
+  /// **'年額プラン'**
+  String get premium_detail_plan_annual;
+
+  /// No description provided for @premium_detail_best_value.
+  ///
+  /// In ja, this message translates to:
+  /// **'お得'**
+  String get premium_detail_best_value;
+
+  /// No description provided for @premium_detail_save_percent.
+  ///
+  /// In ja, this message translates to:
+  /// **'{percent}% OFF'**
+  String premium_detail_save_percent(String percent);
+
+  /// No description provided for @premium_detail_per_month.
+  ///
+  /// In ja, this message translates to:
+  /// **'/月'**
+  String get premium_detail_per_month;
+
+  /// No description provided for @premium_detail_per_year.
+  ///
+  /// In ja, this message translates to:
+  /// **'/年'**
+  String get premium_detail_per_year;
+
+  /// No description provided for @premium_detail_price_after_trial_yearly.
+  ///
+  /// In ja, this message translates to:
+  /// **'その後 {price} / 年'**
+  String premium_detail_price_after_trial_yearly(String price);
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

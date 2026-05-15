@@ -2,12 +2,10 @@
   "@@locale": "en",
   "app_title": "ArchiVe",
   "version": "v2.0",
-
   "critical": "Critical",
   "normal": "Normal",
   "maniac": "Maniac",
   "unrated": "Unrated",
-
   "ok": "OK",
   "cancel": "Cancel",
   "back": "Back",
@@ -26,12 +24,10 @@
   "modify": "Modify",
   "close": "Close",
   "skip": "Skip",
-
   "save_limit_dialog_title": "Save limit reached",
   "save_limit_dialog_status_label": "Saved",
   "save_limit_dialog_premium_detail": "View Premium details",
   "save_limit_loading_ad": "Loading ad...",
-
   "main_page_lists": "Lists",
   "main_page_search": "Search & Collect",
   "main_page_analytics": "Analytics",
@@ -39,13 +35,11 @@
   "main_page_update_info": "Update Notice",
   "main_page_update_later": "Later",
   "main_page_update_now": "Update",
-
   "list_page_my_list": "My Lists",
   "list_page_my_ranking": "My Rankings",
   "list_page_make_list": "Create List",
   "list_page_add_list": "Add List",
   "list_page_input_list_name": "Enter list name",
-
   "ranking_page_dragable": "Drag to reorder",
   "ranking_page_no_title": "(No title)",
   "ranking_page_search_title": "Search title",
@@ -53,7 +47,6 @@
   "ranking_page_limit_error": "You can add up to 10 items only",
   "ranking_page_no_ranking_item": "No items in ranking",
   "ranking_page_no_ranking_item_description": "Please add items from the list below",
-
   "grid_page_item_count": "{length} items",
   "grid_page_no_item": "No items",
   "grid_page_add_item": "Choose how to add an item",
@@ -69,7 +62,6 @@
   "grid_page_sort_count_desc": "Least viewed",
   "grid_page_items_selected_delete": "Delete {count} selected items?",
   "grid_page_rating_guidance": "Items you rate will appear here",
-  
   "detail_page_url_empty": "URL is empty.",
   "detail_page_input_url": "Please enter a URL.",
   "detail_page_url_changed": "URL has been changed.",
@@ -105,14 +97,13 @@
   "detail_page_delete_confirm01": "Delete this item?",
   "detail_page_delete_confirm02": "This action cannot be undone.",
   "detail_page_url_unable": "Invalid URL",
-  "detail_page_review_confirm01": "Are you enjoying \"ArchiVe - Favorite Video Tracker\"?",
-  "detail_page_review_confirm02": "Thank you for using our app.\n\nYour feedback will be carefully reviewed by the developer and used to improve future updates.\n\nIf you enjoy the app, we’d really appreciate your support through a review.",
+  "detail_page_review_confirm01": "Enjoying ArchiVe?",
+  "detail_page_review_confirm02": "A quick review would mean a lot!",
   "detail_page_review_contact_support": "Report feedback or a bug",
   "detail_page_review_later": "Later",
   "detail_page_review_now": "Leave a review",
   "detail_page_mail_subject": "subject=ArchiVe Feedback",
   "detail_page_fetching_thumbnail": "Fetching thumbnail...",
-
   "search_page_cast": "Cast",
   "search_page_genre": "Genre",
   "search_page_series": "Series",
@@ -138,7 +129,6 @@
   "search_page_add_favorite": "Add favorite site",
   "search_page_random_loading": "Picking today's recommendation…",
   "search_page_random_this": "Today's recommendation!",
-
   "search_result_page_site_saved": "Site has been saved",
   "search_result_page_saving_as_item": "Save item",
   "search_result_page_saving_list": "Destination list",
@@ -151,7 +141,6 @@
   "search_result_page_history": "History",
   "search_result_page_ad_remainder01": "An ad will be shown after the next save",
   "search_result_page_ad_remainder02": "Show Ad",
-
   "analytics": "Analytics",
   "analytics_page_summary": "Summary",
   "analytics_page_item_count": "Saved items: {totalWorks}",
@@ -187,7 +176,6 @@
   "analytics_page_saved_by_list": "Saved by List",
   "analytics_page_list_count_subtitle": "{count} lists",
   "analytics_page_type_count_subtitle": "{count} types",
-
   "settings": "Settings",
   "settings_page_dark_mode": "Dark mode",
   "settings_page_theme_color": "Theme color ★",
@@ -212,9 +200,7 @@
   "settings_page_terms": "Terms of Service (Apple Standard EULA)",
   "settings_page_save_count_increased": "Save limit increased by +5",
   "setting_page_unlimited": "Unlimited",
-
   "view_counter_view_count": "Views: {viewCount}",
-
   "random_image_no_image": "Unable to load image",
   "random_image_change_list_name": "Change list name",
   "random_image_change_list_name_dialog": "Change list name",
@@ -224,7 +210,6 @@
   "random_image_delete_list_dialog": "Delete this list?",
   "random_image_delete_list_dialog_description": "Items in this list will also be deleted.",
   "random_image_delete_list_confirm": "Delete",
-
   "premium_detail_premium_title": "ArchiVe Premium",
   "premium_detail_premium_item01": "Unlimited saves",
   "premium_detail_premium_item02": "Customize theme colors",
@@ -240,7 +225,6 @@
   "premium_detail_restore_button": "Restore purchases",
   "premium_detail_restart_message": "Premium features have been activated.\nThe app will restart.",
   "premium_detail_purchase_complete": "Premium purchased successfully!",
-
   "tutorial": "tutorial",
   "tutorial_01": "First, let’s create a list.",
   "tutorial_02": "Open the list you just created.",
@@ -252,7 +236,6 @@
   "start_tutorial_dialog_description": "This will show the steps from creating a list again.",
   "completed_tutorial": "Tutorial complete!\nGreat job!",
   "tutorial_list_name": "Watch Later",
-
   "tutorial_slide_title_01": "A Video Manager\nNo Downloads Needed",
   "tutorial_slide_dict_01": "Collect unlimited videos without using storage",
   "tutorial_slide_image_01": "assets/tutorial/english01.png",
@@ -280,5 +263,12 @@
   "share_title_hint": "Enter title",
   "clipboard_dialog_title": "Add URL from clipboard?",
   "ranking_page_add_item": "Add Item",
-  "search_page_url_cant_open": "Cannot open this URL"
+  "search_page_url_cant_open": "Cannot open this URL",
+  "premium_detail_plan_monthly": "Monthly",
+  "premium_detail_plan_annual": "Annual",
+  "premium_detail_best_value": "BEST VALUE",
+  "premium_detail_save_percent": "Save {percent}%",
+  "premium_detail_per_month": "/ month",
+  "premium_detail_per_year": "/ year",
+  "premium_detail_price_after_trial_yearly": "Then {price} / year"
 }

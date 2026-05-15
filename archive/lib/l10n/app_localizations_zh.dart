@@ -304,12 +304,10 @@ class L10nZh extends L10n {
   String get detail_page_url_unable => '无效的URL';
 
   @override
-  String get detail_page_review_confirm01 =>
-      '您喜欢“ArchiVe - Favorite Video Tracker”吗？';
+  String get detail_page_review_confirm01 => '您喜欢 ArchiVe 吗？';
 
   @override
-  String get detail_page_review_confirm02 =>
-      '感谢您的使用。\n\n您的反馈将由开发者认真查看，并用于后续改进。\n\n如果您喜欢本应用，欢迎留下评价支持我们。';
+  String get detail_page_review_confirm02 => '期待您的好评支持！';
 
   @override
   String get detail_page_review_contact_support => '反馈或报告问题';
@@ -836,6 +834,31 @@ class L10nZh extends L10n {
 
   @override
   String get search_page_url_cant_open => '无法打开此URL';
+
+  @override
+  String get premium_detail_plan_monthly => '月度';
+
+  @override
+  String get premium_detail_plan_annual => '年度';
+
+  @override
+  String get premium_detail_best_value => '推荐';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return '节省 $percent%';
+  }
+
+  @override
+  String get premium_detail_per_month => '/ 月';
+
+  @override
+  String get premium_detail_per_year => '/ 年';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return '之后 $price / 年';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1138,12 +1161,10 @@ class L10nZhHans extends L10nZh {
   String get detail_page_url_unable => '无效的URL';
 
   @override
-  String get detail_page_review_confirm01 =>
-      '您喜欢“ArchiVe - Favorite Video Tracker”吗？';
+  String get detail_page_review_confirm01 => '您喜欢 ArchiVe 吗？';
 
   @override
-  String get detail_page_review_confirm02 =>
-      '感谢您的使用。\n\n您的反馈将由开发者认真查看，并用于后续改进。\n\n如果您喜欢本应用，欢迎留下评价支持我们。';
+  String get detail_page_review_confirm02 => '期待您的好评支持！';
 
   @override
   String get detail_page_review_contact_support => '反馈或报告问题';
@@ -1670,4 +1691,29 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get search_page_url_cant_open => '无法打开此URL';
+
+  @override
+  String get premium_detail_plan_monthly => '月度';
+
+  @override
+  String get premium_detail_plan_annual => '年度';
+
+  @override
+  String get premium_detail_best_value => '推荐';
+
+  @override
+  String premium_detail_save_percent(String percent) {
+    return '节省 $percent%';
+  }
+
+  @override
+  String get premium_detail_per_month => '/ 月';
+
+  @override
+  String get premium_detail_per_year => '/ 年';
+
+  @override
+  String premium_detail_price_after_trial_yearly(String price) {
+    return '之后 $price / 年';
+  }
 }
