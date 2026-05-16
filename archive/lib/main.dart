@@ -33,7 +33,12 @@ void main() async {
   //RevenueCat を初期化
   await Purchases.configure(PurchasesConfiguration(apiKey));
 
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
 
   runApp(
     AppRestart(
