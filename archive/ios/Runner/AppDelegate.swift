@@ -22,6 +22,35 @@ import UIKit
             channel.setMethodCallHandler { [weak self] call, result in
                 self?.handleMethodCall(call, result: result)
             }
+
+            // クリップボード判定（ペースト許可ダイアログを出さずにURL有無を確認）
+            let clipboardChannel = FlutterMethodChannel(
+                name: "com.walkinggoblins.archive/clipboard",
+                binaryMessenger: controller.binaryMessenger
+            )
+            clipboardChannel.setMethodCallHandler { call, result in
+                if call.method == "check" {
+                    let changeCount = UIPasteboard.general.changeCount
+                    if #available(iOS 14.0, *) {
+                        UIPasteboard.general.detectPatterns(for: [.probableWebURL]) { detectionResult in
+                            let hasURL: Bool
+                            switch detectionResult {
+                            case .success(let patterns):
+                                hasURL = patterns.contains(.probableWebURL)
+                            case .failure:
+                                hasURL = UIPasteboard.general.hasURLs
+                            }
+                            DispatchQueue.main.async {
+                                result(["hasURL": hasURL, "changeCount": changeCount])
+                            }
+                        }
+                    } else {
+                        result(["hasURL": UIPasteboard.general.hasURLs, "changeCount": changeCount])
+                    }
+                } else {
+                    result(FlutterMethodNotImplemented)
+                }
+            }
         }
 
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)

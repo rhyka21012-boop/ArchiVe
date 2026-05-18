@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 
-import 'package:flutter/services.dart' show Clipboard;
+import 'package:flutter/services.dart' show Clipboard, MethodChannel;
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart';
@@ -48,7 +48,12 @@ class _MainPageState extends ConsumerState<MainPage>
       GlobalKey<AnalyticsPageState>();
 
   RewardedAd? _rewardedAd;
-  String? _lastCheckedClipboardUrl;
+  String? _lastCheckedClipboardUrl; // Android用
+  int? _lastClipboardChangeCount; // iOS用
+
+  static const _clipboardChannel = MethodChannel(
+    'com.walkinggoblins.archive/clipboard',
+  );
 
   //保存済みバージョン保存用キー
   static const _shownVersionKey = 'last_shown_update_version';
@@ -126,6 +131,53 @@ class _MainPageState extends ConsumerState<MainPage>
   }
 
   Future<void> _checkClipboard() async {
+    if (Platform.isIOS) {
+      await _checkClipboardIOS();
+    } else {
+      await _checkClipboardAndroid();
+    }
+  }
+
+  /// iOS: ネイティブで「ペーストダイアログを出さずに」URL存在と変更回数をチェックし、
+  /// ユーザーがOKを押した時に初めてクリップボードを読む。
+  Future<void> _checkClipboardIOS() async {
+    Map? result;
+    try {
+      result = await _clipboardChannel.invokeMethod<Map>('check');
+    } catch (_) {
+      return;
+    }
+    if (result == null) return;
+
+    final changeCount = (result['changeCount'] as num?)?.toInt() ?? 0;
+    final hasUrl = result['hasURL'] as bool? ?? false;
+
+    // 前回チェックから変化がなければスキップ（ユーザーを煩わせない）
+    if (changeCount == _lastClipboardChangeCount) return;
+    _lastClipboardChangeCount = changeCount;
+
+    if (!hasUrl) return;
+    if (!mounted) return;
+
+    final confirmed = await _showClipboardConfirmDialog(previewText: null);
+    if (confirmed != true || !mounted) return;
+
+    // ユーザーがOKを押した瞬間にだけ読み取る → iOSペーストダイアログが1度だけ出る
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = (data?.text ?? '').trim();
+    if (!text.startsWith('http://') && !text.startsWith('https://')) return;
+    if (!mounted) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailPage(url: text, listName: '選択なし'),
+      ),
+    );
+  }
+
+  /// Android: 既存ロジック（権限不要なので直接読み取り）
+  Future<void> _checkClipboardAndroid() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = (data?.text ?? '').trim();
     if (!text.startsWith('http://') && !text.startsWith('https://')) return;
@@ -133,18 +185,34 @@ class _MainPageState extends ConsumerState<MainPage>
     _lastCheckedClipboardUrl = text;
 
     if (!mounted) return;
-    final colorScheme = Theme.of(context).colorScheme;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showClipboardConfirmDialog(previewText: text);
+    if (confirmed != true || !mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailPage(url: text, listName: '選択なし'),
+      ),
+    );
+  }
+
+  Future<bool?> _showClipboardConfirmDialog({required String? previewText}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.of(ctx)!.clipboard_dialog_title),
-        content: Text(
-          text,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.55)),
-        ),
+        content: previewText == null
+            ? null
+            : Text(
+                previewText,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+              ),
         actions: [
           TextButton(
             style: ButtonStyle(
@@ -172,12 +240,6 @@ class _MainPageState extends ConsumerState<MainPage>
           ),
         ],
       ),
-    );
-
-    if (confirmed != true || !mounted) return;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => DetailPage(url: text, listName: '選択なし')),
     );
   }
 
