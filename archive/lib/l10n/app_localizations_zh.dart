@@ -859,6 +859,39 @@ class L10nZh extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return '之后 $price / 年';
   }
+
+  @override
+  String get settings_page_free_plan => '免费方案';
+
+  @override
+  String get settings_page_current_plan => '当前方案';
+
+  @override
+  String get settings_page_premium_details_link => '解锁保存上限及更多详情';
+
+  @override
+  String get settings_page_section_appearance => '外观';
+
+  @override
+  String get settings_page_section_about => '关于';
+
+  @override
+  String get settings_page_section_legal => '法律信息';
+
+  @override
+  String get settings_page_period_monthly => '月度';
+
+  @override
+  String get settings_page_period_annual => '年度';
+
+  @override
+  String get settings_page_theme_color_pink => '粉色';
+
+  @override
+  String get settings_page_theme_color_purple => '紫色';
+
+  @override
+  String get settings_page_theme_color_teal => '青绿色';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1716,4 +1749,37 @@ class L10nZhHans extends L10nZh {
   String premium_detail_price_after_trial_yearly(String price) {
     return '之后 $price / 年';
   }
+
+  @override
+  String get settings_page_free_plan => '免费方案';
+
+  @override
+  String get settings_page_current_plan => '当前方案';
+
+  @override
+  String get settings_page_premium_details_link => '解锁保存上限及更多详情';
+
+  @override
+  String get settings_page_section_appearance => '外观';
+
+  @override
+  String get settings_page_section_about => '关于';
+
+  @override
+  String get settings_page_section_legal => '法律信息';
+
+  @override
+  String get settings_page_period_monthly => '月度';
+
+  @override
+  String get settings_page_period_annual => '年度';
+
+  @override
+  String get settings_page_theme_color_pink => '粉色';
+
+  @override
+  String get settings_page_theme_color_purple => '紫色';
+
+  @override
+  String get settings_page_theme_color_teal => '青绿色';
 }

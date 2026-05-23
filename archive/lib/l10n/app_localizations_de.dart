@@ -893,4 +893,38 @@ class L10nDe extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return 'Danach $price / Jahr';
   }
+
+  @override
+  String get settings_page_free_plan => 'Kostenloser Plan';
+
+  @override
+  String get settings_page_current_plan => 'Aktueller Plan';
+
+  @override
+  String get settings_page_premium_details_link =>
+      'Speicherlimit aufheben und weitere Details ansehen';
+
+  @override
+  String get settings_page_section_appearance => 'Erscheinungsbild';
+
+  @override
+  String get settings_page_section_about => 'Über die App';
+
+  @override
+  String get settings_page_section_legal => 'Rechtliches';
+
+  @override
+  String get settings_page_period_monthly => 'Monatlich';
+
+  @override
+  String get settings_page_period_annual => 'Jährlich';
+
+  @override
+  String get settings_page_theme_color_pink => 'Pink';
+
+  @override
+  String get settings_page_theme_color_purple => 'Lila';
+
+  @override
+  String get settings_page_theme_color_teal => 'Türkis';
 }

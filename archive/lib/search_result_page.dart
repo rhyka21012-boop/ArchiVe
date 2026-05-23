@@ -140,6 +140,17 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 });
               },
 
+              // YouTubeアプリ等の外部アプリへの遷移をブロックし、WebView内に留める
+              onNavigationRequest: (NavigationRequest request) {
+                final uri = Uri.tryParse(request.url);
+                if (uri == null) return NavigationDecision.prevent;
+                // http(s)以外のスキーム(youtube://, vnd.youtube://, intent://など)を全て拒否
+                if (uri.scheme != 'http' && uri.scheme != 'https') {
+                  return NavigationDecision.prevent;
+                }
+                return NavigationDecision.navigate;
+              },
+
               onPageFinished: (url) async {
                 final title = await _getPageTitle();
 
@@ -1126,19 +1137,23 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     if (remainder == 0 && _interstitialAd != null) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+
+      final snackBarController = messenger.showSnackBar(
         SnackBar(
           content: Text(L10n.of(context)!.search_result_page_ad_remainder02),
-          duration: Duration(milliseconds: 800),
+          duration: Duration(milliseconds: 1200),
         ),
       );
 
-      // 少し待ってから表示（突然感をなくす）
-      await Future.delayed(const Duration(milliseconds: 800));
+      await snackBarController.closed;
+      if (!mounted) return;
 
-      _interstitialAd!.show();
+      final ad = _interstitialAd!;
+      _interstitialAd = null;
 
-      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      ad.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
           ad.dispose();
           _loadInterstitialAd();
@@ -1148,6 +1163,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
           _loadInterstitialAd();
         },
       );
+
+      ad.show();
     }
   }
 

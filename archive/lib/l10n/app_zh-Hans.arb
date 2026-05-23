@@ -270,5 +270,16 @@
   "premium_detail_save_percent": "节省 {percent}%",
   "premium_detail_per_month": "/ 月",
   "premium_detail_per_year": "/ 年",
-  "premium_detail_price_after_trial_yearly": "之后 {price} / 年"
+  "premium_detail_price_after_trial_yearly": "之后 {price} / 年",
+  "settings_page_free_plan": "免费方案",
+  "settings_page_current_plan": "当前方案",
+  "settings_page_premium_details_link": "解锁保存上限及更多详情",
+  "settings_page_section_appearance": "外观",
+  "settings_page_section_about": "关于",
+  "settings_page_section_legal": "法律信息",
+  "settings_page_period_monthly": "月度",
+  "settings_page_period_annual": "年度",
+  "settings_page_theme_color_pink": "粉色",
+  "settings_page_theme_color_purple": "紫色",
+  "settings_page_theme_color_teal": "青绿色"
 }

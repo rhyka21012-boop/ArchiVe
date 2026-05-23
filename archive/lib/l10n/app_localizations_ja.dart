@@ -317,7 +317,7 @@ class L10nJa extends L10n {
   String get detail_page_review_later => 'あとで';
 
   @override
-  String get detail_page_review_now => 'レビューする';
+  String get detail_page_review_now => 'レビューを書く';
 
   @override
   String get detail_page_mail_subject => 'subject=ArchiVe ご意見・ご要望';
@@ -861,4 +861,37 @@ class L10nJa extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return 'その後 $price / 年';
   }
+
+  @override
+  String get settings_page_free_plan => '無料プラン';
+
+  @override
+  String get settings_page_current_plan => '現在のプラン';
+
+  @override
+  String get settings_page_premium_details_link => '保存数上限の解放、その他の詳細はこちら';
+
+  @override
+  String get settings_page_section_appearance => '外観';
+
+  @override
+  String get settings_page_section_about => 'アプリについて';
+
+  @override
+  String get settings_page_section_legal => '法的情報';
+
+  @override
+  String get settings_page_period_monthly => '月額';
+
+  @override
+  String get settings_page_period_annual => '年額';
+
+  @override
+  String get settings_page_theme_color_pink => 'ピンク';
+
+  @override
+  String get settings_page_theme_color_purple => 'パープル';
+
+  @override
+  String get settings_page_theme_color_teal => 'ティール';
 }

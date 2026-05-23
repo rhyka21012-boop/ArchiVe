@@ -894,4 +894,38 @@ class L10nEs extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return 'Luego $price / año';
   }
+
+  @override
+  String get settings_page_free_plan => 'Plan Gratis';
+
+  @override
+  String get settings_page_current_plan => 'Plan Actual';
+
+  @override
+  String get settings_page_premium_details_link =>
+      'Desbloquea el límite de guardado y ve más detalles';
+
+  @override
+  String get settings_page_section_appearance => 'Apariencia';
+
+  @override
+  String get settings_page_section_about => 'Acerca de';
+
+  @override
+  String get settings_page_section_legal => 'Legal';
+
+  @override
+  String get settings_page_period_monthly => 'Mensual';
+
+  @override
+  String get settings_page_period_annual => 'Anual';
+
+  @override
+  String get settings_page_theme_color_pink => 'Rosa';
+
+  @override
+  String get settings_page_theme_color_purple => 'Morado';
+
+  @override
+  String get settings_page_theme_color_teal => 'Verde azulado';
 }

@@ -5,11 +5,13 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
-//import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'thumbnail_setting_provider.dart';
 import 'premium_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:in_app_review/in_app_review.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -26,6 +28,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   bool _notificationsEnabled = true;
 
   bool _isPremium = false;
+  PackageType? _activePackageType;
+
+  String _appVersion = '';
 
   int currentCount = 0; // 現在の保存数
   int baseLimit = 100; // 基本上限
@@ -52,6 +57,52 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     _loadRewardedAd();
     _countSavedItems();
     ref.read(themeModeProvider.notifier).loadTheme();
+    _checkSubscriptionStatus();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v${info.version}';
+        });
+      }
+    } catch (e) {
+      debugPrint('PackageInfo error: $e');
+    }
+  }
+
+  Future<void> _checkSubscriptionStatus() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      final entitlement = customerInfo.entitlements.all['Premium Plan'];
+      final isActive = entitlement?.isActive ?? false;
+
+      PackageType? activeType;
+      if (isActive && entitlement != null) {
+        final offerings = await Purchases.getOfferings();
+        final offering = offerings.current;
+        if (offering != null) {
+          for (final pkg in offering.availablePackages) {
+            if (pkg.storeProduct.identifier == entitlement.productIdentifier) {
+              activeType = pkg.packageType;
+              break;
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPremium = isActive;
+          _activePackageType = activeType;
+        });
+      }
+    } catch (e) {
+      debugPrint('Subscription check error: $e');
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -120,6 +171,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ),
 */
           const SizedBox(height: 16),
+          //サブスクリプションステータスカード
+          _buildSubscriptionStatusCard(context, colorScheme),
           //カード（作品保存数の状態）
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -236,7 +289,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ),
           ),
-          //ダークモード
+          // ===== 外観 =====
+          _buildSectionHeader(
+            context,
+            L10n.of(context)!.settings_page_section_appearance,
+          ),
           SwitchListTile(
             title: Text(L10n.of(context)!.settings_page_dark_mode),
             value: isDarkMode,
@@ -244,50 +301,34 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               ref.read(themeModeProvider.notifier).updateTheme(value);
             },
           ),
-          /*
-          SwitchListTile(
-            title: const Text('通知を有効にする'),
-            value: _notificationsEnabled,
-            onChanged: (value) => setState(() => _notificationsEnabled = value),
-          ),
-          */
-          //テーマカラー設定
           ListTile(
             title: Text(
               L10n.of(context)!.settings_page_theme_color,
               style: TextStyle(color: Color(0xFFB8860B)),
             ),
-
-            //デバッグ用切り替え箇所
             onTap: () async {
               if (!await PremiumGate.ensurePremium(context)) return;
-
               setState(() {
                 _isPremium = true;
               });
             },
-
             trailing: DropdownButton<ThemeColorType>(
               value: selectedColor,
-              items:
-                  ThemeColorType.values.map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Text(themeColorLabel(context, type)),
-                    );
-                  }).toList(),
-              onChanged:
-                  _isPremium
-                      //true //デバッグ用切り替え箇所
-                      ? (value) {
-                        if (value != null) {
-                          ref.read(themeColorProvider.notifier).setColor(value);
-                        }
+              items: ThemeColorType.values.map((type) {
+                return DropdownMenuItem(
+                  value: type,
+                  child: Text(themeColorLabel(context, type)),
+                );
+              }).toList(),
+              onChanged: _isPremium
+                  ? (value) {
+                      if (value != null) {
+                        ref.read(themeColorProvider.notifier).setColor(value);
                       }
-                      : null,
+                    }
+                  : null,
             ),
           ),
-          //リスト画像の表示/非表示
           SwitchListTile(
             title: Text(L10n.of(context)!.settings_page_thumbnail_visibility),
             value: ref.watch(showThumbnailProvider),
@@ -296,58 +337,26 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             },
           ),
 
-          //プレミアム詳細ボタン
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-
-                child: TextButton.icon(
-                  onPressed: () async {
-                    if (!await PremiumGate.ensurePremium(context)) return;
-
-                    setState(() {
-                      _isPremium = true;
-                    });
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          L10n.of(context)!.settings_page_already_purchased,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.star, color: Color(0xFFB8860B)),
-                  label: Text(
-                    L10n.of(context)!.settings_page_premium,
-                    style: TextStyle(
-                      color: Color(0xFFB8860B),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ButtonStyle(
-                    elevation: MaterialStateProperty.all(0),
-                    backgroundColor: MaterialStateProperty.all(
-                      colorScheme.brightness == Brightness.light
-                          ? Colors.black
-                          : Colors.white,
-                    ),
-                    foregroundColor: MaterialStateProperty.all(Colors.white),
-                    shape: MaterialStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // ===== アプリについて =====
+          _buildSectionHeader(
+            context,
+            L10n.of(context)!.settings_page_section_about,
           ),
-          //const Divider(),
+          ListTile(
+            title: Text(L10n.of(context)!.detail_page_review_now),
+            trailing: const Icon(Icons.rate_review),
+            onTap: _requestReview,
+          ),
+          ListTile(
+            title: Text(L10n.of(context)!.settings_page_app_version),
+            subtitle: Text(_appVersion),
+          ),
+
+          // ===== 法的情報 =====
+          _buildSectionHeader(
+            context,
+            L10n.of(context)!.settings_page_section_legal,
+          ),
           ListTile(
             title: Text(L10n.of(context)!.settings_page_plivacy_policy),
             trailing: const Icon(Icons.open_in_new),
@@ -383,11 +392,194 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               }
             },
           ),
-          ListTile(
-            title: Text(L10n.of(context)!.settings_page_app_version),
-            subtitle: Text(L10n.of(context)!.version),
-          ),
+          const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface.withValues(alpha: 0.55),
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  String _premiumDisplayLabel(BuildContext context) {
+    final base = L10n.of(context)!.settings_page_premium;
+    if (_activePackageType == PackageType.monthly) {
+      return '$base（${L10n.of(context)!.settings_page_period_monthly}）';
+    }
+    if (_activePackageType == PackageType.annual) {
+      return '$base（${L10n.of(context)!.settings_page_period_annual}）';
+    }
+    return base;
+  }
+
+  Widget _buildSubscriptionStatusCard(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
+    const gold = Color(0xFFB8860B);
+    const goldLight = Color(0xFFD4AF37);
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200];
+
+    if (_isPremium) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [gold, goldLight, gold],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => const PremiumPurchasePage(),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.star, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          L10n.of(context)!.settings_page_current_plan,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _premiumDisplayLabel(context),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: cardColor,
+      elevation: 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          if (!await PremiumGate.ensurePremium(context)) return;
+          setState(() => _isPremium = true);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: gold.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.star_border,
+                      color: gold,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          L10n.of(context)!.settings_page_current_plan,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurface.withValues(alpha: 0.55),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          L10n.of(context)!.settings_page_free_plan,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: gold),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                L10n.of(context)!.settings_page_premium_details_link,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -441,6 +633,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
     _rewardedAd = null;
     _loadRewardedAd();
+  }
+
+  Future<void> _requestReview() async {
+    final inAppReview = InAppReview.instance;
+
+    if (await inAppReview.isAvailable()) {
+      await inAppReview.requestReview();
+    }
   }
 
   //保存上限の計算

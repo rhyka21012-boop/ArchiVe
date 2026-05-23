@@ -203,6 +203,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _controllers['maker'] = _makerController;
 
     for (final key in _controllers.keys) {
+      _focusNodes[key] = FocusNode();
+      _hashButtonFocusNodes[key] = FocusNode(
+        skipTraversal: true,
+        canRequestFocus: false,
+      );
+    }
+
+    for (final key in _controllers.keys) {
       _controllers[key]!.addListener(() => _onFieldChanged(key));
     }
 
@@ -571,6 +579,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _labelController.dispose();
     _makerController.dispose();
     _memoController.dispose();
+    for (final focusNode in _focusNodes.values) {
+      focusNode.dispose();
+    }
+    for (final focusNode in _hashButtonFocusNodes.values) {
+      focusNode.dispose();
+    }
     _skipTimer?.cancel();
     super.dispose();
   }
@@ -1182,9 +1196,20 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         ],
         if (tutorialStep == TutorialStep.done)
           TutorialCompleteOverlay(
-            onFinished: () {
+            onFinished: () async {
+              final navigator = Navigator.of(context);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('isFirstLaunch', false);
+
               ref.read(isTutorialModeProvider.notifier).state = false;
               ref.read(tutorialStepProvider.notifier).state = TutorialStep.none;
+
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (_) => const PostTutorialPremiumPromptPage(),
+                ),
+                (_) => false,
+              );
             },
           ),
 
@@ -1244,6 +1269,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     String? autocompleteKey,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final hashHintLabel =
+        autocompleteKey == null ? null : _hashHintLabel(label);
+    final focusNode =
+        autocompleteKey == null ? null : _focusNodes[autocompleteKey];
+    final hashButtonFocusNode =
+        autocompleteKey == null ? null : _hashButtonFocusNodes[autocompleteKey];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1252,7 +1283,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              label,
+              _baseLabel(label),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onPrimary,
@@ -1309,6 +1340,24 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       style: TextStyle(color: colorScheme.onPrimary),
                     ),
                   ),
+
+                if (isEditing &&
+                    hashHintLabel != null &&
+                    focusNode != null &&
+                    hashButtonFocusNode != null)
+                  TextButton.icon(
+                    focusNode: hashButtonFocusNode,
+                    onPressed: () => _insertHash(controller, focusNode),
+                    icon: Icon(
+                      Icons.tag,
+                      size: 18,
+                      color: colorScheme.onPrimary,
+                    ),
+                    label: Text(
+                      hashHintLabel,
+                      style: TextStyle(color: colorScheme.onPrimary),
+                    ),
+                  ),
               ],
             ),
           ],
@@ -1326,6 +1375,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             borderRadius: BorderRadius.circular(12),
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               readOnly: !isEditing,
               decoration: InputDecoration(
                 hintText: hintLabel,
@@ -1360,6 +1410,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   List<String> _suggestions = [];
   String _activeFieldKey = '';
   final Map<String, TextEditingController> _controllers = {};
+  final Map<String, FocusNode> _focusNodes = {};
+  final Map<String, FocusNode> _hashButtonFocusNodes = {};
 
   void _onFieldChanged(String fieldKey) async {
     final controller = _controllers[fieldKey]!;
@@ -1411,6 +1463,32 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     });
 
     _showAutocompleteOverlay(fieldKey);
+  }
+
+  String _baseLabel(String label) {
+    final match = RegExp(r'^(.*?)\s*\((#[^)]+)\)$').firstMatch(label);
+    return match?.group(1) ?? label;
+  }
+
+  String? _hashHintLabel(String label) {
+    final match = RegExp(r'^(.*?)\s*\((#[^)]+)\)$').firstMatch(label);
+    return match?.group(2);
+  }
+
+  void _insertHash(TextEditingController controller, FocusNode focusNode) {
+    if (!isEditing) return;
+
+    final selection = controller.selection;
+    final start = selection.isValid ? selection.start : controller.text.length;
+    final end = selection.isValid ? selection.end : controller.text.length;
+
+    final newText = controller.text.replaceRange(start, end, '#');
+    controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
+
+    focusNode.requestFocus();
   }
 
   void _showAutocompleteOverlay(String fieldKey) {

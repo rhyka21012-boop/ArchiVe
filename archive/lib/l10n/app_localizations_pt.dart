@@ -885,4 +885,38 @@ class L10nPt extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return 'Depois $price / ano';
   }
+
+  @override
+  String get settings_page_free_plan => 'Plano Gratuito';
+
+  @override
+  String get settings_page_current_plan => 'Plano Atual';
+
+  @override
+  String get settings_page_premium_details_link =>
+      'Desbloqueie o limite de guardados e veja mais detalhes';
+
+  @override
+  String get settings_page_section_appearance => 'Aparência';
+
+  @override
+  String get settings_page_section_about => 'Sobre o app';
+
+  @override
+  String get settings_page_section_legal => 'Informações legais';
+
+  @override
+  String get settings_page_period_monthly => 'Mensal';
+
+  @override
+  String get settings_page_period_annual => 'Anual';
+
+  @override
+  String get settings_page_theme_color_pink => 'Rosa';
+
+  @override
+  String get settings_page_theme_color_purple => 'Roxo';
+
+  @override
+  String get settings_page_theme_color_teal => 'Verde-azulado';
 }

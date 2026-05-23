@@ -54,11 +54,12 @@ class _LaunchGateState extends State<LaunchGate> {
   }
 
   Future<void> completeTutorial(BuildContext context) async {
+    final navigator = Navigator.of(context);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isFirstLaunch', false);
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const MainPage()));
+    navigator.pushReplacement(
+      MaterialPageRoute(builder: (_) => const PostTutorialPremiumPromptPage()),
+    );
   }
 }

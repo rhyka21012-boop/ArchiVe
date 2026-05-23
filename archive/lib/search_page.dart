@@ -708,6 +708,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
       final selectedCount =
           _selectedListByKey[key]?.where((e) => e).length ?? 0;
       final colorScheme = Theme.of(context).colorScheme;
+      final showAll = _showAllByKey[key] ?? false;
+      final visibleCount =
+          showAll ? options.length : _maxVisibleChips(options.length);
+      final hasHiddenOptions = options.length > visibleCount;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -721,6 +725,13 @@ class SearchPageState extends ConsumerState<SearchPage> {
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
+            onExpansionChanged: (expanded) {
+              if (!expanded) {
+                setState(() {
+                  _showAllByKey[key] = false;
+                });
+              }
+            },
             title: Text(
               '$label ($selectedCount/${options.length})',
               style: TextStyle(
@@ -732,20 +743,32 @@ class SearchPageState extends ConsumerState<SearchPage> {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: Wrap(
-                  spacing: 8,
-                  children: List.generate(
-                    (_showAllByKey[key] ?? false)
-                        ? options.length
-                        : _maxVisibleChips(options.length),
-                    (i) {
+                  spacing: 6,
+                  runSpacing: 8,
+                  children: [
+                    ...List.generate(visibleCount, (i) {
                       return ChoiceChip(
+                        visualDensity: const VisualDensity(
+                          horizontal: -1,
+                          vertical: -1,
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        labelPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 2,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 2),
                         side: BorderSide.none,
+                        showCheckmark: false,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         label: Text(
                           options[i],
-                          style: TextStyle(color: Colors.black),
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 13,
+                          ),
                         ),
                         backgroundColor: Colors.white,
                         selectedColor: colorScheme.primary,
@@ -756,8 +779,39 @@ class SearchPageState extends ConsumerState<SearchPage> {
                           });
                         },
                       );
-                    },
-                  ),
+                    }),
+                    if (hasHiddenOptions)
+                      ActionChip(
+                        visualDensity: const VisualDensity(
+                          horizontal: -1,
+                          vertical: -1,
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        labelPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 2,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        avatar: const Icon(Icons.expand_more, size: 18),
+                        label: Text(L10n.of(context)!.search_page_more),
+                        backgroundColor: colorScheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
+                        labelStyle: TextStyle(
+                          color: colorScheme.primary,
+                          fontSize: 13,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _showAllByKey[key] = true;
+                          });
+                        },
+                      ),
+                  ],
                 ),
               ),
             ],

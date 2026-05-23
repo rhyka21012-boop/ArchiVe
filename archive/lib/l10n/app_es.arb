@@ -270,5 +270,16 @@
   "premium_detail_save_percent": "Ahorra {percent}%",
   "premium_detail_per_month": "/ mes",
   "premium_detail_per_year": "/ año",
-  "premium_detail_price_after_trial_yearly": "Luego {price} / año"
+  "premium_detail_price_after_trial_yearly": "Luego {price} / año",
+  "settings_page_free_plan": "Plan Gratis",
+  "settings_page_current_plan": "Plan Actual",
+  "settings_page_premium_details_link": "Desbloquea el límite de guardado y ve más detalles",
+  "settings_page_section_appearance": "Apariencia",
+  "settings_page_section_about": "Acerca de",
+  "settings_page_section_legal": "Legal",
+  "settings_page_period_monthly": "Mensual",
+  "settings_page_period_annual": "Anual",
+  "settings_page_theme_color_pink": "Rosa",
+  "settings_page_theme_color_purple": "Morado",
+  "settings_page_theme_color_teal": "Verde azulado"
 }

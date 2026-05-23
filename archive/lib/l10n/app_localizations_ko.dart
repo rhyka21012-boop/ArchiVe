@@ -863,4 +863,37 @@ class L10nKo extends L10n {
   String premium_detail_price_after_trial_yearly(String price) {
     return '이후 $price / 년';
   }
+
+  @override
+  String get settings_page_free_plan => '무료 플랜';
+
+  @override
+  String get settings_page_current_plan => '현재 플랜';
+
+  @override
+  String get settings_page_premium_details_link => '저장 한도 해제 및 자세히 보기';
+
+  @override
+  String get settings_page_section_appearance => '외관';
+
+  @override
+  String get settings_page_section_about => '앱 정보';
+
+  @override
+  String get settings_page_section_legal => '법적 정보';
+
+  @override
+  String get settings_page_period_monthly => '월간';
+
+  @override
+  String get settings_page_period_annual => '연간';
+
+  @override
+  String get settings_page_theme_color_pink => '핑크';
+
+  @override
+  String get settings_page_theme_color_purple => '보라';
+
+  @override
+  String get settings_page_theme_color_teal => '청록';
 }

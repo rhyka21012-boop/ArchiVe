@@ -101,7 +101,7 @@
   "detail_page_review_confirm02": "レビューでの応援が励みになります。",
   "detail_page_review_contact_support": "ご意見・不具合を報告",
   "detail_page_review_later": "あとで",
-  "detail_page_review_now": "レビューする",
+  "detail_page_review_now": "レビューを書く",
   "detail_page_mail_subject": "subject=ArchiVe ご意見・ご要望",
   "detail_page_fetching_thumbnail": "サムネイルを取得中...",
   "search_page_cast": "出演",
@@ -284,5 +284,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "settings_page_free_plan": "無料プラン",
+  "settings_page_current_plan": "現在のプラン",
+  "settings_page_premium_details_link": "保存数上限の解放、その他の詳細はこちら",
+  "settings_page_section_appearance": "外観",
+  "settings_page_section_about": "アプリについて",
+  "settings_page_section_legal": "法的情報",
+  "settings_page_period_monthly": "月額",
+  "settings_page_period_annual": "年額",
+  "settings_page_theme_color_pink": "ピンク",
+  "settings_page_theme_color_purple": "パープル",
+  "settings_page_theme_color_teal": "ティール"
 }

@@ -270,5 +270,16 @@
   "premium_detail_save_percent": "{percent}% sparen",
   "premium_detail_per_month": "/ Monat",
   "premium_detail_per_year": "/ Jahr",
-  "premium_detail_price_after_trial_yearly": "Danach {price} / Jahr"
+  "premium_detail_price_after_trial_yearly": "Danach {price} / Jahr",
+  "settings_page_free_plan": "Kostenloser Plan",
+  "settings_page_current_plan": "Aktueller Plan",
+  "settings_page_premium_details_link": "Speicherlimit aufheben und weitere Details ansehen",
+  "settings_page_section_appearance": "Erscheinungsbild",
+  "settings_page_section_about": "Über die App",
+  "settings_page_section_legal": "Rechtliches",
+  "settings_page_period_monthly": "Monatlich",
+  "settings_page_period_annual": "Jährlich",
+  "settings_page_theme_color_pink": "Pink",
+  "settings_page_theme_color_purple": "Lila",
+  "settings_page_theme_color_teal": "Türkis"
 }

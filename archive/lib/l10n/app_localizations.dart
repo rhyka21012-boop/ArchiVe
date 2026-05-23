@@ -719,7 +719,7 @@ abstract class L10n {
   /// No description provided for @detail_page_review_now.
   ///
   /// In ja, this message translates to:
-  /// **'レビューする'**
+  /// **'レビューを書く'**
   String get detail_page_review_now;
 
   /// No description provided for @detail_page_mail_subject.
@@ -1735,6 +1735,72 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'その後 {price} / 年'**
   String premium_detail_price_after_trial_yearly(String price);
+
+  /// No description provided for @settings_page_free_plan.
+  ///
+  /// In ja, this message translates to:
+  /// **'無料プラン'**
+  String get settings_page_free_plan;
+
+  /// No description provided for @settings_page_current_plan.
+  ///
+  /// In ja, this message translates to:
+  /// **'現在のプラン'**
+  String get settings_page_current_plan;
+
+  /// No description provided for @settings_page_premium_details_link.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存数上限の解放、その他の詳細はこちら'**
+  String get settings_page_premium_details_link;
+
+  /// No description provided for @settings_page_section_appearance.
+  ///
+  /// In ja, this message translates to:
+  /// **'外観'**
+  String get settings_page_section_appearance;
+
+  /// No description provided for @settings_page_section_about.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリについて'**
+  String get settings_page_section_about;
+
+  /// No description provided for @settings_page_section_legal.
+  ///
+  /// In ja, this message translates to:
+  /// **'法的情報'**
+  String get settings_page_section_legal;
+
+  /// No description provided for @settings_page_period_monthly.
+  ///
+  /// In ja, this message translates to:
+  /// **'月額'**
+  String get settings_page_period_monthly;
+
+  /// No description provided for @settings_page_period_annual.
+  ///
+  /// In ja, this message translates to:
+  /// **'年額'**
+  String get settings_page_period_annual;
+
+  /// No description provided for @settings_page_theme_color_pink.
+  ///
+  /// In ja, this message translates to:
+  /// **'ピンク'**
+  String get settings_page_theme_color_pink;
+
+  /// No description provided for @settings_page_theme_color_purple.
+  ///
+  /// In ja, this message translates to:
+  /// **'パープル'**
+  String get settings_page_theme_color_purple;
+
+  /// No description provided for @settings_page_theme_color_teal.
+  ///
+  /// In ja, this message translates to:
+  /// **'ティール'**
+  String get settings_page_theme_color_teal;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

@@ -9,7 +9,17 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
   return ThemeModeNotifier();
 });
 
-enum ThemeColorType { orange, green, blue, white, red, yellow }
+enum ThemeColorType {
+  orange,
+  green,
+  blue,
+  white,
+  red,
+  yellow,
+  pink,
+  purple,
+  teal,
+}
 
 final themeColorProvider =
     StateNotifierProvider<ThemeColorNotifier, ThemeColorType>((ref) {
@@ -59,6 +69,9 @@ ThemeData getThemeData(ThemeColorType type, bool isDark) {
     ThemeColorType.red => Colors.red,
     ThemeColorType.yellow => Colors.yellow[700]!,
     ThemeColorType.orange => Colors.orange[600]!,
+    ThemeColorType.pink => Colors.pink[300]!,
+    ThemeColorType.purple => Colors.deepPurple[300]!,
+    ThemeColorType.teal => Colors.teal[400]!,
   };
 
   final colorScheme =
@@ -99,6 +112,12 @@ String themeColorLabel(BuildContext context, ThemeColorType type) {
       return l10n.settings_page_theme_color_red;
     case ThemeColorType.yellow:
       return l10n.settings_page_theme_color_yellow;
+    case ThemeColorType.pink:
+      return l10n.settings_page_theme_color_pink;
+    case ThemeColorType.purple:
+      return l10n.settings_page_theme_color_purple;
+    case ThemeColorType.teal:
+      return l10n.settings_page_theme_color_teal;
     case ThemeColorType.orange:
     default:
       return l10n.settings_page_theme_color_orange;

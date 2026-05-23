@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'main_page.dart';
+import 'premium_detail.dart';
 
 enum TutorialStep {
   createList, // ListPageでFABを押す
@@ -30,6 +31,45 @@ class TutorialPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<TutorialPage> createState() => _TutorialPageState();
+}
+
+class PostTutorialPremiumPromptPage extends StatefulWidget {
+  const PostTutorialPremiumPromptPage({super.key});
+
+  @override
+  State<PostTutorialPremiumPromptPage> createState() =>
+      _PostTutorialPremiumPromptPageState();
+}
+
+class _PostTutorialPremiumPromptPageState
+    extends State<PostTutorialPremiumPromptPage> {
+  bool _didShowPremium = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _didShowPremium) return;
+      _didShowPremium = true;
+
+      final navigator = Navigator.of(context);
+      await PremiumGate.ensurePremium(context);
+
+      if (!mounted) return;
+      navigator.pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: const SizedBox.expand(),
+    );
+  }
 }
 
 class _TutorialPageState extends ConsumerState<TutorialPage> {
