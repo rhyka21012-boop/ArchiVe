@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import google_mobile_ads
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -13,6 +14,18 @@ import UIKit
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         GeneratedPluginRegistrant.register(with: self)
+
+        // ネイティブ広告ファクトリ登録
+        FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
+            self,
+            factoryId: "listTile",
+            nativeAdFactory: ListTileNativeAdFactory()
+        )
+        FLTGoogleMobileAdsPlugin.registerNativeAdFactory(
+            self,
+            factoryId: "gridCard",
+            nativeAdFactory: GridCardNativeAdFactory()
+        )
 
         if let controller = window?.rootViewController as? FlutterViewController {
             let channel = FlutterMethodChannel(

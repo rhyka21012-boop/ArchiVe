@@ -402,19 +402,36 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                 L10n.of(context)!.random_image_change_list_name_confirm,
               ),
               onPressed: () async {
-                Navigator.of(context).pop(); // ダイアログを閉じる
-
-                // 変更処理開始
-                final prefs = await SharedPreferences.getInstance();
-
-                //変更後の名前
+                // 変更後の名前
                 final newListName = _controller.text.trim();
                 if (newListName.isEmpty) {
+                  Navigator.of(context).pop();
                   return;
                 }
 
-                //all_listsを変更
+                final prefs = await SharedPreferences.getInstance();
                 final allLists = prefs.getStringList('all_lists') ?? [];
+
+                // 同名チェック（自分自身は除く）
+                if (newListName != widget.listName &&
+                    allLists.contains(newListName)) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        L10n.of(context)!
+                            .search_result_page_list_already_exists,
+                      ),
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.of(context).pop(); // ダイアログを閉じる
+
+                //all_listsを変更
                 final updatedLists =
                     allLists.map((item) {
                       return item == widget.listName ? newListName : item;

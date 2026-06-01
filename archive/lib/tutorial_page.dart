@@ -1,8 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'main_page.dart';
 import 'premium_detail.dart';
+
+/// チュートリアルをスキップしてホーム or 購入画面に遷移
+Future<void> skipTutorial(BuildContext context, WidgetRef ref) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  ref.read(tutorialStepProvider.notifier).state = TutorialStep.none;
+  ref.read(isTutorialModeProvider.notifier).state = false;
+
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('isFirstLaunch', false);
+
+  if (!context.mounted) return;
+  navigator.pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => const PostTutorialPremiumPromptPage()),
+    (_) => false,
+  );
+}
 
 enum TutorialStep {
   createList, // ListPageでFABを押す
@@ -102,7 +119,7 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
   }
 }
 
-class TutorialOverlayPseudoTap extends StatelessWidget {
+class TutorialOverlayPseudoTap extends ConsumerWidget {
   final Rect holeRect;
   final VoidCallback onTap;
 
@@ -113,7 +130,7 @@ class TutorialOverlayPseudoTap extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: [
         // 半透明オーバーレイ + 穴
@@ -128,6 +145,32 @@ class TutorialOverlayPseudoTap extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: Container(color: Colors.transparent),
+          ),
+        ),
+
+        // スキップボタン（左上）
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          left: 12,
+          child: TextButton(
+            onPressed: () => skipTutorial(context, ref),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.9),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 6,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              L10n.of(context)!.skip,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ],

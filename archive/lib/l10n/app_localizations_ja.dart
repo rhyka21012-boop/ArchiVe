@@ -375,10 +375,35 @@ class L10nJa extends L10n {
   String get search_page_web_title => 'Web検索';
 
   @override
-  String get search_page_search_word => '検索ワード';
+  String get search_page_search_word => 'Web検索';
+
+  @override
+  String get search_page_hint_web_1 => '広告ブロック付きで快適に検索';
+
+  @override
+  String get search_page_hint_web_2 => '例: アニメ OP';
+
+  @override
+  String get search_page_hint_web_3 => 'アプリ内ブラウザでサクサク動画収集';
+
+  @override
+  String get search_page_hint_web_4 => '例: ライブ映像 2026';
+
+  @override
+  String get search_page_hint_web_5 => 'お気に入りサイトで深掘り';
+
+  @override
+  String get search_page_hint_web_6 => '例: 料理 簡単 レシピ';
 
   @override
   String get search_page_select_site => 'サイトで絞る';
+
+  @override
+  String get search_page_select_site_help_title => 'サイトで絞る';
+
+  @override
+  String get search_page_select_site_help_description =>
+      'サイトを絞って動画検索ができます。お気に入りの動画サイトを登録しておくと、そのサイト内のコンテンツだけを横断的に検索できます。下のリストからサイトを選択して検索ボタンをタップしてください。';
 
   @override
   String get search_page_open_site => 'サイトを開く';
@@ -400,6 +425,9 @@ class L10nJa extends L10n {
 
   @override
   String get search_page_random_this => '今日のおすすめはこれ！';
+
+  @override
+  String get search_page_random_again => 'もう一度回す';
 
   @override
   String get search_result_page_site_saved => 'サイトを保存しました';
@@ -574,7 +602,7 @@ class L10nJa extends L10n {
   String get settings_page_dark_mode => 'ダークモード';
 
   @override
-  String get settings_page_theme_color => 'テーマカラー★';
+  String get settings_page_theme_color => 'テーマカラー';
 
   @override
   String get settings_page_theme_color_orange => 'オレンジ';
@@ -680,7 +708,7 @@ class L10nJa extends L10n {
   String get premium_detail_premium_item01 => '無制限の保存数';
 
   @override
-  String get premium_detail_premium_item02 => 'テーマカラーを自由に変更';
+  String get premium_detail_premium_item02 => 'テーマカラー ゴールドを追加';
 
   @override
   String get premium_detail_premium_item03 => '画像を自由に追加';
@@ -695,16 +723,16 @@ class L10nJa extends L10n {
   String get premium_detail_premium_item06 => '広告の非表示';
 
   @override
-  String get premium_detail_note => '1ヶ月の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。';
+  String get premium_detail_note => '3日間の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。';
 
   @override
   String get premium_detail_restore_not_found => '購入履歴が見つかりませんでした';
 
   @override
-  String get premium_detail_free_trial_badge => '1ヶ月無料';
+  String get premium_detail_free_trial_badge => '3日間無料';
 
   @override
-  String get premium_detail_start_trial => '1ヶ月無料で開始';
+  String get premium_detail_start_trial => '3日間無料で開始';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -894,4 +922,231 @@ class L10nJa extends L10n {
 
   @override
   String get settings_page_theme_color_teal => 'ティール';
+
+  @override
+  String get login_page_title => 'サインイン';
+
+  @override
+  String get login_page_description => 'ArchiVe Pro の機能を使うには、サインインしてください。';
+
+  @override
+  String get login_with_apple => 'Appleでサインイン';
+
+  @override
+  String get login_with_google => 'Googleでサインイン';
+
+  @override
+  String get login_failed => 'サインインに失敗しました';
+
+  @override
+  String get logout => 'サインアウト';
+
+  @override
+  String get logout_confirm => 'サインアウトしますか？';
+
+  @override
+  String get settings_page_section_account => 'アカウント';
+
+  @override
+  String get settings_page_not_signed_in => 'サインインしていません';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle => 'プレミアム全機能に加えて、以下が利用可能';
+
+  @override
+  String get pro_detail_feature_cloud_sync => 'クラウド同期（複数端末）';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'AI自動タグ付け';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'AIおすすめキーワード';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'AI月次レポート';
+
+  @override
+  String get pro_detail_feature_public_sharing => '公開リスト共有';
+
+  @override
+  String get pro_detail_feature_theme_teal => 'テーマカラー ティールを追加';
+
+  @override
+  String get plans_page_title => 'プラン';
+
+  @override
+  String get plans_page_current_badge => '現在';
+
+  @override
+  String get plans_page_includes_premium => 'Premium全機能を含む';
+
+  @override
+  String get detail_page_ai_suggest => 'AIでタグ提案';
+
+  @override
+  String get detail_page_ai_loading => 'AIで分析中...';
+
+  @override
+  String get detail_page_ai_error => 'AIタグ提案エラー';
+
+  @override
+  String get share_title => 'リストを共有';
+
+  @override
+  String get share_loading => '共有中...';
+
+  @override
+  String get share_url_label => '共有URL';
+
+  @override
+  String get share_copy => 'コピー';
+
+  @override
+  String get share_copied => 'コピーしました';
+
+  @override
+  String get share_unshare => '共有を解除';
+
+  @override
+  String get share_unshare_confirm => 'このリストの共有を解除しますか？';
+
+  @override
+  String get share_create_action => 'このリストを共有する';
+
+  @override
+  String get share_error => '共有エラー';
+
+  @override
+  String get share_open_url => '共有URLを開く';
+
+  @override
+  String get share_description => '共有URLをこのリストの内容を誰でも閲覧できます（読み取り専用）';
+
+  @override
+  String get share_limit_notice => '最大200件まで共有されます';
+
+  @override
+  String get analytics_monthly_report_title => 'AIサマリー';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return '$month月のまとめ';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => 'まとめを生成';
+
+  @override
+  String get analytics_monthly_report_regenerate => '再生成';
+
+  @override
+  String get analytics_monthly_report_loading => 'AIが分析しています...';
+
+  @override
+  String get analytics_monthly_report_empty => 'ボタンを押すと、今月のアーカイブ活動を AI が要約します。';
+
+  @override
+  String get analytics_monthly_report_error => 'レポート生成エラー';
+
+  @override
+  String get analytics_monthly_report_cached => 'キャッシュから表示';
+
+  @override
+  String get search_result_loading => '読み込み中';
+
+  @override
+  String get grid_page_move_action => '移動';
+
+  @override
+  String get grid_page_move_to_list_title => '移動先のリストを選択';
+
+  @override
+  String get grid_page_move_done => '件を移動しました';
+
+  @override
+  String get undo => '取り消し';
+
+  @override
+  String get settings_page_theme_color_gold => 'ゴールド';
+
+  @override
+  String get plans_page_premium_short => 'プレミアム';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => '無料';
+
+  @override
+  String get plans_page_free_price => '¥0';
+
+  @override
+  String get plans_page_free_item01 => '100件まで保存可能';
+
+  @override
+  String get plans_page_free_item02 => '広告視聴で15枠/日 拡張可能';
+
+  @override
+  String get plans_page_free_item03 => '単一のタグで検索';
+
+  @override
+  String get plans_page_free_item04 => '広告表示';
+
+  @override
+  String get share_pro_required_title => 'Pro プラン限定機能';
+
+  @override
+  String get share_pro_required_description => '公開リスト共有はProプランの購入が必要です。';
+
+  @override
+  String get share_pro_required_action => 'Proプランを見る';
+
+  @override
+  String get pro_locked_badge => 'Pro限定';
+
+  @override
+  String get pro_locked_unlock => 'Proで解除';
+
+  @override
+  String get apple_signin_warning_title => 'Apple アカウントでサインインしますか？';
+
+  @override
+  String get apple_signin_warning_description =>
+      'Apple アカウントは Android 端末ではサインインできず、データを共有できません。複数端末で共有する場合は Google アカウントをお勧めします。';
+
+  @override
+  String get apple_signin_warning_continue => 'Apple で続行';
+
+  @override
+  String get settings_page_manage_subscription => 'サブスクリプションを管理';
+
+  @override
+  String get search_page_ai_recommend_title => 'AIおすすめ';
+
+  @override
+  String get search_page_ai_recommend_subtitle => 'ライブラリ傾向から関連キーワードを提案';
+
+  @override
+  String get search_page_ai_recommend_generate => 'おすすめを取得';
+
+  @override
+  String get search_page_ai_recommend_refresh => '再生成';
+
+  @override
+  String get search_page_ai_recommend_loading => 'AIが分析しています...';
+
+  @override
+  String get search_page_ai_recommend_error => 'おすすめ取得エラー';
+
+  @override
+  String get search_page_ai_recommend_empty =>
+      '保存したアイテムが少ないため提案できません。アイテムを追加してから再度お試しください。';
+
+  @override
+  String get search_page_ai_recommend_intro =>
+      'ボタンを押すと、保存ライブラリの傾向から関連キーワードをAIが提案します。';
 }

@@ -27,6 +27,7 @@ class ListPageState extends ConsumerState<ListPage>
   late TabController _tabController;
   List<String> _listNames = [];
   bool _isPremium = false; //サブスク購入状態を保持
+  bool _isPro = false;
 
   //final theme = Theme.of(context);
 
@@ -96,13 +97,16 @@ class ListPageState extends ConsumerState<ListPage>
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      final isActive =
+      final isPremium =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
 
       if (!mounted) return;
 
       setState(() {
-        _isPremium = isActive;
+        _isPremium = isPremium;
+        _isPro = isPro;
       });
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
@@ -112,6 +116,25 @@ class ListPageState extends ConsumerState<ListPage>
   //MainPage から呼び出す用
   void reload() {
     _loadLists();
+    _checkSubscriptionStatus();
+  }
+
+  /// AppBar タイトル（サブスク状態に応じて変化、色はテーマカラー）
+  Widget _buildAppTitle(ColorScheme colorScheme) {
+    final label = _isPro
+        ? 'ArchiVe Pro'
+        : _isPremium
+            ? 'ArchiVe Premium'
+            : 'ArchiVe';
+
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: 25,
+        fontWeight: FontWeight.bold,
+        color: colorScheme.primary,
+      ),
+    );
   }
 
   @override
@@ -130,21 +153,13 @@ class ListPageState extends ConsumerState<ListPage>
     return Stack(
       children: [
         Scaffold(
-          extendBody: true,
           backgroundColor: colorScheme.surface,
           appBar: AppBar(
             elevation: 0,
             backgroundColor: Theme.of(context).colorScheme.surface,
             surfaceTintColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            title: Text(
-              'ArchiVe',
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-              ),
-            ),
+            title: _buildAppTitle(colorScheme),
 
             centerTitle: true,
 
@@ -602,10 +617,22 @@ class ListPageState extends ConsumerState<ListPage>
                   final prefs = await SharedPreferences.getInstance();
                   final existing = prefs.getStringList('all_lists') ?? [];
 
-                  if (!existing.contains(listName)) {
-                    existing.add(listName);
-                    await prefs.setStringList('all_lists', existing);
+                  if (existing.contains(listName)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          L10n.of(context)!
+                              .search_result_page_list_already_exists,
+                        ),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
                   }
+
+                  existing.add(listName);
+                  await prefs.setStringList('all_lists', existing);
 
                   Navigator.pop(context);
                   await _loadLists();
@@ -726,7 +753,7 @@ class _TutorialBalloon extends StatelessWidget {
 // =======================
 // チュートリアル用オーバーレイ（擬似タップ方式）
 // =======================
-class TutorialOverlayPseudoTap extends StatelessWidget {
+class TutorialOverlayPseudoTap extends ConsumerWidget {
   final Rect holeRect;
   final VoidCallback onTap;
 
@@ -737,7 +764,7 @@ class TutorialOverlayPseudoTap extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: [
         // 半透明 + 穴の見た目
@@ -752,6 +779,32 @@ class TutorialOverlayPseudoTap extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: Container(color: Colors.transparent),
+          ),
+        ),
+
+        // スキップボタン（左上）
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          left: 12,
+          child: TextButton(
+            onPressed: () => skipTutorial(context, ref),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.9),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 6,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              L10n.of(context)!.skip,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ],

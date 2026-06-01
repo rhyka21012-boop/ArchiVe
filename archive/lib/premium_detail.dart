@@ -3,6 +3,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'main.dart';
 import 'l10n/app_localizations.dart';
+import 'purchase_page.dart';
 
 /// ===============================
 /// 外部から呼ぶためのゲートクラス
@@ -11,18 +12,16 @@ class PremiumGate {
   static const String entitlementId = 'Premium Plan';
 
   static Future<bool> ensurePremium(BuildContext context) async {
-    final isPremium = await _checkSubscriptionStatus();
-    if (isPremium) return true;
-
-    final purchased = await Navigator.push<bool>(
+    if (await _checkSubscriptionStatus()) return true;
+    if (!context.mounted) return false;
+    await Navigator.push(
       context,
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const PremiumPurchasePage(),
+        builder: (_) => const PurchasePage(focusedTier: PurchaseTier.premium),
       ),
     );
-
-    return purchased == true;
+    return await _checkSubscriptionStatus();
   }
 
   static Future<bool> _checkSubscriptionStatus() async {

@@ -20,10 +20,12 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'view_counter.dart';
 import 'premium_detail.dart';
+import 'pro_detail.dart';
+import 'ai_service.dart';
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'random_image_reload_provider.dart';
-import 'playlist_player_page.dart';
+import 'search_result_page.dart';
 import "save_limit_helper.dart";
 
 class DetailPage extends ConsumerStatefulWidget {
@@ -130,6 +132,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   //タイトルフェチ中判定
   bool _isFetchingTitle = false;
+  bool _isFetchingAi = false;
+
+  // AppBar/FAB: Twitter風 - 下スクロールで隠す、上スクロールで表示
+  final ScrollController _detailScrollController = ScrollController();
+  bool _showChrome = true;
+  double _lastScrollOffset = 0;
 
   RewardedAd? _rewardedAd;
 
@@ -183,6 +191,19 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   void initState() {
     super.initState();
     _initializeControllers();
+
+    // Twitter風スクロール検知：下スクロールで隠す、上スクロール（または最上部）で表示
+    _detailScrollController.addListener(() {
+      final offset = _detailScrollController.offset;
+      if (offset <= 40) {
+        if (!_showChrome) setState(() => _showChrome = true);
+      } else if (offset > _lastScrollOffset + 8 && _showChrome) {
+        setState(() => _showChrome = false);
+      } else if (offset < _lastScrollOffset - 8 && !_showChrome) {
+        setState(() => _showChrome = true);
+      }
+      _lastScrollOffset = offset;
+    });
     //_initializeFirebase();
 
     if ((widget.image == null || widget.image!.isEmpty) && widget.url != null) {
@@ -230,7 +251,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       if (ref.read(tutorialStepProvider.notifier).state ==
           TutorialStep.inputUrl) {
         _urlController.text =
-            'https://youtu.be/h_D3VFfhvs4?si=mn5UBLFS_Tv9FvJh';
+            'https://www.youtube.com/watch?v=sPyAQQklc1s';
       }
 
       final ctx = _urlFieldKey.currentContext;
@@ -579,6 +600,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _labelController.dispose();
     _makerController.dispose();
     _memoController.dispose();
+    _detailScrollController.dispose();
     for (final focusNode in _focusNodes.values) {
       focusNode.dispose();
     }
@@ -647,7 +669,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           child: Scaffold(
             //backgroundColor: Colors.transparent,
             extendBodyBehindAppBar: true,
-            appBar: AppBar(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                offset: _showChrome ? Offset.zero : const Offset(0, -1.5),
+                child: AppBar(
               backgroundColor: const Color(0xFF121212).withOpacity(0.3),
               title: Text(
                 L10n.of(context)!.detail_page_item_detail,
@@ -680,6 +708,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   ),
               ],
             ),
+              ),
+            ),
+            floatingActionButton:
+                isEditing ? _buildAiTagFab(colorScheme) : null,
             body: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -689,6 +721,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ),
               ),
               child: SingleChildScrollView(
+                controller: _detailScrollController,
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
@@ -1166,8 +1199,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             holeRect: getRectFromKey(_fetchTitleKey, context),
             onTap: () async {
               await _fetchTitleFromUrl();
-              ref.read(tutorialStepProvider.notifier).state =
-                  TutorialStep.saveItem;
+              if (!mounted) return;
+              // 保存ボタンまで確実にスクロールしてAppBarを表示
+              await startSaveTutorial();
             },
           ),
           _buildBalloonFromRect(
@@ -1340,6 +1374,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       style: TextStyle(color: colorScheme.onPrimary),
                     ),
                   ),
+
 
                 if (isEditing &&
                     hashHintLabel != null &&
@@ -1683,6 +1718,111 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         ),
       ],
     );
+  }
+
+  /// AI タグ提案 FAB（Twitter風：下スクロールで隠す、上で表示）
+  Widget _buildAiTagFab(ColorScheme colorScheme) {
+    const tealDeep = Color(0xFF00695C);
+    const tealLight = Color(0xFF26A69A);
+    const gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [tealDeep, tealLight, tealDeep],
+      stops: [0.0, 0.5, 1.0],
+    );
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      offset: _showChrome ? Offset.zero : const Offset(0, 2),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 220),
+        opacity: _showChrome ? 1.0 : 0.0,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: tealLight.withValues(alpha: 0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(28),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: _isFetchingAi ? null : _aiSuggestTags,
+              borderRadius: BorderRadius.circular(28),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isFetchingAi
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.auto_awesome,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                    const SizedBox(width: 8),
+                    Text(
+                      L10n.of(context)!.detail_page_ai_suggest,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// AIでタグを提案して各フィールドに自動入力（Pro限定）
+  Future<void> _aiSuggestTags() async {
+    if (_isFetchingAi) return;
+    // 購入先行型: 未加入ユーザーにサインインを促さず購入画面を表示
+    if (!await ProGate.ensureProPurchaseFirst(context)) return;
+    if (!mounted) return;
+
+    final url = _urlController.text.trim();
+    final title = _titleController.text.trim();
+    if (url.isEmpty && title.isEmpty) return;
+
+    setState(() => _isFetchingAi = true);
+    try {
+      final tags = await AiService.suggestTags(url: url, title: title);
+      if (!mounted) return;
+      String toHashtags(List<String> list) =>
+          list.isEmpty ? '' : list.map((t) => '#$t').join(' ');
+      setState(() {
+        if (tags.genre.isNotEmpty) _genreController.text = toHashtags(tags.genre);
+        if (tags.cast.isNotEmpty) _castController.text = toHashtags(tags.cast);
+        if (tags.series.isNotEmpty) _seriesController.text = toHashtags(tags.series);
+        if (tags.label.isNotEmpty) _labelController.text = toHashtags(tags.label);
+        if (tags.maker.isNotEmpty) _makerController.text = toHashtags(tags.maker);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage('${L10n.of(context)!.detail_page_ai_error}: $e');
+    } finally {
+      if (mounted) setState(() => _isFetchingAi = false);
+    }
   }
 
   //メタデータからタイトルを取得
@@ -2238,6 +2378,28 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     ref.read(tutorialStepProvider.notifier).state = TutorialStep.fetchTitle;
   }
 
+  //チュートリアル - 保存ボタンの表示処理（最上部までスクロールして AppBar を表示）
+  Future<void> startSaveTutorial() async {
+    // AppBar を確実に表示
+    if (!_showChrome) setState(() => _showChrome = true);
+
+    // 最上部までスクロール
+    if (_detailScrollController.hasClients &&
+        _detailScrollController.offset > 0) {
+      await _detailScrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    // レイアウトが安定するのを待つ
+    await Future.delayed(const Duration(milliseconds: 80));
+
+    if (!mounted) return;
+    ref.read(tutorialStepProvider.notifier).state = TutorialStep.saveItem;
+  }
+
   //サムネクリック時の処理
   Future<void> openPlayer(String url) async {
     final prefs = await SharedPreferences.getInstance();
@@ -2264,13 +2426,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
 
     final index = queue.indexWhere((item) => item['url'] == url);
+    final safeIndex = index >= 0 ? index : 0;
     if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PlaylistPlayerPage(
-          items: queue,
-          initialIndex: index >= 0 ? index : 0,
+        builder: (_) => SearchResultPage(
+          initialUrl: queue[safeIndex]['url']?.toString() ?? url,
+          title: queue[safeIndex]['title']?.toString() ?? '',
+          playlistItems: queue,
+          playlistIndex: safeIndex,
         ),
       ),
     );

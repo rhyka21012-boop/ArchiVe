@@ -16,8 +16,13 @@ import 'detail_page.dart';
 import 'random_image_reload_provider.dart';
 import 'home_tab_index_provider.dart';
 import 'search_tab_index_provider.dart';
-import 'playlist_player_page.dart';
+import 'search_result_page.dart';
 import 'save_limit_helper.dart';
+import 'pro_detail.dart';
+import 'share_dialog.dart';
+import 'sync_service.dart';
+import 'list_reload_provider.dart';
+import 'my_native_ad_widget.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -190,11 +195,20 @@ class GridPageState extends ConsumerState<GridPage> {
                   _isSelectionMode
                       ? [
                         IconButton(
+                          icon: const Icon(Icons.drive_file_move),
+                          tooltip: L10n.of(context)!.grid_page_move_action,
+                          onPressed: () => _moveSelectedToList(itemsToShow),
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: _confirmDeleteSelected,
                         ),
                       ]
                       : [
+                        IconButton(
+                          onPressed: () => _openShareDialog(itemsToShow),
+                          icon: const Icon(Icons.share),
+                        ),
                         IconButton(
                           onPressed: _showSortModal,
                           icon: Icon(Icons.sort),
@@ -320,362 +334,78 @@ class GridPageState extends ConsumerState<GridPage> {
                             isTablet
                                 ? _gridCount + 1
                                 : _gridCount; //タブレットの場合のグリッド数
-                        return GridView.builder(
+                        final childAspectRatio = isTablet
+                            ? (_isYoutubeGrid ? 0.8 : 1.6)
+                            : (_isYoutubeGrid ? 0.7 : 1.4);
+
+                        // 非Premium時のみ N件ごとに広告セルを1つ挿入
+                        const adInterval = 10;
+                        final adCount = _isPremium
+                            ? 0
+                            : itemsToShow.length ~/ adInterval;
+                        final totalCount = itemsToShow.length + adCount;
+
+                        return CustomScrollView(
                           controller: _scrollController,
-                          itemCount: itemsToShow.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: effectiveGridCount,
-                                mainAxisSpacing: 0.2,
-                                crossAxisSpacing: 0.2,
-                                childAspectRatio:
-                                    isTablet
-                                        ? (_isYoutubeGrid ? 0.8 : 1.6)
-                                        : (_isYoutubeGrid ? 0.7 : 1.4),
-                              ),
-                          itemBuilder: (context, index) {
-                            final item = itemsToShow[index];
-
-                            final url = item['url'] ?? '';
-                            final localPaths = _localImagesMap[url] ?? [];
-
-                            String? rating = item['rating'];
-                            String? iconPath;
-                            switch (rating) {
-                              case 'critical':
-                                iconPath = 'assets/icons/critical.png';
-                                break;
-                              case 'normal':
-                                iconPath = 'assets/icons/normal.png';
-                                break;
-                              case 'maniac':
-                                iconPath = 'assets/icons/maniac.png';
-                                break;
-                            }
-
-                            return GestureDetector(
-                              onLongPress: () {
-                                setState(() {
-                                  _isSelectionMode = true;
-                                  _selectedIndexes.add(index);
-                                });
-                              },
-                              onTap: () async {
-                                if (_isSelectionMode) {
-                                  setState(() {
-                                    if (_selectedIndexes.contains(index)) {
-                                      _selectedIndexes.remove(index);
-                                      if (_selectedIndexes.isEmpty) {
-                                        _isSelectionMode = false;
-                                      }
-                                    } else {
-                                      _selectedIndexes.add(index);
-                                    }
-                                  });
-                                  return;
-                                }
-                                final result = await Navigator.push(
-                                  context,
-                                  fadeScaleRoute(
-                                    DetailPage(
-                                      listName: item['listName'],
-                                      url: item['url'],
-                                      title: item['title'],
-                                      image: item['image'],
-                                      cast: item['cast'] ?? '',
-                                      genre: item['genre'] ?? '',
-                                      series: item['series'] ?? '',
-                                      label: item['label'] ?? '',
-                                      maker: item['maker'] ?? '',
-                                      rating: item['rating'],
-                                      memo: item['memo'],
-                                      isReadOnly: true,
-                                    ),
+                          slivers: [
+                            SliverGrid(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: effectiveGridCount,
+                                    mainAxisSpacing: 0.2,
+                                    crossAxisSpacing: 0.2,
+                                    childAspectRatio: childAspectRatio,
                                   ),
-                                ).then((_) {
-                                  setState(() {
-                                    _searchMetadata();
-                                  });
-                                });
-
-                                // 戻ってきたタイミングでフォーカスを外す
-                                FocusScope.of(context).unfocus();
-                                if (result == true) (await _searchMetadata());
-                              },
-                              child: Stack(
-                                children: [
-                                  AnimatedScale(
-                                    duration: const Duration(milliseconds: 200),
-                                    scale:
-                                        _removingIndexes.contains(index)
-                                            ? 0.8
-                                            : _selectedIndexes.contains(index)
-                                            ? 0.92 // ← 好みで 0.9〜0.95 に調整OK
-                                            : 1,
-                                    child: AnimatedOpacity(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      opacity:
-                                          _removingIndexes.contains(index)
-                                              ? 0
-                                              : 1,
-                                      child: Card(
-                                        elevation: 0,
-                                        color:
-                                            colorScheme.brightness ==
-                                                    Brightness.light
-                                                ? Colors.grey[200]
-                                                : const Color(0xFF2C2C2C),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          side:
-                                              _selectedIndexes.contains(index)
-                                                  ? BorderSide(
-                                                    color: colorScheme.primary,
-                                                    width: 6,
-                                                  )
-                                                  : BorderSide.none,
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child:
-                                            _isYoutubeGrid //Youtube風グリッドUI
-                                                ? Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    /// サムネ（比率 2）
-                                                    Expanded(
-                                                      flex: 3,
-                                                      child: SizedBox(
-                                                        width: double.infinity,
-                                                        child: Stack(
-                                                          children: [
-                                                            Positioned.fill(
-                                                              child:
-                                                                  item['image'] !=
-                                                                          null
-                                                                      ? Image.network(
-                                                                        item['image'],
-                                                                        fit:
-                                                                            BoxFit.cover,
-                                                                      )
-                                                                      : placeholderWidget(
-                                                                        context,
-                                                                      ),
-                                                            ),
-
-                                                            /// 再生ボタン
-                                                            Positioned(
-                                                              right: 6,
-                                                              bottom: 6,
-                                                              child: GestureDetector(
-                                                                onTap:
-                                                                    () => openPlayer(
-                                                                      item['url'],
-                                                                    ),
-                                                                child: Container(
-                                                                  padding:
-                                                                      const EdgeInsets.all(
-                                                                        6,
-                                                                      ),
-                                                                  decoration: BoxDecoration(
-                                                                    color:
-                                                                        Colors
-                                                                            .black54,
-                                                                    shape:
-                                                                        BoxShape
-                                                                            .circle,
-                                                                  ),
-                                                                  child: const Icon(
-                                                                    Icons
-                                                                        .play_arrow,
-                                                                    size: 18,
-                                                                    color:
-                                                                        Colors
-                                                                            .white,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    /// タイトル（比率 1）
-                                                    Expanded(
-                                                      flex: 2,
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets.fromLTRB(
-                                                              10,
-                                                              8,
-                                                              10,
-                                                              2,
-                                                            ),
-                                                        child: Text(
-                                                          item['title'] ?? '',
-                                                          maxLines: 3,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                height: 1.25,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                                /// 大サムネUI
-                                                : Stack(
-                                                  children: [
-                                                    Positioned.fill(
-                                                      child:
-                                                          item['image'] != null
-                                                              ? Image.network(
-                                                                item['image'],
-                                                                fit:
-                                                                    BoxFit
-                                                                        .cover,
-                                                              )
-                                                              : placeholderWidget(
-                                                                context,
-                                                              ),
-                                                    ),
-                                                    Positioned(
-                                                      bottom: 0,
-                                                      left: 0,
-                                                      right: 0,
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets.all(
-                                                              8,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          gradient: LinearGradient(
-                                                            begin:
-                                                                Alignment
-                                                                    .topCenter,
-                                                            end:
-                                                                Alignment
-                                                                    .bottomCenter,
-                                                            colors: [
-                                                              Colors
-                                                                  .transparent,
-                                                              Colors.black
-                                                                  .withOpacity(
-                                                                    0.7,
-                                                                  ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          item['title'] ?? '',
-                                                          maxLines: 1,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                                color:
-                                                                    Colors
-                                                                        .white,
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    /// 再生ボタン
-                                                    Positioned(
-                                                      right: 6,
-                                                      bottom: 24,
-                                                      child: GestureDetector(
-                                                        onTap:
-                                                            () => openPlayer(
-                                                              item['url'],
-                                                            ),
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.all(
-                                                                6,
-                                                              ),
-                                                          decoration:
-                                                              BoxDecoration(
-                                                                color:
-                                                                    Colors
-                                                                        .black54,
-                                                                shape:
-                                                                    BoxShape
-                                                                        .circle,
-                                                              ),
-                                                          child: const Icon(
-                                                            Icons.play_arrow,
-                                                            size: 18,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  // 選択モード中の表示
-                                  if (_isSelectionMode)
-                                    Positioned.fill(
-                                      child: Container(
-                                        child: Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 16,
-                                            ),
-                                            child:
-                                                _selectedIndexes.contains(index)
-                                                    ? Icon(
-                                                      Icons.check_circle,
-                                                      color:
-                                                          colorScheme.primary,
-                                                      size: 28,
-                                                    )
-                                                    : Icon(
-                                                      Icons
-                                                          .radio_button_unchecked,
-                                                      color: Colors.white,
-                                                      key: ValueKey(false),
-                                                    ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                              delegate: SliverChildBuilderDelegate(
+                                (context, displayIndex) {
+                                  // 広告セル判定
+                                  if (!_isPremium &&
+                                      displayIndex > 0 &&
+                                      (displayIndex + 1) % (adInterval + 1) ==
+                                          0) {
+                                    return const GridCardNativeAd();
+                                  }
+                                  final realIndex = _isPremium
+                                      ? displayIndex
+                                      : displayIndex -
+                                          (displayIndex ~/ (adInterval + 1));
+                                  return _buildGridItem(
+                                    context,
+                                    realIndex,
+                                    colorScheme,
+                                  );
+                                },
+                                childCount: totalCount,
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         );
                       },
                     )
                     : ListView.builder(
                       controller: _scrollController,
-                      itemCount: itemsToShow.length,
+                      itemCount: () {
+                        // 非Premiumのみ N件ごとに広告を1枠挿入
+                        const adInterval = 10;
+                        if (_isPremium) return itemsToShow.length;
+                        final adCount = itemsToShow.length ~/ adInterval;
+                        return itemsToShow.length + adCount;
+                      }(),
                       itemBuilder: (context, index) {
-                        final item = itemsToShow[index];
+                        const adInterval = 10;
+                        // 広告位置判定（非Premium時のみ）
+                        if (!_isPremium &&
+                            index > 0 &&
+                            (index + 1) % (adInterval + 1) == 0) {
+                          return const ListTileNativeAd();
+                        }
+                        final realIndex = _isPremium
+                            ? index
+                            : index - (index ~/ (adInterval + 1));
+                        if (realIndex >= itemsToShow.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final item = itemsToShow[realIndex];
                         String? rating = item['rating'];
                         String? iconPath;
                         switch (rating) {
@@ -960,6 +690,235 @@ class GridPageState extends ConsumerState<GridPage> {
     );
   }
 
+  /// グリッドアイテムのカードを構築（YouTube風 or 大サムネ）
+  Widget _buildGridItem(
+    BuildContext context,
+    int index,
+    ColorScheme colorScheme,
+  ) {
+    final itemsToShow = _searchedItems;
+    if (index < 0 || index >= itemsToShow.length) {
+      return const SizedBox.shrink();
+    }
+    final item = itemsToShow[index];
+
+    return GestureDetector(
+      onLongPress: () {
+        setState(() {
+          _isSelectionMode = true;
+          _selectedIndexes.add(index);
+        });
+      },
+      onTap: () async {
+        if (_isSelectionMode) {
+          setState(() {
+            if (_selectedIndexes.contains(index)) {
+              _selectedIndexes.remove(index);
+              if (_selectedIndexes.isEmpty) {
+                _isSelectionMode = false;
+              }
+            } else {
+              _selectedIndexes.add(index);
+            }
+          });
+          return;
+        }
+        final result = await Navigator.push(
+          context,
+          fadeScaleRoute(
+            DetailPage(
+              listName: item['listName'],
+              url: item['url'],
+              title: item['title'],
+              image: item['image'],
+              cast: item['cast'] ?? '',
+              genre: item['genre'] ?? '',
+              series: item['series'] ?? '',
+              label: item['label'] ?? '',
+              maker: item['maker'] ?? '',
+              rating: item['rating'],
+              memo: item['memo'],
+              isReadOnly: true,
+            ),
+          ),
+        ).then((_) {
+          setState(() {
+            _searchMetadata();
+          });
+        });
+        FocusScope.of(context).unfocus();
+        if (result == true) (await _searchMetadata());
+      },
+      child: Stack(
+        children: [
+          AnimatedScale(
+            duration: const Duration(milliseconds: 200),
+            scale: _removingIndexes.contains(index)
+                ? 0.8
+                : _selectedIndexes.contains(index)
+                    ? 0.92
+                    : 1,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _removingIndexes.contains(index) ? 0 : 1,
+              child: Card(
+                elevation: 0,
+                color: colorScheme.brightness == Brightness.light
+                    ? Colors.grey[200]
+                    : const Color(0xFF2C2C2C),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: _selectedIndexes.contains(index)
+                      ? BorderSide(color: colorScheme.primary, width: 6)
+                      : BorderSide.none,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _isYoutubeGrid
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: item['image'] != null
+                                        ? Image.network(
+                                            item['image'],
+                                            fit: BoxFit.cover,
+                                          )
+                                        : placeholderWidget(context),
+                                  ),
+                                  Positioned(
+                                    right: 6,
+                                    bottom: 6,
+                                    child: GestureDetector(
+                                      onTap: () => openPlayer(item['url']),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.play_arrow,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
+                              child: Text(
+                                item['title'] ?? '',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Stack(
+                        children: [
+                          Positioned.fill(
+                            child: item['image'] != null
+                                ? Image.network(item['image'], fit: BoxFit.cover)
+                                : placeholderWidget(context),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.7),
+                                  ],
+                                ),
+                              ),
+                              child: Text(
+                                item['title'] ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 6,
+                            bottom: 24,
+                            child: GestureDetector(
+                              onTap: () => openPlayer(item['url']),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+          if (_isSelectionMode)
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: _selectedIndexes.contains(index)
+                      ? Icon(
+                          Icons.check_circle,
+                          color: colorScheme.primary,
+                          size: 28,
+                        )
+                      : const Icon(
+                          Icons.radio_button_unchecked,
+                          color: Colors.white,
+                          key: ValueKey(false),
+                        ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   // ===== チュートリアル対応：追加ボタン押下 =====
   Future<void> _onAddPressed() async {
     _isPremium = await _checkPremium();
@@ -1086,6 +1045,138 @@ class GridPageState extends ConsumerState<GridPage> {
   //******** */
   //削除処理
   //******** */
+  Future<void> _moveSelectedToList(
+    List<Map<String, dynamic>> itemsToShow,
+  ) async {
+    if (_selectedIndexes.isEmpty) return;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final prefs = await SharedPreferences.getInstance();
+    final allLists = prefs.getStringList('all_lists') ?? [];
+    // 「選択なし」も移動先として含める
+    final candidates = <String>['選択なし', ...allLists];
+
+    if (!mounted) return;
+    final targetList = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Text(L10n.of(ctx)!.grid_page_move_to_list_title),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: candidates.length,
+              itemBuilder: (_, i) {
+                final name = candidates[i];
+                final isCurrent = name == widget.listName;
+                return ListTile(
+                  dense: true,
+                  visualDensity: const VisualDensity(vertical: -2),
+                  leading: Icon(
+                    isCurrent ? Icons.check : Icons.folder_outlined,
+                    size: 20,
+                    color: isCurrent ? colorScheme.primary : null,
+                  ),
+                  title: Text(name, style: const TextStyle(fontSize: 14)),
+                  enabled: !isCurrent,
+                  onTap: () => Navigator.pop(ctx, name),
+                );
+              },
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(Colors.grey[300]),
+              foregroundColor: WidgetStateProperty.all(Colors.black),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            child: Text(L10n.of(ctx)!.cancel),
+          ),
+        ],
+      ),
+    );
+    if (targetList == null || !mounted) return;
+
+    final selectedUrls =
+        _selectedIndexes.map((i) => itemsToShow[i]['url'] as String).toSet();
+
+    // Undo 用：移動前の URL → 元の listName を保存
+    final originalListNames = <String, String>{};
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final updatedList = savedList.map((jsonStr) {
+      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final url = map['url'] as String?;
+      if (url != null && selectedUrls.contains(url)) {
+        originalListNames[url] = (map['listName'] as String?) ?? '選択なし';
+        map['listName'] = targetList;
+        SyncService.upsertItem(map);
+      }
+      return jsonEncode(map);
+    }).toList();
+    await prefs.setStringList('saved_metadata', updatedList);
+
+    if (!mounted) return;
+    final movedCount = selectedUrls.length;
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIndexes.clear();
+    });
+    await _searchMetadata();
+    ref.read(listReloadProvider.notifier).state++;
+
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          '$movedCount${L10n.of(context)!.grid_page_move_done}',
+          style: const TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.grey[300],
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: L10n.of(context)!.undo,
+          textColor: Colors.black,
+          onPressed: () => _undoMove(originalListNames),
+        ),
+      ),
+    );
+  }
+
+  /// 直前の移動を元に戻す
+  Future<void> _undoMove(Map<String, String> originalListNames) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final restoredList = savedList.map((jsonStr) {
+      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final url = map['url'] as String?;
+      if (url != null && originalListNames.containsKey(url)) {
+        map['listName'] = originalListNames[url];
+        SyncService.upsertItem(map);
+      }
+      return jsonEncode(map);
+    }).toList();
+    await prefs.setStringList('saved_metadata', restoredList);
+    if (!mounted) return;
+    await _searchMetadata();
+    ref.read(listReloadProvider.notifier).state++;
+  }
+
   Future<void> _confirmDeleteSelected() async {
     if (_selectedIndexes.isEmpty) return;
 
@@ -1196,12 +1287,15 @@ class GridPageState extends ConsumerState<GridPage> {
   void openPlayer(String url) {
     final queue = _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
     final index = queue.indexWhere((item) => item['url'] == url);
+    final safeIndex = index >= 0 ? index : 0;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PlaylistPlayerPage(
-          items: queue,
-          initialIndex: index >= 0 ? index : 0,
+        builder: (_) => SearchResultPage(
+          initialUrl: queue[safeIndex]['url']?.toString() ?? url,
+          title: queue[safeIndex]['title']?.toString() ?? '',
+          playlistItems: queue,
+          playlistIndex: safeIndex,
         ),
       ),
     );
@@ -1224,6 +1318,78 @@ class GridPageState extends ConsumerState<GridPage> {
   //====================
   //ソートのモーダルウィンドウ
   //====================
+  Future<void> _openShareDialog(List<Map<String, dynamic>> items) async {
+    // Pro 未加入なら、購入を促すダイアログを表示
+    final isPro = await ProGate.isPro();
+    if (!mounted) return;
+    if (!isPro) {
+      final shouldPurchase = await _showProRequiredDialog();
+      if (shouldPurchase != true || !mounted) return;
+      if (!await ProGate.ensureProPurchaseFirst(context)) return;
+      if (!mounted) return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (_) => ShareDialog(
+        listName: widget.listName,
+        items: items,
+      ),
+    );
+  }
+
+  /// 公開リスト共有が Pro 限定であることを伝えるダイアログ
+  Future<bool?> _showProRequiredDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final l = L10n.of(context)!;
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Text(
+          l.share_pro_required_title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF00695C),
+          ),
+        ),
+        content: Text(l.share_pro_required_description),
+        actions: [
+          TextButton(
+            style: ButtonStyle(
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor: WidgetStateProperty.all(Colors.grey[300]),
+              foregroundColor: WidgetStateProperty.all(Colors.black),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(L10n.of(ctx)!.cancel),
+          ),
+          TextButton(
+            style: ButtonStyle(
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor:
+                  WidgetStateProperty.all(const Color(0xFF00695C)),
+              foregroundColor: WidgetStateProperty.all(Colors.white),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.share_pro_required_action),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSortModal() {
     final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(

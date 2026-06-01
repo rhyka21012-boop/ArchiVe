@@ -377,10 +377,36 @@ class L10nEn extends L10n {
   String get search_page_web_title => 'Web Search';
 
   @override
-  String get search_page_search_word => 'Search term';
+  String get search_page_search_word => 'Web search';
+
+  @override
+  String get search_page_hint_web_1 => 'Search with built-in ad blocker';
+
+  @override
+  String get search_page_hint_web_2 => 'e.g., anime OP';
+
+  @override
+  String get search_page_hint_web_3 =>
+      'Collect videos fast in the in-app browser';
+
+  @override
+  String get search_page_hint_web_4 => 'e.g., live 2026';
+
+  @override
+  String get search_page_hint_web_5 => 'Dig deeper on favorite sites';
+
+  @override
+  String get search_page_hint_web_6 => 'e.g., easy dinner recipes';
 
   @override
   String get search_page_select_site => 'Filter by Site';
+
+  @override
+  String get search_page_select_site_help_title => 'Filter by Site';
+
+  @override
+  String get search_page_select_site_help_description =>
+      'You can narrow your video search to specific sites. Register your favorite video sites and search across that site only. Select a site from the list below and tap the search button.';
 
   @override
   String get search_page_open_site => 'Open site';
@@ -402,6 +428,9 @@ class L10nEn extends L10n {
 
   @override
   String get search_page_random_this => 'Today\'s recommendation!';
+
+  @override
+  String get search_page_random_again => 'Spin again';
 
   @override
   String get search_result_page_site_saved => 'Site has been saved';
@@ -579,7 +608,7 @@ class L10nEn extends L10n {
   String get settings_page_dark_mode => 'Dark mode';
 
   @override
-  String get settings_page_theme_color => 'Theme color ★';
+  String get settings_page_theme_color => 'Theme color';
 
   @override
   String get settings_page_theme_color_orange => 'Orange';
@@ -686,7 +715,7 @@ class L10nEn extends L10n {
   String get premium_detail_premium_item01 => 'Unlimited saves';
 
   @override
-  String get premium_detail_premium_item02 => 'Customize theme colors';
+  String get premium_detail_premium_item02 => 'Add Gold theme color';
 
   @override
   String get premium_detail_premium_item03 => 'Add images freely';
@@ -703,16 +732,16 @@ class L10nEn extends L10n {
 
   @override
   String get premium_detail_note =>
-      'After the 1-month free trial, the subscription will renew automatically.\nCancel anytime.';
+      'After the 3-day free trial, the subscription will renew automatically.\nCancel anytime.';
 
   @override
   String get premium_detail_restore_not_found => 'No purchase history found';
 
   @override
-  String get premium_detail_free_trial_badge => '1-month free';
+  String get premium_detail_free_trial_badge => '3-day free';
 
   @override
-  String get premium_detail_start_trial => 'Start 1-month free trial';
+  String get premium_detail_start_trial => 'Start 3-day free trial';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -912,4 +941,235 @@ class L10nEn extends L10n {
 
   @override
   String get settings_page_theme_color_teal => 'Teal';
+
+  @override
+  String get login_page_title => 'Sign In';
+
+  @override
+  String get login_page_description => 'Sign in to use ArchiVe Pro features.';
+
+  @override
+  String get login_with_apple => 'Sign in with Apple';
+
+  @override
+  String get login_with_google => 'Sign in with Google';
+
+  @override
+  String get login_failed => 'Sign in failed';
+
+  @override
+  String get logout => 'Sign Out';
+
+  @override
+  String get logout_confirm => 'Sign out?';
+
+  @override
+  String get settings_page_section_account => 'Account';
+
+  @override
+  String get settings_page_not_signed_in => 'Not signed in';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle => 'All Premium features plus the following';
+
+  @override
+  String get pro_detail_feature_cloud_sync => 'Cloud sync across devices';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'AI auto-tagging';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'AI recommended keywords';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'AI monthly report';
+
+  @override
+  String get pro_detail_feature_public_sharing => 'Public list sharing';
+
+  @override
+  String get pro_detail_feature_theme_teal => 'Add Teal theme color';
+
+  @override
+  String get plans_page_title => 'Plans';
+
+  @override
+  String get plans_page_current_badge => 'Current';
+
+  @override
+  String get plans_page_includes_premium => 'Includes all Premium features';
+
+  @override
+  String get detail_page_ai_suggest => 'Suggest tags with AI';
+
+  @override
+  String get detail_page_ai_loading => 'Analyzing with AI...';
+
+  @override
+  String get detail_page_ai_error => 'AI suggestion error';
+
+  @override
+  String get share_title => 'Share List';
+
+  @override
+  String get share_loading => 'Sharing...';
+
+  @override
+  String get share_url_label => 'Share URL';
+
+  @override
+  String get share_copy => 'Copy';
+
+  @override
+  String get share_copied => 'Copied';
+
+  @override
+  String get share_unshare => 'Stop sharing';
+
+  @override
+  String get share_unshare_confirm => 'Stop sharing this list?';
+
+  @override
+  String get share_create_action => 'Share this list';
+
+  @override
+  String get share_error => 'Share error';
+
+  @override
+  String get share_open_url => 'Open share URL';
+
+  @override
+  String get share_description =>
+      'Anyone with the URL can view this list (read-only)';
+
+  @override
+  String get share_limit_notice => 'Up to 200 items will be shared';
+
+  @override
+  String get analytics_monthly_report_title => 'AI Summary';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return 'Month $month report';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => 'Generate Summary';
+
+  @override
+  String get analytics_monthly_report_regenerate => 'Regenerate';
+
+  @override
+  String get analytics_monthly_report_loading => 'AI is analyzing...';
+
+  @override
+  String get analytics_monthly_report_empty =>
+      'Tap to have AI summarize this month\'s archive activity.';
+
+  @override
+  String get analytics_monthly_report_error => 'Report error';
+
+  @override
+  String get analytics_monthly_report_cached => 'From cache';
+
+  @override
+  String get search_result_loading => 'Loading';
+
+  @override
+  String get grid_page_move_action => 'Move';
+
+  @override
+  String get grid_page_move_to_list_title => 'Select destination list';
+
+  @override
+  String get grid_page_move_done => 'items moved';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get settings_page_theme_color_gold => 'Gold';
+
+  @override
+  String get plans_page_premium_short => 'Premium';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => 'Free';
+
+  @override
+  String get plans_page_free_price => '\$0';
+
+  @override
+  String get plans_page_free_item01 => 'Save up to 100 items';
+
+  @override
+  String get plans_page_free_item02 => 'Watch ads: extend +15 slots/day';
+
+  @override
+  String get plans_page_free_item03 => 'Search by single tag';
+
+  @override
+  String get plans_page_free_item04 => 'Ads shown';
+
+  @override
+  String get share_pro_required_title => 'Pro plan feature';
+
+  @override
+  String get share_pro_required_description =>
+      'Public list sharing requires a Pro plan purchase.';
+
+  @override
+  String get share_pro_required_action => 'View Pro plan';
+
+  @override
+  String get pro_locked_badge => 'Pro only';
+
+  @override
+  String get pro_locked_unlock => 'Unlock with Pro';
+
+  @override
+  String get apple_signin_warning_title => 'Sign in with Apple?';
+
+  @override
+  String get apple_signin_warning_description =>
+      'Apple accounts cannot sign in on Android devices, so data won\'t be shareable across platforms. We recommend Google if you plan to use multiple devices.';
+
+  @override
+  String get apple_signin_warning_continue => 'Continue with Apple';
+
+  @override
+  String get settings_page_manage_subscription => 'Manage Subscription';
+
+  @override
+  String get search_page_ai_recommend_title => 'AI Suggestions';
+
+  @override
+  String get search_page_ai_recommend_subtitle =>
+      'Keyword ideas based on your library';
+
+  @override
+  String get search_page_ai_recommend_generate => 'Get suggestions';
+
+  @override
+  String get search_page_ai_recommend_refresh => 'Regenerate';
+
+  @override
+  String get search_page_ai_recommend_loading => 'AI is analyzing...';
+
+  @override
+  String get search_page_ai_recommend_error => 'Failed to fetch suggestions';
+
+  @override
+  String get search_page_ai_recommend_empty =>
+      'Not enough saved items to suggest keywords. Add more items and try again.';
+
+  @override
+  String get search_page_ai_recommend_intro =>
+      'Tap the button to let AI suggest related search keywords from your saved library.';
 }

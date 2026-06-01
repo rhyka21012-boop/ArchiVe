@@ -18,7 +18,18 @@ enum ThemeColorType {
   yellow,
   pink,
   purple,
-  teal,
+  gold, // Premium UI色
+  teal, // Pro 限定
+}
+
+/// Pro 限定のテーマカラー判定
+bool isProOnlyThemeColor(ThemeColorType type) {
+  return type == ThemeColorType.teal;
+}
+
+/// Premium 限定のテーマカラー判定（gold）
+bool isPremiumOnlyThemeColor(ThemeColorType type) {
+  return type == ThemeColorType.gold;
 }
 
 final themeColorProvider =
@@ -61,8 +72,9 @@ class ThemeColorNotifier extends StateNotifier<ThemeColorType> {
   }
 }
 
-ThemeData getThemeData(ThemeColorType type, bool isDark) {
-  final primaryColor = switch (type) {
+/// 各テーマカラーの実色を返す
+Color themeColorSwatch(ThemeColorType type) {
+  return switch (type) {
     ThemeColorType.green => Colors.lightGreen,
     ThemeColorType.blue => Colors.lightBlue,
     ThemeColorType.white => Colors.grey,
@@ -71,8 +83,13 @@ ThemeData getThemeData(ThemeColorType type, bool isDark) {
     ThemeColorType.orange => Colors.orange[600]!,
     ThemeColorType.pink => Colors.pink[300]!,
     ThemeColorType.purple => Colors.deepPurple[300]!,
+    ThemeColorType.gold => const Color(0xFFB8860B),
     ThemeColorType.teal => Colors.teal[400]!,
   };
+}
+
+ThemeData getThemeData(ThemeColorType type, bool isDark) {
+  final primaryColor = themeColorSwatch(type);
 
   final colorScheme =
       isDark
@@ -116,6 +133,8 @@ String themeColorLabel(BuildContext context, ThemeColorType type) {
       return l10n.settings_page_theme_color_pink;
     case ThemeColorType.purple:
       return l10n.settings_page_theme_color_purple;
+    case ThemeColorType.gold:
+      return l10n.settings_page_theme_color_gold;
     case ThemeColorType.teal:
       return l10n.settings_page_theme_color_teal;
     case ThemeColorType.orange:

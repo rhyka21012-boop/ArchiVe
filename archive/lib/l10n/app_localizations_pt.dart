@@ -377,10 +377,35 @@ class L10nPt extends L10n {
   String get search_page_web_title => 'Pesquisa Web';
 
   @override
-  String get search_page_search_word => 'Termo de pesquisa';
+  String get search_page_search_word => 'Pesquisa web';
+
+  @override
+  String get search_page_hint_web_1 => 'Pesquise com bloqueador de anúncios';
+
+  @override
+  String get search_page_hint_web_2 => 'Ex.: anime OP';
+
+  @override
+  String get search_page_hint_web_3 => 'Recolha vídeos no navegador integrado';
+
+  @override
+  String get search_page_hint_web_4 => 'Ex.: ao vivo 2026';
+
+  @override
+  String get search_page_hint_web_5 => 'Aprofunde nos seus sites favoritos';
+
+  @override
+  String get search_page_hint_web_6 => 'Ex.: receitas fáceis';
 
   @override
   String get search_page_select_site => 'Filtrar por site';
+
+  @override
+  String get search_page_select_site_help_title => 'Filtrar por site';
+
+  @override
+  String get search_page_select_site_help_description =>
+      'Pode restringir a pesquisa de vídeos a sites específicos. Registe os seus sites de vídeo favoritos e pesquise apenas dentro deles. Selecione um site na lista abaixo e toque em pesquisar.';
 
   @override
   String get search_page_open_site => 'Abrir site';
@@ -402,6 +427,9 @@ class L10nPt extends L10n {
 
   @override
   String get search_page_random_this => 'Recomendação de hoje!';
+
+  @override
+  String get search_page_random_again => 'Girar de novo';
 
   @override
   String get search_result_page_site_saved => 'O site foi guardado';
@@ -579,7 +607,7 @@ class L10nPt extends L10n {
   String get settings_page_dark_mode => 'Modo escuro';
 
   @override
-  String get settings_page_theme_color => 'Cor do tema ★';
+  String get settings_page_theme_color => 'Cor do tema';
 
   @override
   String get settings_page_theme_color_orange => 'Laranja';
@@ -689,7 +717,7 @@ class L10nPt extends L10n {
   String get premium_detail_premium_item01 => 'Salvamentos ilimitados';
 
   @override
-  String get premium_detail_premium_item02 => 'Personalize as cores do tema';
+  String get premium_detail_premium_item02 => 'Adicionar cor de tema Dourado';
 
   @override
   String get premium_detail_premium_item03 => 'Adicione imagens livremente';
@@ -706,17 +734,17 @@ class L10nPt extends L10n {
 
   @override
   String get premium_detail_note =>
-      'Após o teste gratuito de 1 mês, a assinatura será renovada automaticamente.\nCancele a qualquer momento.';
+      'Após o teste grátis de 3 dias, a subscrição renovar-se-á automaticamente.\nCancele a qualquer momento.';
 
   @override
   String get premium_detail_restore_not_found =>
       'Nenhum histórico de compra encontrado';
 
   @override
-  String get premium_detail_free_trial_badge => '1 mês grátis';
+  String get premium_detail_free_trial_badge => '3 dias grátis';
 
   @override
-  String get premium_detail_start_trial => 'Iniciar teste gratuito de 1 mês';
+  String get premium_detail_start_trial => 'Iniciar teste grátis de 3 dias';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -919,4 +947,240 @@ class L10nPt extends L10n {
 
   @override
   String get settings_page_theme_color_teal => 'Verde-azulado';
+
+  @override
+  String get login_page_title => 'Iniciar sessão';
+
+  @override
+  String get login_page_description =>
+      'Inicie sessão para usar as funcionalidades ArchiVe Pro.';
+
+  @override
+  String get login_with_apple => 'Iniciar sessão com Apple';
+
+  @override
+  String get login_with_google => 'Iniciar sessão com Google';
+
+  @override
+  String get login_failed => 'Falha ao iniciar sessão';
+
+  @override
+  String get logout => 'Terminar sessão';
+
+  @override
+  String get logout_confirm => 'Terminar sessão?';
+
+  @override
+  String get settings_page_section_account => 'Conta';
+
+  @override
+  String get settings_page_not_signed_in => 'Sem sessão iniciada';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle =>
+      'Todas as funcionalidades Premium além das seguintes';
+
+  @override
+  String get pro_detail_feature_cloud_sync => 'Sincronização na nuvem';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'Etiquetagem automática IA';
+
+  @override
+  String get pro_detail_feature_ai_recommend =>
+      'Palavras-chave recomendadas por IA';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'Relatório mensal IA';
+
+  @override
+  String get pro_detail_feature_public_sharing => 'Partilha de listas públicas';
+
+  @override
+  String get pro_detail_feature_theme_teal =>
+      'Adicionar cor de tema Verde-azulado';
+
+  @override
+  String get plans_page_title => 'Planos';
+
+  @override
+  String get plans_page_current_badge => 'Atual';
+
+  @override
+  String get plans_page_includes_premium =>
+      'Inclui todas as funcionalidades Premium';
+
+  @override
+  String get detail_page_ai_suggest => 'Sugerir etiquetas com IA';
+
+  @override
+  String get detail_page_ai_loading => 'Analisando com IA...';
+
+  @override
+  String get detail_page_ai_error => 'Erro de sugestão IA';
+
+  @override
+  String get share_title => 'Partilhar lista';
+
+  @override
+  String get share_loading => 'A partilhar...';
+
+  @override
+  String get share_url_label => 'URL de partilha';
+
+  @override
+  String get share_copy => 'Copiar';
+
+  @override
+  String get share_copied => 'Copiado';
+
+  @override
+  String get share_unshare => 'Parar de partilhar';
+
+  @override
+  String get share_unshare_confirm => 'Parar de partilhar esta lista?';
+
+  @override
+  String get share_create_action => 'Partilhar esta lista';
+
+  @override
+  String get share_error => 'Erro de partilha';
+
+  @override
+  String get share_open_url => 'Abrir URL de partilha';
+
+  @override
+  String get share_description =>
+      'Qualquer pessoa com o URL pode ver esta lista (apenas leitura)';
+
+  @override
+  String get share_limit_notice => 'Até 200 itens serão partilhados';
+
+  @override
+  String get analytics_monthly_report_title => 'Resumo IA';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return 'Mês $month';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => 'Gerar resumo';
+
+  @override
+  String get analytics_monthly_report_regenerate => 'Regenerar';
+
+  @override
+  String get analytics_monthly_report_loading => 'IA a analisar...';
+
+  @override
+  String get analytics_monthly_report_empty =>
+      'Toque para a IA resumir a sua atividade de arquivo deste mês.';
+
+  @override
+  String get analytics_monthly_report_error => 'Erro de relatório';
+
+  @override
+  String get analytics_monthly_report_cached => 'Da cache';
+
+  @override
+  String get search_result_loading => 'A carregar';
+
+  @override
+  String get grid_page_move_action => 'Mover';
+
+  @override
+  String get grid_page_move_to_list_title => 'Selecionar lista de destino';
+
+  @override
+  String get grid_page_move_done => 'itens movidos';
+
+  @override
+  String get undo => 'Desfazer';
+
+  @override
+  String get settings_page_theme_color_gold => 'Dourado';
+
+  @override
+  String get plans_page_premium_short => 'Premium';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => 'Grátis';
+
+  @override
+  String get plans_page_free_price => 'R\$0';
+
+  @override
+  String get plans_page_free_item01 => 'Guardar até 100 itens';
+
+  @override
+  String get plans_page_free_item02 => 'Ver anúncios: +15 vagas/dia';
+
+  @override
+  String get plans_page_free_item03 => 'Pesquisa por etiqueta única';
+
+  @override
+  String get plans_page_free_item04 => 'Com anúncios';
+
+  @override
+  String get share_pro_required_title => 'Recurso do plano Pro';
+
+  @override
+  String get share_pro_required_description =>
+      'A partilha pública de listas requer a compra do plano Pro.';
+
+  @override
+  String get share_pro_required_action => 'Ver plano Pro';
+
+  @override
+  String get pro_locked_badge => 'Apenas Pro';
+
+  @override
+  String get pro_locked_unlock => 'Desbloquear com Pro';
+
+  @override
+  String get apple_signin_warning_title => 'Iniciar sessão com a Apple?';
+
+  @override
+  String get apple_signin_warning_description =>
+      'As contas Apple não podem ser usadas no Android, por isso os dados não serão partilhados entre plataformas. Recomendamos a Google se vai usar vários dispositivos.';
+
+  @override
+  String get apple_signin_warning_continue => 'Continuar com a Apple';
+
+  @override
+  String get settings_page_manage_subscription => 'Gerir subscrição';
+
+  @override
+  String get search_page_ai_recommend_title => 'Sugestões da IA';
+
+  @override
+  String get search_page_ai_recommend_subtitle =>
+      'Ideias com base na sua biblioteca';
+
+  @override
+  String get search_page_ai_recommend_generate => 'Obter sugestões';
+
+  @override
+  String get search_page_ai_recommend_refresh => 'Regenerar';
+
+  @override
+  String get search_page_ai_recommend_loading => 'A IA está a analisar...';
+
+  @override
+  String get search_page_ai_recommend_error => 'Falha ao obter sugestões';
+
+  @override
+  String get search_page_ai_recommend_empty =>
+      'Itens guardados insuficientes para sugerir. Adicione mais e tente novamente.';
+
+  @override
+  String get search_page_ai_recommend_intro =>
+      'Toque no botão para a IA sugerir palavras-chave relacionadas com a sua biblioteca.';
 }

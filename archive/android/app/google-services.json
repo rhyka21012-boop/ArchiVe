@@ -1,26 +1,60 @@
 {
   "project_info": {
-    "project_number": "116483118933",
-    "project_id": "archive-66d76",
-    "storage_bucket": "archive-66d76.firebasestorage.app"
+    "project_number": "145261305649",
+    "project_id": "archive-e4efc",
+    "storage_bucket": "archive-e4efc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:116483118933:android:452e62517f74a272e601dc",
+        "mobilesdk_app_id": "1:145261305649:android:933f2269aba6d703ce1a10",
         "android_client_info": {
           "package_name": "com.walkinggoblins.archive"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "145261305649-8ubourllsqa8ipbjpjaevj7putpsihum.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.walkinggoblins.archive",
+            "certificate_hash": "153b2c9b7c1c946d9988d4d2f842e65a4aa5178e"
+          }
+        },
+        {
+          "client_id": "145261305649-9kfeanr97pf98tf8sbmann87m344ek4k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.walkinggoblins.archive",
+            "certificate_hash": "0f5f3c240978c918f5a573c33aefed2b6dddd231"
+          }
+        },
+        {
+          "client_id": "145261305649-rhlhhfuu6om809fek66hha1j9oia7pi5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDyIeeGAQ9OmZkewhgmIrbaj_CLHauXtPQ"
+          "current_key": "AIzaSyDvTBSMrhaq1NgzjyypEztAigVmL5e0PAc"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145261305649-rhlhhfuu6om809fek66hha1j9oia7pi5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "145261305649-ap3gdii6biscnbd76t5q1133rj4898nt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.walkinggoblins.archive",
+                "app_store_id": "6751015790"
+              }
+            }
+          ]
         }
       }
     }

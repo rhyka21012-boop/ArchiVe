@@ -833,14 +833,62 @@ abstract class L10n {
   /// No description provided for @search_page_search_word.
   ///
   /// In ja, this message translates to:
-  /// **'検索ワード'**
+  /// **'Web検索'**
   String get search_page_search_word;
+
+  /// No description provided for @search_page_hint_web_1.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告ブロック付きで快適に検索'**
+  String get search_page_hint_web_1;
+
+  /// No description provided for @search_page_hint_web_2.
+  ///
+  /// In ja, this message translates to:
+  /// **'例: アニメ OP'**
+  String get search_page_hint_web_2;
+
+  /// No description provided for @search_page_hint_web_3.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ内ブラウザでサクサク動画収集'**
+  String get search_page_hint_web_3;
+
+  /// No description provided for @search_page_hint_web_4.
+  ///
+  /// In ja, this message translates to:
+  /// **'例: ライブ映像 2026'**
+  String get search_page_hint_web_4;
+
+  /// No description provided for @search_page_hint_web_5.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入りサイトで深掘り'**
+  String get search_page_hint_web_5;
+
+  /// No description provided for @search_page_hint_web_6.
+  ///
+  /// In ja, this message translates to:
+  /// **'例: 料理 簡単 レシピ'**
+  String get search_page_hint_web_6;
 
   /// No description provided for @search_page_select_site.
   ///
   /// In ja, this message translates to:
   /// **'サイトで絞る'**
   String get search_page_select_site;
+
+  /// No description provided for @search_page_select_site_help_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイトで絞る'**
+  String get search_page_select_site_help_title;
+
+  /// No description provided for @search_page_select_site_help_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイトを絞って動画検索ができます。お気に入りの動画サイトを登録しておくと、そのサイト内のコンテンツだけを横断的に検索できます。下のリストからサイトを選択して検索ボタンをタップしてください。'**
+  String get search_page_select_site_help_description;
 
   /// No description provided for @search_page_open_site.
   ///
@@ -883,6 +931,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'今日のおすすめはこれ！'**
   String get search_page_random_this;
+
+  /// No description provided for @search_page_random_again.
+  ///
+  /// In ja, this message translates to:
+  /// **'もう一度回す'**
+  String get search_page_random_again;
 
   /// No description provided for @search_result_page_site_saved.
   ///
@@ -1181,7 +1235,7 @@ abstract class L10n {
   /// No description provided for @settings_page_theme_color.
   ///
   /// In ja, this message translates to:
-  /// **'テーマカラー★'**
+  /// **'テーマカラー'**
   String get settings_page_theme_color;
 
   /// No description provided for @settings_page_theme_color_orange.
@@ -1385,7 +1439,7 @@ abstract class L10n {
   /// No description provided for @premium_detail_premium_item02.
   ///
   /// In ja, this message translates to:
-  /// **'テーマカラーを自由に変更'**
+  /// **'テーマカラー ゴールドを追加'**
   String get premium_detail_premium_item02;
 
   /// No description provided for @premium_detail_premium_item03.
@@ -1415,7 +1469,7 @@ abstract class L10n {
   /// No description provided for @premium_detail_note.
   ///
   /// In ja, this message translates to:
-  /// **'1ヶ月の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。'**
+  /// **'3日間の無料トライアル後、自動的に課金されます。\nいつでもキャンセルできます。'**
   String get premium_detail_note;
 
   /// No description provided for @premium_detail_restore_not_found.
@@ -1427,13 +1481,13 @@ abstract class L10n {
   /// No description provided for @premium_detail_free_trial_badge.
   ///
   /// In ja, this message translates to:
-  /// **'1ヶ月無料'**
+  /// **'3日間無料'**
   String get premium_detail_free_trial_badge;
 
   /// No description provided for @premium_detail_start_trial.
   ///
   /// In ja, this message translates to:
-  /// **'1ヶ月無料で開始'**
+  /// **'3日間無料で開始'**
   String get premium_detail_start_trial;
 
   /// No description provided for @premium_detail_price_after_trial.
@@ -1801,6 +1855,450 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'ティール'**
   String get settings_page_theme_color_teal;
+
+  /// No description provided for @login_page_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'サインイン'**
+  String get login_page_title;
+
+  /// No description provided for @login_page_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'ArchiVe Pro の機能を使うには、サインインしてください。'**
+  String get login_page_description;
+
+  /// No description provided for @login_with_apple.
+  ///
+  /// In ja, this message translates to:
+  /// **'Appleでサインイン'**
+  String get login_with_apple;
+
+  /// No description provided for @login_with_google.
+  ///
+  /// In ja, this message translates to:
+  /// **'Googleでサインイン'**
+  String get login_with_google;
+
+  /// No description provided for @login_failed.
+  ///
+  /// In ja, this message translates to:
+  /// **'サインインに失敗しました'**
+  String get login_failed;
+
+  /// No description provided for @logout.
+  ///
+  /// In ja, this message translates to:
+  /// **'サインアウト'**
+  String get logout;
+
+  /// No description provided for @logout_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'サインアウトしますか？'**
+  String get logout_confirm;
+
+  /// No description provided for @settings_page_section_account.
+  ///
+  /// In ja, this message translates to:
+  /// **'アカウント'**
+  String get settings_page_section_account;
+
+  /// No description provided for @settings_page_not_signed_in.
+  ///
+  /// In ja, this message translates to:
+  /// **'サインインしていません'**
+  String get settings_page_not_signed_in;
+
+  /// No description provided for @pro_detail_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ArchiVe Pro'**
+  String get pro_detail_title;
+
+  /// No description provided for @pro_detail_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアム全機能に加えて、以下が利用可能'**
+  String get pro_detail_subtitle;
+
+  /// No description provided for @pro_detail_feature_cloud_sync.
+  ///
+  /// In ja, this message translates to:
+  /// **'クラウド同期（複数端末）'**
+  String get pro_detail_feature_cloud_sync;
+
+  /// No description provided for @pro_detail_feature_ai_tagging.
+  ///
+  /// In ja, this message translates to:
+  /// **'AI自動タグ付け'**
+  String get pro_detail_feature_ai_tagging;
+
+  /// No description provided for @pro_detail_feature_ai_recommend.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIおすすめキーワード'**
+  String get pro_detail_feature_ai_recommend;
+
+  /// No description provided for @pro_detail_feature_monthly_report.
+  ///
+  /// In ja, this message translates to:
+  /// **'AI月次レポート'**
+  String get pro_detail_feature_monthly_report;
+
+  /// No description provided for @pro_detail_feature_public_sharing.
+  ///
+  /// In ja, this message translates to:
+  /// **'公開リスト共有'**
+  String get pro_detail_feature_public_sharing;
+
+  /// No description provided for @pro_detail_feature_theme_teal.
+  ///
+  /// In ja, this message translates to:
+  /// **'テーマカラー ティールを追加'**
+  String get pro_detail_feature_theme_teal;
+
+  /// No description provided for @plans_page_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'プラン'**
+  String get plans_page_title;
+
+  /// No description provided for @plans_page_current_badge.
+  ///
+  /// In ja, this message translates to:
+  /// **'現在'**
+  String get plans_page_current_badge;
+
+  /// No description provided for @plans_page_includes_premium.
+  ///
+  /// In ja, this message translates to:
+  /// **'Premium全機能を含む'**
+  String get plans_page_includes_premium;
+
+  /// No description provided for @detail_page_ai_suggest.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIでタグ提案'**
+  String get detail_page_ai_suggest;
+
+  /// No description provided for @detail_page_ai_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIで分析中...'**
+  String get detail_page_ai_loading;
+
+  /// No description provided for @detail_page_ai_error.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIタグ提案エラー'**
+  String get detail_page_ai_error;
+
+  /// No description provided for @share_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'リストを共有'**
+  String get share_title;
+
+  /// No description provided for @share_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有中...'**
+  String get share_loading;
+
+  /// No description provided for @share_url_label.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有URL'**
+  String get share_url_label;
+
+  /// No description provided for @share_copy.
+  ///
+  /// In ja, this message translates to:
+  /// **'コピー'**
+  String get share_copy;
+
+  /// No description provided for @share_copied.
+  ///
+  /// In ja, this message translates to:
+  /// **'コピーしました'**
+  String get share_copied;
+
+  /// No description provided for @share_unshare.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有を解除'**
+  String get share_unshare;
+
+  /// No description provided for @share_unshare_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'このリストの共有を解除しますか？'**
+  String get share_unshare_confirm;
+
+  /// No description provided for @share_create_action.
+  ///
+  /// In ja, this message translates to:
+  /// **'このリストを共有する'**
+  String get share_create_action;
+
+  /// No description provided for @share_error.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有エラー'**
+  String get share_error;
+
+  /// No description provided for @share_open_url.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有URLを開く'**
+  String get share_open_url;
+
+  /// No description provided for @share_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有URLをこのリストの内容を誰でも閲覧できます（読み取り専用）'**
+  String get share_description;
+
+  /// No description provided for @share_limit_notice.
+  ///
+  /// In ja, this message translates to:
+  /// **'最大200件まで共有されます'**
+  String get share_limit_notice;
+
+  /// No description provided for @analytics_monthly_report_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIサマリー'**
+  String get analytics_monthly_report_title;
+
+  /// No description provided for @analytics_monthly_report_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'{month}月のまとめ'**
+  String analytics_monthly_report_subtitle(int month);
+
+  /// No description provided for @analytics_monthly_report_generate.
+  ///
+  /// In ja, this message translates to:
+  /// **'まとめを生成'**
+  String get analytics_monthly_report_generate;
+
+  /// No description provided for @analytics_monthly_report_regenerate.
+  ///
+  /// In ja, this message translates to:
+  /// **'再生成'**
+  String get analytics_monthly_report_regenerate;
+
+  /// No description provided for @analytics_monthly_report_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIが分析しています...'**
+  String get analytics_monthly_report_loading;
+
+  /// No description provided for @analytics_monthly_report_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'ボタンを押すと、今月のアーカイブ活動を AI が要約します。'**
+  String get analytics_monthly_report_empty;
+
+  /// No description provided for @analytics_monthly_report_error.
+  ///
+  /// In ja, this message translates to:
+  /// **'レポート生成エラー'**
+  String get analytics_monthly_report_error;
+
+  /// No description provided for @analytics_monthly_report_cached.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャッシュから表示'**
+  String get analytics_monthly_report_cached;
+
+  /// No description provided for @search_result_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'読み込み中'**
+  String get search_result_loading;
+
+  /// No description provided for @grid_page_move_action.
+  ///
+  /// In ja, this message translates to:
+  /// **'移動'**
+  String get grid_page_move_action;
+
+  /// No description provided for @grid_page_move_to_list_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'移動先のリストを選択'**
+  String get grid_page_move_to_list_title;
+
+  /// No description provided for @grid_page_move_done.
+  ///
+  /// In ja, this message translates to:
+  /// **'件を移動しました'**
+  String get grid_page_move_done;
+
+  /// No description provided for @undo.
+  ///
+  /// In ja, this message translates to:
+  /// **'取り消し'**
+  String get undo;
+
+  /// No description provided for @settings_page_theme_color_gold.
+  ///
+  /// In ja, this message translates to:
+  /// **'ゴールド'**
+  String get settings_page_theme_color_gold;
+
+  /// No description provided for @plans_page_premium_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアム'**
+  String get plans_page_premium_short;
+
+  /// No description provided for @plans_page_pro_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro'**
+  String get plans_page_pro_short;
+
+  /// No description provided for @plans_page_free_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'無料'**
+  String get plans_page_free_short;
+
+  /// No description provided for @plans_page_free_price.
+  ///
+  /// In ja, this message translates to:
+  /// **'¥0'**
+  String get plans_page_free_price;
+
+  /// No description provided for @plans_page_free_item01.
+  ///
+  /// In ja, this message translates to:
+  /// **'100件まで保存可能'**
+  String get plans_page_free_item01;
+
+  /// No description provided for @plans_page_free_item02.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告視聴で15枠/日 拡張可能'**
+  String get plans_page_free_item02;
+
+  /// No description provided for @plans_page_free_item03.
+  ///
+  /// In ja, this message translates to:
+  /// **'単一のタグで検索'**
+  String get plans_page_free_item03;
+
+  /// No description provided for @plans_page_free_item04.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告表示'**
+  String get plans_page_free_item04;
+
+  /// No description provided for @share_pro_required_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro プラン限定機能'**
+  String get share_pro_required_title;
+
+  /// No description provided for @share_pro_required_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'公開リスト共有はProプランの購入が必要です。'**
+  String get share_pro_required_description;
+
+  /// No description provided for @share_pro_required_action.
+  ///
+  /// In ja, this message translates to:
+  /// **'Proプランを見る'**
+  String get share_pro_required_action;
+
+  /// No description provided for @pro_locked_badge.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro限定'**
+  String get pro_locked_badge;
+
+  /// No description provided for @pro_locked_unlock.
+  ///
+  /// In ja, this message translates to:
+  /// **'Proで解除'**
+  String get pro_locked_unlock;
+
+  /// No description provided for @apple_signin_warning_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'Apple アカウントでサインインしますか？'**
+  String get apple_signin_warning_title;
+
+  /// No description provided for @apple_signin_warning_description.
+  ///
+  /// In ja, this message translates to:
+  /// **'Apple アカウントは Android 端末ではサインインできず、データを共有できません。複数端末で共有する場合は Google アカウントをお勧めします。'**
+  String get apple_signin_warning_description;
+
+  /// No description provided for @apple_signin_warning_continue.
+  ///
+  /// In ja, this message translates to:
+  /// **'Apple で続行'**
+  String get apple_signin_warning_continue;
+
+  /// No description provided for @settings_page_manage_subscription.
+  ///
+  /// In ja, this message translates to:
+  /// **'サブスクリプションを管理'**
+  String get settings_page_manage_subscription;
+
+  /// No description provided for @search_page_ai_recommend_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIおすすめ'**
+  String get search_page_ai_recommend_title;
+
+  /// No description provided for @search_page_ai_recommend_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'ライブラリ傾向から関連キーワードを提案'**
+  String get search_page_ai_recommend_subtitle;
+
+  /// No description provided for @search_page_ai_recommend_generate.
+  ///
+  /// In ja, this message translates to:
+  /// **'おすすめを取得'**
+  String get search_page_ai_recommend_generate;
+
+  /// No description provided for @search_page_ai_recommend_refresh.
+  ///
+  /// In ja, this message translates to:
+  /// **'再生成'**
+  String get search_page_ai_recommend_refresh;
+
+  /// No description provided for @search_page_ai_recommend_loading.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIが分析しています...'**
+  String get search_page_ai_recommend_loading;
+
+  /// No description provided for @search_page_ai_recommend_error.
+  ///
+  /// In ja, this message translates to:
+  /// **'おすすめ取得エラー'**
+  String get search_page_ai_recommend_error;
+
+  /// No description provided for @search_page_ai_recommend_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存したアイテムが少ないため提案できません。アイテムを追加してから再度お試しください。'**
+  String get search_page_ai_recommend_empty;
+
+  /// No description provided for @search_page_ai_recommend_intro.
+  ///
+  /// In ja, this message translates to:
+  /// **'ボタンを押すと、保存ライブラリの傾向から関連キーワードをAIが提案します。'**
+  String get search_page_ai_recommend_intro;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

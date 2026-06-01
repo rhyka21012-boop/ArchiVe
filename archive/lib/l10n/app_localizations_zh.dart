@@ -373,10 +373,35 @@ class L10nZh extends L10n {
   String get search_page_web_title => '网页搜索';
 
   @override
-  String get search_page_search_word => '搜索词';
+  String get search_page_search_word => '网络搜索';
+
+  @override
+  String get search_page_hint_web_1 => '内置广告拦截，畅快搜索';
+
+  @override
+  String get search_page_hint_web_2 => '例：动漫 OP';
+
+  @override
+  String get search_page_hint_web_3 => '应用内浏览器，快速收藏视频';
+
+  @override
+  String get search_page_hint_web_4 => '例：现场 2026';
+
+  @override
+  String get search_page_hint_web_5 => '在收藏的网站深入探索';
+
+  @override
+  String get search_page_hint_web_6 => '例：简单菜谱';
 
   @override
   String get search_page_select_site => '按网站筛选';
+
+  @override
+  String get search_page_select_site_help_title => '按网站筛选';
+
+  @override
+  String get search_page_select_site_help_description =>
+      '可以将视频搜索范围限定到特定网站。注册您喜欢的视频网站，仅在该网站内进行搜索。从下方列表选择网站后，点击搜索按钮。';
 
   @override
   String get search_page_open_site => '打开网站';
@@ -398,6 +423,9 @@ class L10nZh extends L10n {
 
   @override
   String get search_page_random_this => '今日推荐！';
+
+  @override
+  String get search_page_random_again => '再转一次';
 
   @override
   String get search_result_page_site_saved => '网站已保存';
@@ -572,7 +600,7 @@ class L10nZh extends L10n {
   String get settings_page_dark_mode => '深色模式';
 
   @override
-  String get settings_page_theme_color => '主题颜色 ★';
+  String get settings_page_theme_color => '主题颜色';
 
   @override
   String get settings_page_theme_color_orange => '橙色';
@@ -678,7 +706,7 @@ class L10nZh extends L10n {
   String get premium_detail_premium_item01 => '无限保存';
 
   @override
-  String get premium_detail_premium_item02 => '自由更改主题颜色';
+  String get premium_detail_premium_item02 => '新增主题色 金色';
 
   @override
   String get premium_detail_premium_item03 => '自由添加图片';
@@ -693,16 +721,16 @@ class L10nZh extends L10n {
   String get premium_detail_premium_item06 => '去除广告';
 
   @override
-  String get premium_detail_note => '1个月免费试用结束后，将自动续订。\n您可以随时取消。';
+  String get premium_detail_note => '3 天免费试用后将自动续费。\n随时可以取消。';
 
   @override
   String get premium_detail_restore_not_found => '未找到购买记录';
 
   @override
-  String get premium_detail_free_trial_badge => '1个月免费';
+  String get premium_detail_free_trial_badge => '3 天免费';
 
   @override
-  String get premium_detail_start_trial => '开始1个月免费试用';
+  String get premium_detail_start_trial => '开始 3 天免费试用';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -892,6 +920,231 @@ class L10nZh extends L10n {
 
   @override
   String get settings_page_theme_color_teal => '青绿色';
+
+  @override
+  String get login_page_title => '登录';
+
+  @override
+  String get login_page_description => '登录以使用 ArchiVe Pro 功能。';
+
+  @override
+  String get login_with_apple => '使用 Apple 登录';
+
+  @override
+  String get login_with_google => '使用 Google 登录';
+
+  @override
+  String get login_failed => '登录失败';
+
+  @override
+  String get logout => '退出登录';
+
+  @override
+  String get logout_confirm => '要退出登录吗？';
+
+  @override
+  String get settings_page_section_account => '账户';
+
+  @override
+  String get settings_page_not_signed_in => '未登录';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle => '在所有 Premium 功能基础上还包含以下功能';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '云同步（多设备）';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'AI 自动标签';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'AI 推荐关键词';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'AI 月度报告';
+
+  @override
+  String get pro_detail_feature_public_sharing => '公开列表分享';
+
+  @override
+  String get pro_detail_feature_theme_teal => '新增主题色 蓝绿';
+
+  @override
+  String get plans_page_title => '方案';
+
+  @override
+  String get plans_page_current_badge => '当前';
+
+  @override
+  String get plans_page_includes_premium => '包含所有 Premium 功能';
+
+  @override
+  String get detail_page_ai_suggest => '使用 AI 推荐标签';
+
+  @override
+  String get detail_page_ai_loading => 'AI 分析中...';
+
+  @override
+  String get detail_page_ai_error => 'AI 推荐错误';
+
+  @override
+  String get share_title => '分享列表';
+
+  @override
+  String get share_loading => '分享中...';
+
+  @override
+  String get share_url_label => '分享 URL';
+
+  @override
+  String get share_copy => '复制';
+
+  @override
+  String get share_copied => '已复制';
+
+  @override
+  String get share_unshare => '取消分享';
+
+  @override
+  String get share_unshare_confirm => '要取消分享此列表吗？';
+
+  @override
+  String get share_create_action => '分享此列表';
+
+  @override
+  String get share_error => '分享错误';
+
+  @override
+  String get share_open_url => '打开分享 URL';
+
+  @override
+  String get share_description => '任何拥有此 URL 的人都可以查看此列表（只读）';
+
+  @override
+  String get share_limit_notice => '最多分享 200 个项目';
+
+  @override
+  String get analytics_monthly_report_title => 'AI 摘要';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return '$month月摘要';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => '生成总结';
+
+  @override
+  String get analytics_monthly_report_regenerate => '重新生成';
+
+  @override
+  String get analytics_monthly_report_loading => 'AI 正在分析...';
+
+  @override
+  String get analytics_monthly_report_empty => '点击让 AI 总结本月的归档活动。';
+
+  @override
+  String get analytics_monthly_report_error => '报告错误';
+
+  @override
+  String get analytics_monthly_report_cached => '来自缓存';
+
+  @override
+  String get search_result_loading => '加载中';
+
+  @override
+  String get grid_page_move_action => '移动';
+
+  @override
+  String get grid_page_move_to_list_title => '选择目标列表';
+
+  @override
+  String get grid_page_move_done => '项已移动';
+
+  @override
+  String get undo => '撤销';
+
+  @override
+  String get settings_page_theme_color_gold => '金色';
+
+  @override
+  String get plans_page_premium_short => '高级版';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => '免费';
+
+  @override
+  String get plans_page_free_price => '¥0';
+
+  @override
+  String get plans_page_free_item01 => '可保存 100 件';
+
+  @override
+  String get plans_page_free_item02 => '观看广告扩展 15 个名额/日';
+
+  @override
+  String get plans_page_free_item03 => '单一标签搜索';
+
+  @override
+  String get plans_page_free_item04 => '显示广告';
+
+  @override
+  String get share_pro_required_title => 'Pro 套餐专属功能';
+
+  @override
+  String get share_pro_required_description => '公开列表分享需要购买 Pro 套餐。';
+
+  @override
+  String get share_pro_required_action => '查看 Pro 套餐';
+
+  @override
+  String get pro_locked_badge => 'Pro 限定';
+
+  @override
+  String get pro_locked_unlock => '用 Pro 解锁';
+
+  @override
+  String get apple_signin_warning_title => '使用 Apple 帐户登录？';
+
+  @override
+  String get apple_signin_warning_description =>
+      'Apple 帐户无法在 Android 设备上登录，因此数据无法跨平台共享。如需多设备使用，建议使用 Google 帐户。';
+
+  @override
+  String get apple_signin_warning_continue => '继续使用 Apple';
+
+  @override
+  String get settings_page_manage_subscription => '管理订阅';
+
+  @override
+  String get search_page_ai_recommend_title => 'AI 推荐';
+
+  @override
+  String get search_page_ai_recommend_subtitle => '根据你的库提供关键词建议';
+
+  @override
+  String get search_page_ai_recommend_generate => '获取推荐';
+
+  @override
+  String get search_page_ai_recommend_refresh => '重新生成';
+
+  @override
+  String get search_page_ai_recommend_loading => 'AI 正在分析...';
+
+  @override
+  String get search_page_ai_recommend_error => '获取推荐失败';
+
+  @override
+  String get search_page_ai_recommend_empty => '已保存的内容不足，无法生成建议。请添加更多后再试。';
+
+  @override
+  String get search_page_ai_recommend_intro => '点击按钮，让 AI 根据已保存的库推荐相关搜索关键词。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1263,10 +1516,35 @@ class L10nZhHans extends L10nZh {
   String get search_page_web_title => '网页搜索';
 
   @override
-  String get search_page_search_word => '搜索词';
+  String get search_page_search_word => '网络搜索';
+
+  @override
+  String get search_page_hint_web_1 => '内置广告拦截，畅快搜索';
+
+  @override
+  String get search_page_hint_web_2 => '例：动漫 OP';
+
+  @override
+  String get search_page_hint_web_3 => '应用内浏览器，快速收藏视频';
+
+  @override
+  String get search_page_hint_web_4 => '例：现场 2026';
+
+  @override
+  String get search_page_hint_web_5 => '在收藏的网站深入探索';
+
+  @override
+  String get search_page_hint_web_6 => '例：简单菜谱';
 
   @override
   String get search_page_select_site => '按网站筛选';
+
+  @override
+  String get search_page_select_site_help_title => '按网站筛选';
+
+  @override
+  String get search_page_select_site_help_description =>
+      '可以将视频搜索范围限定到特定网站。注册您喜欢的视频网站，仅在该网站内进行搜索。从下方列表选择网站后，点击搜索按钮。';
 
   @override
   String get search_page_open_site => '打开网站';
@@ -1288,6 +1566,9 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get search_page_random_this => '今日推荐！';
+
+  @override
+  String get search_page_random_again => '再转一次';
 
   @override
   String get search_result_page_site_saved => '网站已保存';
@@ -1462,7 +1743,7 @@ class L10nZhHans extends L10nZh {
   String get settings_page_dark_mode => '深色模式';
 
   @override
-  String get settings_page_theme_color => '主题颜色 ★';
+  String get settings_page_theme_color => '主题颜色';
 
   @override
   String get settings_page_theme_color_orange => '橙色';
@@ -1568,7 +1849,7 @@ class L10nZhHans extends L10nZh {
   String get premium_detail_premium_item01 => '无限保存';
 
   @override
-  String get premium_detail_premium_item02 => '自由更改主题颜色';
+  String get premium_detail_premium_item02 => '新增主题色 金色';
 
   @override
   String get premium_detail_premium_item03 => '自由添加图片';
@@ -1583,16 +1864,16 @@ class L10nZhHans extends L10nZh {
   String get premium_detail_premium_item06 => '去除广告';
 
   @override
-  String get premium_detail_note => '1个月免费试用结束后，将自动续订。\n您可以随时取消。';
+  String get premium_detail_note => '3 天免费试用后将自动续费。\n随时可以取消。';
 
   @override
   String get premium_detail_restore_not_found => '未找到购买记录';
 
   @override
-  String get premium_detail_free_trial_badge => '1个月免费';
+  String get premium_detail_free_trial_badge => '3 天免费';
 
   @override
-  String get premium_detail_start_trial => '开始1个月免费试用';
+  String get premium_detail_start_trial => '开始 3 天免费试用';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -1782,4 +2063,229 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get settings_page_theme_color_teal => '青绿色';
+
+  @override
+  String get login_page_title => '登录';
+
+  @override
+  String get login_page_description => '登录以使用 ArchiVe Pro 功能。';
+
+  @override
+  String get login_with_apple => '使用 Apple 登录';
+
+  @override
+  String get login_with_google => '使用 Google 登录';
+
+  @override
+  String get login_failed => '登录失败';
+
+  @override
+  String get logout => '退出登录';
+
+  @override
+  String get logout_confirm => '要退出登录吗？';
+
+  @override
+  String get settings_page_section_account => '账户';
+
+  @override
+  String get settings_page_not_signed_in => '未登录';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle => '在所有 Premium 功能基础上还包含以下功能';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '云同步（多设备）';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'AI 自动标签';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'AI 推荐关键词';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'AI 月度报告';
+
+  @override
+  String get pro_detail_feature_public_sharing => '公开列表分享';
+
+  @override
+  String get pro_detail_feature_theme_teal => '新增主题色 蓝绿';
+
+  @override
+  String get plans_page_title => '方案';
+
+  @override
+  String get plans_page_current_badge => '当前';
+
+  @override
+  String get plans_page_includes_premium => '包含所有 Premium 功能';
+
+  @override
+  String get detail_page_ai_suggest => '使用 AI 推荐标签';
+
+  @override
+  String get detail_page_ai_loading => 'AI 分析中...';
+
+  @override
+  String get detail_page_ai_error => 'AI 推荐错误';
+
+  @override
+  String get share_title => '分享列表';
+
+  @override
+  String get share_loading => '分享中...';
+
+  @override
+  String get share_url_label => '分享 URL';
+
+  @override
+  String get share_copy => '复制';
+
+  @override
+  String get share_copied => '已复制';
+
+  @override
+  String get share_unshare => '取消分享';
+
+  @override
+  String get share_unshare_confirm => '要取消分享此列表吗？';
+
+  @override
+  String get share_create_action => '分享此列表';
+
+  @override
+  String get share_error => '分享错误';
+
+  @override
+  String get share_open_url => '打开分享 URL';
+
+  @override
+  String get share_description => '任何拥有此 URL 的人都可以查看此列表（只读）';
+
+  @override
+  String get share_limit_notice => '最多分享 200 个项目';
+
+  @override
+  String get analytics_monthly_report_title => 'AI 摘要';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return '$month月摘要';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => '生成总结';
+
+  @override
+  String get analytics_monthly_report_regenerate => '重新生成';
+
+  @override
+  String get analytics_monthly_report_loading => 'AI 正在分析...';
+
+  @override
+  String get analytics_monthly_report_empty => '点击让 AI 总结本月的归档活动。';
+
+  @override
+  String get analytics_monthly_report_error => '报告错误';
+
+  @override
+  String get analytics_monthly_report_cached => '来自缓存';
+
+  @override
+  String get search_result_loading => '加载中';
+
+  @override
+  String get grid_page_move_action => '移动';
+
+  @override
+  String get grid_page_move_to_list_title => '选择目标列表';
+
+  @override
+  String get grid_page_move_done => '项已移动';
+
+  @override
+  String get undo => '撤销';
+
+  @override
+  String get settings_page_theme_color_gold => '金色';
+
+  @override
+  String get plans_page_premium_short => '高级版';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => '免费';
+
+  @override
+  String get plans_page_free_price => '¥0';
+
+  @override
+  String get plans_page_free_item01 => '可保存 100 件';
+
+  @override
+  String get plans_page_free_item02 => '观看广告扩展 15 个名额/日';
+
+  @override
+  String get plans_page_free_item03 => '单一标签搜索';
+
+  @override
+  String get plans_page_free_item04 => '显示广告';
+
+  @override
+  String get share_pro_required_title => 'Pro 套餐专属功能';
+
+  @override
+  String get share_pro_required_description => '公开列表分享需要购买 Pro 套餐。';
+
+  @override
+  String get share_pro_required_action => '查看 Pro 套餐';
+
+  @override
+  String get pro_locked_badge => 'Pro 限定';
+
+  @override
+  String get pro_locked_unlock => '用 Pro 解锁';
+
+  @override
+  String get apple_signin_warning_title => '使用 Apple 帐户登录？';
+
+  @override
+  String get apple_signin_warning_description =>
+      'Apple 帐户无法在 Android 设备上登录，因此数据无法跨平台共享。如需多设备使用，建议使用 Google 帐户。';
+
+  @override
+  String get apple_signin_warning_continue => '继续使用 Apple';
+
+  @override
+  String get settings_page_manage_subscription => '管理订阅';
+
+  @override
+  String get search_page_ai_recommend_title => 'AI 推荐';
+
+  @override
+  String get search_page_ai_recommend_subtitle => '根据你的库提供关键词建议';
+
+  @override
+  String get search_page_ai_recommend_generate => '获取推荐';
+
+  @override
+  String get search_page_ai_recommend_refresh => '重新生成';
+
+  @override
+  String get search_page_ai_recommend_loading => 'AI 正在分析...';
+
+  @override
+  String get search_page_ai_recommend_error => '获取推荐失败';
+
+  @override
+  String get search_page_ai_recommend_empty => '已保存的内容不足，无法生成建议。请添加更多后再试。';
+
+  @override
+  String get search_page_ai_recommend_intro => '点击按钮，让 AI 根据已保存的库推荐相关搜索关键词。';
 }

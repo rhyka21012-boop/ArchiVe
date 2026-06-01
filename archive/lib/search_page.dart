@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
-//import 'package:confetti/confetti.dart';
+import 'package:confetti/confetti.dart';
 
 import 'search_result_page.dart';
 import 'grid_page.dart';
@@ -15,6 +16,9 @@ import 'detail_page.dart';
 import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
 import 'search_tab_index_provider.dart';
+import 'ai_service.dart';
+import 'pro_detail.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -62,12 +66,24 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   bool _ignoreNextFocus = false;
 
+  //AIおすすめキーワード（Pro機能）
+  bool _isLoadingAiRecommend = false;
+  List<RecommendedKeyword> _aiRecommendations = [];
+  String? _aiRecommendError;
+  bool _isPro = false;
+
+  // Web 検索バーの hint テキストローテーション
+  int _webHintIndex = 0;
+  Timer? _webHintTimer;
+
   @override
   void initState() {
     super.initState();
 
     //検索履歴を更新
     _loadSearchHistory();
+    _checkProStatus();
+    _startWebHintRotation();
 
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
@@ -93,8 +109,55 @@ class SearchPageState extends ConsumerState<SearchPage> {
     _isMetadataLoaded = true;
   }
 
+  Future<void> _checkProStatus() async {
+    try {
+      final info = await Purchases.getCustomerInfo();
+      final isPro = info.entitlements.all['Pro Plan']?.isActive ?? false;
+      if (!mounted) return;
+      setState(() => _isPro = isPro);
+    } catch (_) {}
+  }
+
+  /// Web 検索バーの hint テキストを 4 秒ごとにローテーション
+  void _startWebHintRotation() {
+    _webHintTimer?.cancel();
+    _webHintTimer =
+        Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      // フォーカス中 or 入力中はローテ停止
+      if (_searchFocusNode.hasFocus || _searchController.text.isNotEmpty) {
+        return;
+      }
+      setState(() {
+        _webHintIndex = (_webHintIndex + 1) % 6;
+      });
+    });
+  }
+
+  /// 現在の Web hint テキストを返す
+  String _currentWebHint() {
+    final l = L10n.of(context)!;
+    switch (_webHintIndex) {
+      case 0:
+        return l.search_page_hint_web_1;
+      case 1:
+        return l.search_page_hint_web_2;
+      case 2:
+        return l.search_page_hint_web_3;
+      case 3:
+        return l.search_page_hint_web_4;
+      case 4:
+        return l.search_page_hint_web_5;
+      case 5:
+        return l.search_page_hint_web_6;
+      default:
+        return l.search_page_search_word;
+    }
+  }
+
   @override
   void dispose() {
+    _webHintTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _removeOverlay();
@@ -422,7 +485,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.black),
+                prefixIcon: Icon(
+                  isWeb ? Icons.public : Icons.search,
+                  color: Colors.black,
+                ),
                 suffixIcon:
                     _searchController.text.isNotEmpty
                         ? IconButton(
@@ -435,11 +501,42 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         )
                         : null,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                hintText:
-                    isWeb
-                        ? L10n.of(context)!.search_page_search_word
-                        : L10n.of(context)!.search_page_search_title, //タイトルを検索
-                hintStyle: const TextStyle(color: Colors.black, fontSize: 16),
+                // hint は Web タブ時はローテーション表示、App タブ時は固定
+                hint: isWeb
+                    ? AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        layoutBuilder: (currentChild, previousChildren) {
+                          return Stack(
+                            alignment: AlignmentDirectional.centerStart,
+                            children: [
+                              ...previousChildren,
+                              if (currentChild != null) currentChild,
+                            ],
+                          );
+                        },
+                        transitionBuilder: (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
+                        child: Align(
+                          key: ValueKey(_webHintIndex),
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            _currentWebHint(),
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        L10n.of(context)!.search_page_search_title,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
               focusNode: _searchFocusNode,
             ),
@@ -853,9 +950,33 @@ class SearchPageState extends ConsumerState<SearchPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              L10n.of(context)!.search_page_select_site,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            _buildAiRecommendCard(),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Text(
+                  L10n.of(context)!.search_page_select_site,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
+                  icon: Icon(
+                    Icons.help_outline,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.55),
+                  ),
+                  onPressed: _showSelectSiteHelp,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             GridView.builder(
@@ -878,6 +999,469 @@ class SearchPageState extends ConsumerState<SearchPage> {
           ],
         );
       },
+    );
+  }
+
+  /// 「サイトで絞る」のヘルプダイアログ
+  Future<void> _showSelectSiteHelp() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final l = L10n.of(context)!;
+    return showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: colorScheme.primary, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l.search_page_select_site_help_title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l.search_page_select_site_help_description,
+          style: const TextStyle(fontSize: 13, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(L10n.of(ctx)!.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //=========================
+  //AIおすすめ（Pro機能）
+  //=========================
+  /// Pro 未加入向けのコンパクトプレビューカード
+  Widget _buildAiRecommendLockedCard() {
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    const tealDeep = Color(0xFF00695C);
+    const tealMid = Color(0xFF00897B);
+
+    return InkWell(
+      onTap: _generateAiRecommendations,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1A1A1A)
+              : tealDeep.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: tealMid.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.auto_awesome, size: 18, color: tealMid),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        l.search_page_ai_recommend_title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tealMid.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 10, color: tealMid),
+                            const SizedBox(width: 3),
+                            Text(
+                              l.pro_locked_badge,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: tealMid,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l.search_page_ai_recommend_subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiRecommendCard() {
+    // Pro 未加入はコンパクトプレビューカードでトーンダウン
+    if (!_isPro) return _buildAiRecommendLockedCard();
+
+    final l = L10n.of(context)!;
+    const tealDeep = Color(0xFF00695C);
+    const tealLight = Color(0xFF26A69A);
+    const gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [tealDeep, tealLight, tealDeep],
+      stops: [0.0, 0.5, 1.0],
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: tealLight.withValues(alpha: 0.3),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l.search_page_ai_recommend_title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      l.search_page_ai_recommend_subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_aiRecommendations.isNotEmpty && !_isLoadingAiRecommend)
+                IconButton(
+                  tooltip: l.search_page_ai_recommend_refresh,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: _generateAiRecommendations,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingAiRecommend)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l.search_page_ai_recommend_loading,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (_aiRecommendations.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _aiRecommendations
+                  .map((kw) => _buildRecommendChip(kw, tealDeep))
+                  .toList(),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _aiRecommendError ?? l.search_page_ai_recommend_intro,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _generateAiRecommendations,
+                    icon: const Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: tealDeep,
+                    ),
+                    label: Text(
+                      l.search_page_ai_recommend_generate,
+                      style: const TextStyle(
+                        color: tealDeep,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendChip(RecommendedKeyword kw, Color tealDeep) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => _openAiRecommendation(kw.keyword),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.search, size: 18, color: tealDeep),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        kw.keyword,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: tealDeep,
+                        ),
+                      ),
+                      if (kw.reason.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          kw.reason,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, size: 14, color: tealDeep),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAiRecommendation(String keyword) {
+    if (keyword.isEmpty) return;
+    _addSearchHistory(keyword);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchResultPage(
+          initialUrl: _buildWebSearchUrl(keyword, null),
+          title: L10n.of(context)!.search_page_web_title,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generateAiRecommendations() async {
+    if (_isLoadingAiRecommend) return;
+
+    // Pro限定（購入先行型: 未加入ユーザーにサインインを促さず購入画面を表示）
+    if (!await ProGate.ensureProPurchaseFirst(context)) return;
+    if (!mounted) return;
+
+    final l = L10n.of(context)!;
+
+    // ライブラリ集約
+    final agg = _aggregateLibrary();
+    if (agg.itemCount == 0) {
+      setState(() {
+        _aiRecommendError = l.search_page_ai_recommend_empty;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingAiRecommend = true;
+      _aiRecommendError = null;
+    });
+
+    try {
+      final result = await AiService.recommendKeywords(
+        topGenres: agg.topGenres,
+        topCasts: agg.topCasts,
+        topMakers: agg.topMakers,
+        topSeries: agg.topSeries,
+        topLabels: agg.topLabels,
+        recentTitles: agg.recentTitles,
+        itemCount: agg.itemCount,
+        locale: Localizations.localeOf(context).languageCode,
+      );
+      if (!mounted) return;
+      setState(() {
+        _aiRecommendations = result;
+        if (result.isEmpty) {
+          _aiRecommendError = l.search_page_ai_recommend_empty;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l.search_page_ai_recommend_error}: $e'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingAiRecommend = false);
+    }
+  }
+
+  _LibraryAggregation _aggregateLibrary() {
+    final genreCount = <String, int>{};
+    final castCount = <String, int>{};
+    final makerCount = <String, int>{};
+    final seriesCount = <String, int>{};
+    final labelCount = <String, int>{};
+
+    void count(String? raw, Map<String, int> target) {
+      if (raw == null || raw.trim().isEmpty) return;
+      for (final part in raw
+          .split(RegExp(r'\s*#\s*'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)) {
+        target[part] = (target[part] ?? 0) + 1;
+      }
+    }
+
+    for (final item in _savedItems) {
+      count(item['genre']?.toString(), genreCount);
+      count(item['cast']?.toString(), castCount);
+      count(item['maker']?.toString(), makerCount);
+      count(item['series']?.toString(), seriesCount);
+      count(item['label']?.toString(), labelCount);
+    }
+
+    List<String> sortedKeys(Map<String, int> m, int limit) {
+      final list = m.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      return list.take(limit).map((e) => e.key).toList();
+    }
+
+    final recentTitles = _savedItems
+        .reversed
+        .take(5)
+        .map((e) => (e['title'] ?? '').toString())
+        .where((t) => t.isNotEmpty)
+        .toList();
+
+    return _LibraryAggregation(
+      itemCount: _savedItems.length,
+      topGenres: sortedKeys(genreCount, 10),
+      topCasts: sortedKeys(castCount, 10),
+      topMakers: sortedKeys(makerCount, 10),
+      topSeries: sortedKeys(seriesCount, 10),
+      topLabels: sortedKeys(labelCount, 10),
+      recentTitles: recentTitles,
     );
   }
 
@@ -985,12 +1569,12 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 Center(
                   child: Image.network(
                     faviconUrl,
-                    width: 28,
-                    height: 28,
+                    width: 36,
+                    height: 36,
                     errorBuilder:
                         (_, __, ___) => Icon(
                           Icons.public,
-                          size: 26,
+                          size: 34,
                           color:
                               isDark
                                   ? Colors.white54
@@ -1346,230 +1930,351 @@ class SearchPageState extends ConsumerState<SearchPage> {
     return 'https://www.google.com/search?q=$siteQuery&tbm=vid&safe=off';
   }
 
-  //当たり枠点滅管理
-  bool blink = false;
-  int blinkCount = 0;
-
-  //タイトル表示管理
-  bool showResult = false;
-
-  //スクロール管理
-  final ScrollController _rouletteController = ScrollController();
-
   //ルーレット機能 - モーダル表示
   void _showRouletteModal() {
+    if (_savedItems.isEmpty) return;
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierLabel: "",
-      barrierColor: Colors.black.withOpacity(0.65),
+      barrierLabel: '',
+      barrierColor: Colors.black.withValues(alpha: 0.85),
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        Map<String, dynamic>? rouletteItem;
-        Color borderColor = Colors.white;
-        bool started = false;
-        bool isRunning = true;
+      pageBuilder: (_, __, ___) => _RouletteModal(items: _savedItems),
+    );
+  }
 
-        //紙吹雪コントローラー
-        /*
-        final confettiController = ConfettiController(
-          duration: const Duration(seconds: 1),
-        );
-        */
+}
 
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            const cardWidth = 240.0;
-            final screenWidth = MediaQuery.of(context).size.width;
-            final spacing = (screenWidth - cardWidth) / 2;
+class _LibraryAggregation {
+  final int itemCount;
+  final List<String> topGenres;
+  final List<String> topCasts;
+  final List<String> topMakers;
+  final List<String> topSeries;
+  final List<String> topLabels;
+  final List<String> recentTitles;
 
-            //サムネから色を抽出
-            Future<Color> _extractColor(String imageUrl) async {
-              final imageProvider = NetworkImage(imageUrl);
+  _LibraryAggregation({
+    required this.itemCount,
+    required this.topGenres,
+    required this.topCasts,
+    required this.topMakers,
+    required this.topSeries,
+    required this.topLabels,
+    required this.recentTitles,
+  });
+}
 
-              final paletteGenerator = await PaletteGenerator.fromImageProvider(
-                imageProvider,
-              );
+// =====================================================================
+// ルーレットモーダル（改善版）
+// =====================================================================
+class _RouletteModal extends StatefulWidget {
+  final List<Map<String, dynamic>> items;
+  const _RouletteModal({required this.items});
 
-              return paletteGenerator.vibrantColor?.color ??
-                  paletteGenerator.dominantColor?.color ??
-                  Colors.white;
-            }
+  @override
+  State<_RouletteModal> createState() => _RouletteModalState();
+}
 
-            Future<void> startRoulette() async {
-              //アイテム一覧を更新
-              _loadSavedMetadata();
+class _RouletteModalState extends State<_RouletteModal>
+    with TickerProviderStateMixin {
+  static const _cardWidth = 240.0;
 
-              //ルーレット開始時にタイトルなどを非表示
-              setModalState(() {
-                showResult = false;
-                rouletteItem = null;
-              });
+  final ScrollController _scrollController = ScrollController();
+  late final ConfettiController _confettiController;
+  late final AnimationController _pulseController;
+  Timer? _tickTimer;
 
-              /// スクロール位置リセット
-              _rouletteController.jumpTo(0);
+  Map<String, dynamic>? _resultItem;
+  Color _accent = Colors.white;
+  bool _isRunning = true;
+  bool _showResult = false;
 
-              final random = Random();
-              final stopIndex = random.nextInt(_savedItems.length);
+  @override
+  void initState() {
+    super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 1));
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
 
-              //サムネから色を抽出
-              final imageUrl = _savedItems[stopIndex]['image'];
-              Future<Color> colorFuture = _extractColor(imageUrl);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
 
-              final itemWidth = cardWidth + spacing * 2;
+  @override
+  void dispose() {
+    _tickTimer?.cancel();
+    _confettiController.dispose();
+    _pulseController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-              final target =
-                  (stopIndex + (_savedItems.length * 10)) * itemWidth;
+  Future<Color> _extractColor(String? imageUrl) async {
+    if (imageUrl == null || imageUrl.isEmpty) return Colors.white;
+    try {
+      final palette = await PaletteGenerator.fromImageProvider(
+        NetworkImage(imageUrl),
+      );
+      return palette.vibrantColor?.color ??
+          palette.dominantColor?.color ??
+          Colors.white;
+    } catch (_) {
+      return Colors.white;
+    }
+  }
 
-              await _rouletteController.animateTo(
-                target.toDouble(),
-                duration: const Duration(milliseconds: 1500),
-                curve: Curves.decelerate,
-              );
+  Future<void> _start() async {
+    if (widget.items.isEmpty) return;
 
-              //回転終了時に色を取得
-              final dominantColor = await colorFuture;
+    setState(() {
+      _showResult = false;
+      _resultItem = null;
+      _isRunning = true;
+    });
 
-              setModalState(() {
-                rouletteItem = _savedItems[stopIndex];
-                borderColor = dominantColor;
-                isRunning = false;
-                showResult = true;
-                blink = true;
-                blinkCount = 0;
-              });
+    HapticFeedback.mediumImpact();
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
 
-              for (int i = 0; i < 6; i++) {
-                await Future.delayed(const Duration(milliseconds: 250));
+    final stopIndex = Random().nextInt(widget.items.length);
+    final colorFuture = _extractColor(widget.items[stopIndex]['image']);
 
-                setModalState(() {
-                  blink = !blink;
-                });
-              }
+    final screenWidth = MediaQuery.of(context).size.width;
+    final spacing = (screenWidth - _cardWidth) / 2;
+    final itemWidth = _cardWidth + spacing * 2;
+    final fullTarget =
+        (stopIndex + (widget.items.length * 10)) * itemWidth;
+    final nearMissTarget = fullTarget - itemWidth * 0.6;
 
-              //紙吹雪
-              //confettiController.play();
-            }
+    // 触覚 tick（スピン中の小刻みなフィードバック）
+    _tickTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+      HapticFeedback.selectionClick();
+    });
 
-            /// 初回のみ開始
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!started) {
-                started = true;
-                startRoulette();
-              }
-            });
+    // Phase 1: 高速回転（70%地点まで一気に）
+    await _scrollController.animateTo(
+      fullTarget * 0.75,
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeIn,
+    );
+    if (!mounted) return;
 
-            return SafeArea(
-              child: Center(
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      //説明ラベル
-                      Text(
-                        isRunning
-                            ? L10n.of(context)!.search_page_random_loading
-                            : L10n.of(context)!.search_page_random_this,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          height: 1.4,
-                        ),
+    // Phase 2: 減速してニアミス位置まで
+    await _scrollController.animateTo(
+      nearMissTarget,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.decelerate,
+    );
+    if (!mounted) return;
+
+    _tickTimer?.cancel();
+
+    // Phase 3: ニアミス後、ゆっくり最終位置へ
+    await _scrollController.animateTo(
+      fullTarget,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutQuart,
+    );
+
+    final accent = await colorFuture;
+    if (!mounted) return;
+
+    HapticFeedback.heavyImpact();
+    _confettiController.play();
+
+    setState(() {
+      _resultItem = widget.items[stopIndex];
+      _accent = accent;
+      _isRunning = false;
+      _showResult = true;
+    });
+  }
+
+  Future<void> _spinAgain() async {
+    HapticFeedback.lightImpact();
+    await _start();
+  }
+
+  void _openInBrowser() {
+    final url = _resultItem?['url']?.toString();
+    if (url == null || url.isEmpty) return;
+    launchUrl(Uri.parse(url));
+  }
+
+  void _openDetail() {
+    final item = _resultItem;
+    if (item == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailPage(
+          listName: item['listName'],
+          url: item['url'],
+          title: item['title'],
+          image: item['image'],
+          cast: item['cast'] ?? '',
+          genre: item['genre'] ?? '',
+          series: item['series'] ?? '',
+          label: item['label'] ?? '',
+          maker: item['maker'] ?? '',
+          rating: item['rating'],
+          memo: item['memo'],
+          isReadOnly: true,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final spacing = (screenWidth - _cardWidth) / 2;
+
+    return PopScope(
+      canPop: true,
+      child: Stack(
+        children: [
+          // 当選サムネのドミナントカラーで背景をふんわり彩色
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 700),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
+                colors: [
+                  _accent.withValues(alpha: _showResult ? 0.35 : 0.0),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _isRunning
+                          ? l.search_page_random_loading
+                          : l.search_page_random_this,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
                       ),
+                    ),
+                    const SizedBox(height: 16),
 
-                      SizedBox(height: 16),
-
-                      /// ルーレットUI
-                      SizedBox(
-                        height: 240 * 9 / 16,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            /// 紙吹雪
-                            /*
-                            ConfettiWidget(
-                              confettiController: confettiController,
-                              blastDirectionality:
-                                  BlastDirectionality.explosive,
-                              shouldLoop: false,
-                              numberOfParticles: 100,
-                              gravity: 0.1,
-                              //colors: [colorScheme.onPrimary],
-                            ),
-                            */
-
-                            /// 当たり枠
-                            IgnorePointer(
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 300),
-                                opacity: blink ? 0.3 : 1,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 1000),
-                                  width: cardWidth,
-                                  height: cardWidth * 9 / 16,
+                    // スロット
+                    SizedBox(
+                      height: _cardWidth * 9 / 16,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 当選リング（パルス）
+                          IgnorePointer(
+                            child: AnimatedBuilder(
+                              animation: _pulseController,
+                              builder: (_, __) {
+                                final t = _showResult
+                                    ? _pulseController.value
+                                    : 0.0;
+                                final width = _cardWidth + (t * 10);
+                                final height = (_cardWidth * 9 / 16) + (t * 6);
+                                return AnimatedContainer(
+                                  duration:
+                                      const Duration(milliseconds: 500),
+                                  width: width,
+                                  height: height,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
+                                    borderRadius:
+                                        BorderRadius.circular(18),
                                     border: Border.all(
-                                      color:
-                                          isRunning
-                                              ? Colors.transparent
-                                              : borderColor,
+                                      color: _isRunning
+                                          ? Colors.transparent
+                                          : _accent,
                                       width: 4,
                                     ),
-                                    boxShadow:
-                                        isRunning
-                                            ? []
-                                            : [
-                                              BoxShadow(
-                                                color: borderColor.withOpacity(
-                                                  0.9,
-                                                ),
-                                                blurRadius: 25,
-                                                spreadRadius: 3,
+                                    boxShadow: _isRunning
+                                        ? []
+                                        : [
+                                            BoxShadow(
+                                              color: _accent.withValues(
+                                                alpha: 0.6 + (t * 0.3),
                                               ),
-                                            ],
+                                              blurRadius: 25 + (t * 15),
+                                              spreadRadius: 2 + (t * 4),
+                                            ),
+                                          ],
                                   ),
-                                ),
-                              ),
-                            ),
-
-                            /// スロット
-                            ListView.builder(
-                              controller: _rouletteController,
-                              scrollDirection: Axis.horizontal,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _savedItems.length * 20,
-                              itemBuilder: (context, index) {
-                                final item =
-                                    _savedItems[index % _savedItems.length];
-
-                                return Container(
-                                  width: 240,
-                                  height: 240 * (9 / 16),
-                                  margin: EdgeInsets.symmetric(
-                                    horizontal: spacing,
-                                  ),
-                                  child: rouletteCard(context, item),
                                 );
                               },
                             ),
-                          ],
-                        ),
+                          ),
+
+                          // スロット本体
+                          ListView.builder(
+                            controller: _scrollController,
+                            scrollDirection: Axis.horizontal,
+                            physics:
+                                const NeverScrollableScrollPhysics(),
+                            itemCount: widget.items.length * 20,
+                            itemBuilder: (context, index) {
+                              final item = widget
+                                  .items[index % widget.items.length];
+                              return Container(
+                                width: _cardWidth,
+                                height: _cardWidth * (9 / 16),
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: spacing,
+                                ),
+                                child: _RouletteCard(
+                                  item: item,
+                                  colorScheme: colorScheme,
+                                ),
+                              );
+                            },
+                          ),
+
+                          // 紙吹雪
+                          Align(
+                            alignment: Alignment.center,
+                            child: ConfettiWidget(
+                              confettiController: _confettiController,
+                              blastDirectionality:
+                                  BlastDirectionality.explosive,
+                              shouldLoop: false,
+                              numberOfParticles: 30,
+                              maxBlastForce: 18,
+                              minBlastForce: 6,
+                              gravity: 0.25,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 12),
 
-                      const SizedBox(height: 5),
-
-                      /// タイトル
-                      AnimatedOpacity(
-                        opacity: showResult ? 1 : 0,
-                        duration: const Duration(milliseconds: 300),
+                    // タイトル
+                    AnimatedOpacity(
+                      opacity: _showResult ? 1 : 0,
+                      duration: const Duration(milliseconds: 300),
+                      child: GestureDetector(
+                        onTap: _openDetail,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
-                            rouletteItem?['title'] ?? "",
+                            _resultItem?['title']?.toString() ?? '',
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -1581,81 +2286,68 @@ class SearchPageState extends ConsumerState<SearchPage> {
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
 
-                      const SizedBox(height: 5),
-
-                      /// ボタン
-                      /*AnimatedOpacity(
-                        opacity: showResult ? 1 : 0,
-                        duration: const Duration(milliseconds: 300),
-                        child: */
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          //ブラウザで開く
-                          IconButton(
-                            icon: const Icon(
-                              Icons.open_in_new,
-                              color: Colors.white,
+                    // ボタン
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.open_in_new,
+                              color: Colors.white),
+                          onPressed: _showResult ? _openInBrowser : null,
+                          tooltip: l.detail_page_access,
+                        ),
+                        const SizedBox(width: 8),
+                        // もう一度（テキスト＋アイコン）
+                        ElevatedButton.icon(
+                          onPressed: _isRunning ? null : _spinAgain,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(l.search_page_random_again),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
                             ),
-                            onPressed: () {
-                              final url = rouletteItem?['url'];
-                              if (url != null) {
-                                launchUrl(Uri.parse(url));
-                              }
-                            },
-                          ),
-
-                          const SizedBox(width: 20),
-
-                          //リロード
-                          IconButton(
-                            icon: const Icon(
-                              Icons.refresh,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setModalState(() {
-                                rouletteItem = null;
-                                isRunning = true;
-                                showResult = false;
-                              });
-                              startRoulette();
-                            },
-                          ),
-
-                          const SizedBox(width: 20),
-
-                          //閉じる
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              L10n.of(context)!.close,
-                              style: TextStyle(color: Colors.white),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        ],
-                      ),
-                      //),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            l.close,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        );
-      },
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  //カードUI
-  Widget rouletteCard(BuildContext context, Map<String, dynamic> item) {
-    final colorScheme = Theme.of(context).colorScheme;
+class _RouletteCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final ColorScheme colorScheme;
+  const _RouletteCard({required this.item, required this.colorScheme});
 
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      width: 240,
+      width: _RouletteModalState._cardWidth,
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: Card(
@@ -1663,35 +2355,12 @@ class SearchPageState extends ConsumerState<SearchPage> {
             borderRadius: BorderRadius.circular(16),
           ),
           clipBehavior: Clip.antiAlias,
-          color:
-              colorScheme.brightness == Brightness.light
-                  ? Colors.grey[200]
-                  : const Color(0xFF2C2C2C),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => DetailPage(
-                        listName: item['listName'],
-                        url: item['url'],
-                        title: item['title'],
-                        image: item['image'],
-                        cast: item['cast'] ?? '',
-                        genre: item['genre'] ?? '',
-                        series: item['series'] ?? '',
-                        label: item['label'] ?? '',
-                        maker: item['maker'] ?? '',
-                        rating: item['rating'],
-                        memo: item['memo'],
-                        isReadOnly: true,
-                      ),
-                ),
-              );
-            },
-            child: Image.network(item['image'], fit: BoxFit.cover),
-          ),
+          color: colorScheme.brightness == Brightness.light
+              ? Colors.grey[200]
+              : const Color(0xFF2C2C2C),
+          child: item['image'] != null
+              ? Image.network(item['image'], fit: BoxFit.cover)
+              : const SizedBox.shrink(),
         ),
       ),
     );

@@ -375,10 +375,35 @@ class L10nKo extends L10n {
   String get search_page_web_title => '웹 검색';
 
   @override
-  String get search_page_search_word => '검색어';
+  String get search_page_search_word => '웹 검색';
+
+  @override
+  String get search_page_hint_web_1 => '광고 차단 기능으로 쾌적 검색';
+
+  @override
+  String get search_page_hint_web_2 => '예: 애니메이션 OP';
+
+  @override
+  String get search_page_hint_web_3 => '앱 내 브라우저로 빠른 동영상 수집';
+
+  @override
+  String get search_page_hint_web_4 => '예: 라이브 2026';
+
+  @override
+  String get search_page_hint_web_5 => '즐겨찾는 사이트 깊게 탐색';
+
+  @override
+  String get search_page_hint_web_6 => '예: 간단 레시피';
 
   @override
   String get search_page_select_site => '사이트 필터';
+
+  @override
+  String get search_page_select_site_help_title => '사이트 필터';
+
+  @override
+  String get search_page_select_site_help_description =>
+      '특정 사이트로 동영상 검색을 좁힐 수 있습니다. 즐겨찾는 동영상 사이트를 등록하면 해당 사이트 내에서만 검색이 가능합니다. 아래 목록에서 사이트를 선택하고 검색 버튼을 누르세요.';
 
   @override
   String get search_page_open_site => '사이트 열기';
@@ -400,6 +425,9 @@ class L10nKo extends L10n {
 
   @override
   String get search_page_random_this => '오늘의 추천!';
+
+  @override
+  String get search_page_random_again => '다시 돌리기';
 
   @override
   String get search_result_page_site_saved => '사이트가 저장되었습니다';
@@ -574,7 +602,7 @@ class L10nKo extends L10n {
   String get settings_page_dark_mode => '다크 모드';
 
   @override
-  String get settings_page_theme_color => '테마 색상 ★';
+  String get settings_page_theme_color => '테마 색상';
 
   @override
   String get settings_page_theme_color_orange => '오렌지';
@@ -681,7 +709,7 @@ class L10nKo extends L10n {
   String get premium_detail_premium_item01 => '무제한 저장';
 
   @override
-  String get premium_detail_premium_item02 => '테마 색상 자유 변경';
+  String get premium_detail_premium_item02 => '테마 색상 골드 추가';
 
   @override
   String get premium_detail_premium_item03 => '이미지 자유 추가';
@@ -696,17 +724,16 @@ class L10nKo extends L10n {
   String get premium_detail_premium_item06 => '광고 제거';
 
   @override
-  String get premium_detail_note =>
-      '1개월 무료 체험 후 자동으로 구독이 갱신됩니다.\n언제든지 취소할 수 있습니다.';
+  String get premium_detail_note => '3일 무료 체험 후 자동으로 결제됩니다.\n언제든 취소할 수 있습니다.';
 
   @override
   String get premium_detail_restore_not_found => '구매 내역을 찾을 수 없습니다';
 
   @override
-  String get premium_detail_free_trial_badge => '1개월 무료';
+  String get premium_detail_free_trial_badge => '3일 무료';
 
   @override
-  String get premium_detail_start_trial => '1개월 무료로 시작';
+  String get premium_detail_start_trial => '3일 무료로 시작';
 
   @override
   String premium_detail_price_after_trial(Object price) {
@@ -896,4 +923,232 @@ class L10nKo extends L10n {
 
   @override
   String get settings_page_theme_color_teal => '청록';
+
+  @override
+  String get login_page_title => '로그인';
+
+  @override
+  String get login_page_description => 'ArchiVe Pro 기능을 사용하려면 로그인하세요.';
+
+  @override
+  String get login_with_apple => 'Apple로 로그인';
+
+  @override
+  String get login_with_google => 'Google로 로그인';
+
+  @override
+  String get login_failed => '로그인에 실패했습니다';
+
+  @override
+  String get logout => '로그아웃';
+
+  @override
+  String get logout_confirm => '로그아웃하시겠습니까?';
+
+  @override
+  String get settings_page_section_account => '계정';
+
+  @override
+  String get settings_page_not_signed_in => '로그인되어 있지 않음';
+
+  @override
+  String get pro_detail_title => 'ArchiVe Pro';
+
+  @override
+  String get pro_detail_subtitle => '모든 프리미엄 기능 외에 다음 기능 제공';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '클라우드 동기화';
+
+  @override
+  String get pro_detail_feature_ai_tagging => 'AI 자동 태그';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'AI 추천 키워드';
+
+  @override
+  String get pro_detail_feature_monthly_report => 'AI 월간 보고서';
+
+  @override
+  String get pro_detail_feature_public_sharing => '공개 목록 공유';
+
+  @override
+  String get pro_detail_feature_theme_teal => '테마 색상 틸 추가';
+
+  @override
+  String get plans_page_title => '플랜';
+
+  @override
+  String get plans_page_current_badge => '현재';
+
+  @override
+  String get plans_page_includes_premium => '모든 Premium 기능 포함';
+
+  @override
+  String get detail_page_ai_suggest => 'AI로 태그 제안';
+
+  @override
+  String get detail_page_ai_loading => 'AI 분석 중...';
+
+  @override
+  String get detail_page_ai_error => 'AI 제안 오류';
+
+  @override
+  String get share_title => '목록 공유';
+
+  @override
+  String get share_loading => '공유 중...';
+
+  @override
+  String get share_url_label => '공유 URL';
+
+  @override
+  String get share_copy => '복사';
+
+  @override
+  String get share_copied => '복사됨';
+
+  @override
+  String get share_unshare => '공유 해제';
+
+  @override
+  String get share_unshare_confirm => '이 목록의 공유를 해제하시겠습니까?';
+
+  @override
+  String get share_create_action => '이 목록 공유';
+
+  @override
+  String get share_error => '공유 오류';
+
+  @override
+  String get share_open_url => '공유 URL 열기';
+
+  @override
+  String get share_description => 'URL이 있는 사람은 누구나 이 목록을 볼 수 있습니다 (읽기 전용)';
+
+  @override
+  String get share_limit_notice => '최대 200개 항목이 공유됩니다';
+
+  @override
+  String get analytics_monthly_report_title => 'AI 요약';
+
+  @override
+  String analytics_monthly_report_subtitle(int month) {
+    return '$month월 요약';
+  }
+
+  @override
+  String get analytics_monthly_report_generate => '요약 생성';
+
+  @override
+  String get analytics_monthly_report_regenerate => '다시 생성';
+
+  @override
+  String get analytics_monthly_report_loading => 'AI가 분석 중입니다...';
+
+  @override
+  String get analytics_monthly_report_empty =>
+      '버튼을 누르면 AI가 이번 달 아카이브 활동을 요약합니다.';
+
+  @override
+  String get analytics_monthly_report_error => '보고서 오류';
+
+  @override
+  String get analytics_monthly_report_cached => '캐시에서';
+
+  @override
+  String get search_result_loading => '로딩 중';
+
+  @override
+  String get grid_page_move_action => '이동';
+
+  @override
+  String get grid_page_move_to_list_title => '이동할 목록 선택';
+
+  @override
+  String get grid_page_move_done => '개 항목 이동됨';
+
+  @override
+  String get undo => '실행 취소';
+
+  @override
+  String get settings_page_theme_color_gold => '골드';
+
+  @override
+  String get plans_page_premium_short => '프리미엄';
+
+  @override
+  String get plans_page_pro_short => 'Pro';
+
+  @override
+  String get plans_page_free_short => '무료';
+
+  @override
+  String get plans_page_free_price => '₩0';
+
+  @override
+  String get plans_page_free_item01 => '100개까지 저장 가능';
+
+  @override
+  String get plans_page_free_item02 => '광고 시청으로 15개/일 확장';
+
+  @override
+  String get plans_page_free_item03 => '단일 태그 검색';
+
+  @override
+  String get plans_page_free_item04 => '광고 표시';
+
+  @override
+  String get share_pro_required_title => 'Pro 요금제 전용 기능';
+
+  @override
+  String get share_pro_required_description => '공개 목록 공유는 Pro 요금제 구매가 필요합니다.';
+
+  @override
+  String get share_pro_required_action => 'Pro 요금제 보기';
+
+  @override
+  String get pro_locked_badge => 'Pro 전용';
+
+  @override
+  String get pro_locked_unlock => 'Pro로 잠금 해제';
+
+  @override
+  String get apple_signin_warning_title => 'Apple 계정으로 로그인하시겠습니까?';
+
+  @override
+  String get apple_signin_warning_description =>
+      'Apple 계정은 Android 기기에서 로그인할 수 없어 데이터가 플랫폼 간 공유되지 않습니다. 여러 기기를 사용한다면 Google 계정을 권장합니다.';
+
+  @override
+  String get apple_signin_warning_continue => 'Apple로 계속';
+
+  @override
+  String get settings_page_manage_subscription => '구독 관리';
+
+  @override
+  String get search_page_ai_recommend_title => 'AI 추천';
+
+  @override
+  String get search_page_ai_recommend_subtitle => '라이브러리 기반 키워드 제안';
+
+  @override
+  String get search_page_ai_recommend_generate => '추천 받기';
+
+  @override
+  String get search_page_ai_recommend_refresh => '다시 생성';
+
+  @override
+  String get search_page_ai_recommend_loading => 'AI가 분석 중...';
+
+  @override
+  String get search_page_ai_recommend_error => '추천 가져오기 실패';
+
+  @override
+  String get search_page_ai_recommend_empty =>
+      '저장된 항목이 부족합니다. 항목을 더 추가한 후 다시 시도해 주세요.';
+
+  @override
+  String get search_page_ai_recommend_intro =>
+      '버튼을 누르면 저장한 라이브러리에서 관련 키워드를 AI가 제안합니다.';
 }

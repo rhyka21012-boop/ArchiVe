@@ -6,6 +6,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'premium_detail.dart';
+import 'pro_detail.dart';
+import 'ai_service.dart';
 import 'l10n/app_localizations.dart';
 
 class AnalyticsPage extends StatefulWidget {
@@ -35,7 +37,16 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   List<Map<String, dynamic>> recentItems = [];
 
   bool _isPremium = false;
+  bool _isPro = false;
+  bool _isLoadingReport = false;
+  String? _monthlyReport;
   bool _debugBypassPremium = false;
+
+  // 今月の AI サマリーをユーザーが閉じたかどうか
+  bool _monthlyReportDismissed = false;
+  static const _kPrefDismissedMonth = 'monthly_report_dismissed_month';
+  static const _kPrefReportMonth = 'monthly_report_cached_month';
+  static const _kPrefReportText = 'monthly_report_cached_text';
 
   Map<String, int> viewingCountByRating = {
     'critical': 0,
@@ -72,6 +83,47 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     super.initState();
     _loadAll();
     _checkSubscriptionStatus();
+    _loadDismissedState();
+  }
+
+  /// レポート対象月（前月）の YYYY-MM キー
+  String _reportMonthKey() {
+    final now = DateTime.now();
+    final prev = DateTime(now.year, now.month - 1, 1);
+    return '${prev.year}-${prev.month.toString().padLeft(2, '0')}';
+  }
+
+  /// 表示用の月（前月の月番号）
+  int _reportMonth() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month - 1, 1).month;
+  }
+
+  Future<void> _loadDismissedState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_kPrefDismissedMonth);
+    if (saved == _reportMonthKey()) {
+      setState(() => _monthlyReportDismissed = true);
+    }
+
+    // 対象月（前月）のキャッシュ済みレポートがあれば復元
+    final cachedMonth = prefs.getString(_kPrefReportMonth);
+    final cachedText = prefs.getString(_kPrefReportText);
+    if (cachedMonth == _reportMonthKey() &&
+        cachedText != null &&
+        cachedText.isNotEmpty) {
+      if (mounted) setState(() => _monthlyReport = cachedText);
+    } else if (cachedMonth != null && cachedMonth != _reportMonthKey()) {
+      // 対象月が変わったらローカルキャッシュを破棄
+      await prefs.remove(_kPrefReportMonth);
+      await prefs.remove(_kPrefReportText);
+    }
+  }
+
+  Future<void> _dismissMonthlyReport() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPrefDismissedMonth, _reportMonthKey());
+    if (mounted) setState(() => _monthlyReportDismissed = true);
   }
 
   void _loadAll() {
@@ -83,11 +135,307 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      final isActive =
+      final isPremium =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
-      setState(() => _isPremium = isActive);
+      final isPro =
+          customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
+      setState(() {
+        _isPremium = isPremium;
+        _isPro = isPro;
+      });
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
+    }
+  }
+
+  /// Pro 未加入向けのコンパクトプレビューカード
+  Widget _buildMonthlyReportLockedCard() {
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    const tealDeep = Color(0xFF00695C);
+    const tealMid = Color(0xFF00897B);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => _generateMonthlyReport(),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1A1A1A)
+                : tealDeep.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: tealMid.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 18, color: tealMid),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          l.analytics_monthly_report_title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tealMid.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lock, size: 10, color: tealMid),
+                              const SizedBox(width: 3),
+                              Text(
+                                l.pro_locked_badge,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: tealMid,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l.analytics_monthly_report_subtitle(
+                          _reportMonth()),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyReportCard() {
+    // Pro 未加入はコンパクトプレビューカードでトーンダウン
+    if (!_isPro) return _buildMonthlyReportLockedCard();
+
+    final l = L10n.of(context)!;
+    const tealDeep = Color(0xFF00695C);
+    const tealLight = Color(0xFF26A69A);
+    const gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [tealDeep, tealLight, tealDeep],
+      stops: [0.0, 0.5, 1.0],
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: tealLight.withValues(alpha: 0.3),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l.analytics_monthly_report_title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      l.analytics_monthly_report_subtitle(_reportMonth()),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: l.close,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
+                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                onPressed: _dismissMonthlyReport,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingReport)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l.analytics_monthly_report_loading,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (_monthlyReport != null)
+            Text(
+              _monthlyReport!,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.6,
+                color: Colors.white,
+              ),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.analytics_monthly_report_empty,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _generateMonthlyReport(),
+                    icon: const Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: tealDeep,
+                    ),
+                    label: Text(
+                      l.analytics_monthly_report_generate,
+                      style: const TextStyle(
+                        color: tealDeep,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateMonthlyReport({bool force = false}) async {
+    if (_isLoadingReport) return;
+    // Pro 未加入なら購入画面を先に表示、加入後にサインイン
+    if (!_isPro) {
+      if (!await ProGate.ensureProPurchaseFirst(context)) return;
+      if (!mounted) return;
+      setState(() => _isPro = true);
+    }
+    setState(() => _isLoadingReport = true);
+    try {
+      final result = await AiService.getMonthlyReport(force: force);
+      if (!mounted) return;
+      setState(() => _monthlyReport = result.report);
+
+      // ローカルキャッシュに保存（次回アプリ起動時に即時復元するため）
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPrefReportMonth, _reportMonthKey());
+      await prefs.setString(_kPrefReportText, result.report);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${L10n.of(context)!.analytics_monthly_report_error}: $e',
+          ),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingReport = false);
     }
   }
 
@@ -173,33 +521,51 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   Future<void> _loadTop5ViewingStats() async {
     final prefs = await SharedPreferences.getInstance();
-    final allKeys = prefs.getKeys();
-    final viewCounts = <String, int>{};
-    int total = 0;
 
-    for (final key in allKeys) {
-      final raw = prefs.get(key);
-      if (raw is int && raw > 0 && key.startsWith('http')) {
-        viewCounts[key] = raw;
-        total += raw;
-      }
-    }
-
+    // 保存済みアイテムを先に取得（削除済みのURLは除外するため）
     final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final savedUrls = <String>{};
+    urlToTitleMap.clear();
+    urlToImageMap.clear();
     for (final item in savedList) {
       final map = jsonDecode(item) as Map<String, dynamic>;
       final url = map['url']?.toString();
       final title = map['title']?.toString();
       final image = map['image']?.toString();
-      if (url != null && title != null) {
-        urlToTitleMap[url] = title;
+      if (url != null) {
+        savedUrls.add(url);
+        if (title != null) urlToTitleMap[url] = title;
         if (image != null) urlToImageMap[url] = image;
       }
+    }
+
+    final allKeys = prefs.getKeys();
+    final viewCounts = <String, int>{};
+    int total = 0;
+    final orphanKeys = <String>[];
+
+    for (final key in allKeys) {
+      final raw = prefs.get(key);
+      if (raw is int && raw > 0 && key.startsWith('http')) {
+        // 削除済みアイテムの視聴カウントはスキップ＆クリーンアップ対象に
+        if (!savedUrls.contains(key)) {
+          orphanKeys.add(key);
+          continue;
+        }
+        viewCounts[key] = raw;
+        total += raw;
+      }
+    }
+
+    // 孤立した視聴カウントを削除（ゴミ掃除）
+    for (final k in orphanKeys) {
+      await prefs.remove(k);
     }
 
     final sorted =
         viewCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
+    if (!mounted) return;
     setState(() {
       top5Viewings = sorted.take(5).toList();
       totalViewCount = total;
@@ -233,6 +599,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
+              if (!_monthlyReportDismissed) _buildMonthlyReportCard(),
               _buildSummarySection(),
               _buildTop5ViewSection(),
               _buildRatingSection(),

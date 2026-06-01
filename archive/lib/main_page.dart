@@ -27,6 +27,7 @@ import 'app_group_service.dart';
 import 'random_image_reload_provider.dart';
 import 'list_reload_provider.dart';
 import 'my_flutter_app_icons.dart';
+import 'theme_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -138,6 +139,10 @@ class _MainPageState extends ConsumerState<MainPage>
     }
   }
 
+  // SharedPreferences キー（永続化することでアプリ再起動後も同じURLは再表示しない）
+  static const _kPrefClipboardChangeCount = 'clipboard_last_change_count_ios';
+  static const _kPrefClipboardUrl = 'clipboard_last_url_android';
+
   /// iOS: ネイティブで「ペーストダイアログを出さずに」URL存在と変更回数をチェックし、
   /// ユーザーがOKを押した時に初めてクリップボードを読む。
   Future<void> _checkClipboardIOS() async {
@@ -152,9 +157,14 @@ class _MainPageState extends ConsumerState<MainPage>
     final changeCount = (result['changeCount'] as num?)?.toInt() ?? 0;
     final hasUrl = result['hasURL'] as bool? ?? false;
 
+    // 永続化された前回値を遅延ロード
+    final prefs = await SharedPreferences.getInstance();
+    _lastClipboardChangeCount ??= prefs.getInt(_kPrefClipboardChangeCount);
+
     // 前回チェックから変化がなければスキップ（ユーザーを煩わせない）
     if (changeCount == _lastClipboardChangeCount) return;
     _lastClipboardChangeCount = changeCount;
+    await prefs.setInt(_kPrefClipboardChangeCount, changeCount);
 
     if (!hasUrl) return;
     if (!mounted) return;
@@ -181,8 +191,14 @@ class _MainPageState extends ConsumerState<MainPage>
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = (data?.text ?? '').trim();
     if (!text.startsWith('http://') && !text.startsWith('https://')) return;
+
+    // 永続化された前回URLを遅延ロード
+    final prefs = await SharedPreferences.getInstance();
+    _lastCheckedClipboardUrl ??= prefs.getString(_kPrefClipboardUrl);
+
     if (text == _lastCheckedClipboardUrl) return;
     _lastCheckedClipboardUrl = text;
+    await prefs.setString(_kPrefClipboardUrl, text);
 
     if (!mounted) return;
 
@@ -507,7 +523,8 @@ class _MainPageState extends ConsumerState<MainPage>
     });
 
     final watchedAdToday = ref.watch(adBadgeProvider);
-    final showAdBadge = watchedAdToday < 3;
+    // Premium（Pro含む）加入者には赤バッジ非表示
+    final showAdBadge = watchedAdToday < 3 && !_isPremium;
     final colorScheme = Theme.of(context).colorScheme;
 
     final List<Widget> _pages = [
@@ -518,7 +535,6 @@ class _MainPageState extends ConsumerState<MainPage>
     ];
 
     return Scaffold(
-      extendBody: true,
       backgroundColor: Color(0xFF121212),
       body: Stack(
         children: [
@@ -606,11 +622,27 @@ class _MainPageState extends ConsumerState<MainPage>
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      final isActive =
+      final isPremium =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
       setState(() {
-        _isPremium = isActive;
+        _isPremium = isPremium;
       });
+
+      // Premium 限定（gold）解除時、または Pro 限定（teal）解除時のみ既定に戻す
+      // その他のカラーは無料でも変更可能なので保持
+      final currentColor = ref.read(themeColorProvider);
+      if (isPremiumOnlyThemeColor(currentColor) && !isPremium) {
+        await ref
+            .read(themeColorProvider.notifier)
+            .setColor(ThemeColorType.orange);
+      } else if (isProOnlyThemeColor(currentColor) && !isPro) {
+        await ref
+            .read(themeColorProvider.notifier)
+            .setColor(ThemeColorType.orange);
+      }
+
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
     }
@@ -620,7 +652,7 @@ class _MainPageState extends ConsumerState<MainPage>
   Future<void> checkAppVersion(BuildContext context) async {
     try {
       final response = await http.get(
-        Uri.parse('https://archive-e4efc.firebaseapp.com/version.json'),
+        Uri.parse('https://walkinggoblins-site.web.app/version.json'),
       );
 
       print(response.statusCode);
