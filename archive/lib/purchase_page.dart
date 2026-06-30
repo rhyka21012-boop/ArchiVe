@@ -30,6 +30,7 @@ class _PurchasePageState extends State<PurchasePage>
   Offering? _premiumOffering;
   Offering? _proOffering;
   String _currentEntitlement = '';
+  BillingPeriod? _currentPeriod;
   bool _isPurchasingPremium = false;
   bool _isPurchasingPro = false;
 
@@ -44,20 +45,47 @@ class _PurchasePageState extends State<PurchasePage>
       final offerings = await Purchases.getOfferings();
       final info = await Purchases.getCustomerInfo();
       String current = '';
+      String? currentProductId;
       if (info.entitlements.all['Pro Plan']?.isActive ?? false) {
         current = 'Pro Plan';
+        currentProductId =
+            info.entitlements.all['Pro Plan']?.productIdentifier;
       } else if (info.entitlements.all['Premium Plan']?.isActive ?? false) {
         current = 'Premium Plan';
+        currentProductId =
+            info.entitlements.all['Premium Plan']?.productIdentifier;
       }
+
+      final premiumOffering = offerings.current;
+      final proOffering = offerings.getOffering('pro');
+      final currentPeriod = _periodOfProductId(
+        currentProductId,
+        current == 'Pro Plan' ? proOffering : premiumOffering,
+      );
+
       if (!mounted) return;
       setState(() {
-        _premiumOffering = offerings.current;
-        _proOffering = offerings.getOffering('pro');
+        _premiumOffering = premiumOffering;
+        _proOffering = proOffering;
         _currentEntitlement = current;
+        _currentPeriod = currentPeriod;
       });
     } catch (e) {
       debugPrint('Purchase page load error: $e');
     }
+  }
+
+  BillingPeriod? _periodOfProductId(String? productId, Offering? offering) {
+    if (productId == null || offering == null) return null;
+    final base = productId.split(':').first;
+    for (final p in offering.availablePackages) {
+      final pid = p.storeProduct.identifier.split(':').first;
+      if (pid == base) {
+        if (p.packageType == PackageType.monthly) return BillingPeriod.monthly;
+        if (p.packageType == PackageType.annual) return BillingPeriod.annual;
+      }
+    }
+    return null;
   }
 
   Package? _packageOf(Offering? offering, BillingPeriod period) {
@@ -498,7 +526,8 @@ class _PurchasePageState extends State<PurchasePage>
   // ============================================================
   Widget _buildPremiumCard(L10n l, ColorScheme colorScheme) {
     final pkg = _packageOf(_premiumOffering, _period);
-    final isCurrent = _currentEntitlement == 'Premium Plan';
+    final isCurrent = _currentEntitlement == 'Premium Plan' &&
+        _currentPeriod == _period;
     return _buildPlanCard(
       l: l,
       colorScheme: colorScheme,
@@ -528,7 +557,8 @@ class _PurchasePageState extends State<PurchasePage>
   // ============================================================
   Widget _buildProCard(L10n l, ColorScheme colorScheme) {
     final pkg = _packageOf(_proOffering, _period);
-    final isCurrent = _currentEntitlement == 'Pro Plan';
+    final isCurrent =
+        _currentEntitlement == 'Pro Plan' && _currentPeriod == _period;
     return _buildPlanCard(
       l: l,
       colorScheme: colorScheme,
