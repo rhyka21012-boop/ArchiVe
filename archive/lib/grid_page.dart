@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
@@ -466,15 +467,15 @@ class GridPageState extends ConsumerState<GridPage> {
                                     borderRadius: BorderRadius.circular(8),
                                     child:
                                         item['image'] != null
-                                            ? Image.network(
-                                              item['image'],
+                                            ? CachedNetworkImage(
+                                              imageUrl: item['image'],
                                               height: 80,
                                               width: 90,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (
+                                              errorWidget: (
                                                 context,
+                                                url,
                                                 error,
-                                                stackTrace,
                                               ) {
                                                 return Container(
                                                   height: 80,
@@ -785,9 +786,11 @@ class GridPageState extends ConsumerState<GridPage> {
                                 children: [
                                   Positioned.fill(
                                     child: item['image'] != null
-                                        ? Image.network(
-                                            item['image'],
+                                        ? CachedNetworkImage(
+                                            imageUrl: item['image'],
                                             fit: BoxFit.cover,
+                                            errorWidget: (context, url, error) =>
+                                                placeholderWidget(context),
                                           )
                                         : placeholderWidget(context),
                                   ),
@@ -836,7 +839,12 @@ class GridPageState extends ConsumerState<GridPage> {
                         children: [
                           Positioned.fill(
                             child: item['image'] != null
-                                ? Image.network(item['image'], fit: BoxFit.cover)
+                                ? CachedNetworkImage(
+                                    imageUrl: item['image'],
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) =>
+                                        placeholderWidget(context),
+                                  )
                                 : placeholderWidget(context),
                           ),
                           Positioned(

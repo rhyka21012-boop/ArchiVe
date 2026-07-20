@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 import 'dart:ui';
 import 'dart:async';
@@ -90,11 +91,11 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
               child:
                   imageUrl != null
                       ? (showThumbnail
-                          ? Image.network(
-                            imageUrl,
+                          ? CachedNetworkImage(
+                            imageUrl: imageUrl,
                             key: ValueKey(imageUrl),
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
+                            errorWidget: (context, url, error) {
                               return Container(
                                 height: 100,
                                 color: Colors.grey[300],

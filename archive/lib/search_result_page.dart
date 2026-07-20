@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
@@ -533,12 +534,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: image != null && image.isNotEmpty
-                            ? Image.network(
-                                image,
+                            ? CachedNetworkImage(
+                                imageUrl: image,
                                 width: 52,
                                 height: 36,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorWidget: (_, __, ___) =>
                                     _playlistPlaceholder(),
                               )
                             : _playlistPlaceholder(),
@@ -1130,10 +1131,10 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                               width: 72,
                               height: 54,
                               child: thumbnailUrl != null
-                                  ? Image.network(
-                                      thumbnailUrl!,
+                                  ? CachedNetworkImage(
+                                      imageUrl: thumbnailUrl!,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
+                                      errorWidget: (_, __, ___) => Container(
                                         color: Colors.grey.shade300,
                                         child: const Icon(
                                           Icons.image_not_supported,

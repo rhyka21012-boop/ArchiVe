@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PlaylistPlayerPage extends StatefulWidget {
   final List<Map<String, dynamic>> items;
@@ -283,12 +284,12 @@ class _PlaylistPlayerPageState extends State<PlaylistPlayerPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: image != null
-                            ? Image.network(
-                                image,
+                            ? CachedNetworkImage(
+                                imageUrl: image,
                                 width: 52,
                                 height: 36,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _placeholder(),
+                                errorWidget: (_, __, ___) => _placeholder(),
                               )
                             : _placeholder(),
                       ),

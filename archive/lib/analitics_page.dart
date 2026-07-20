@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'premium_detail.dart';
 import 'pro_detail.dart';
 import 'ai_service.dart';
@@ -935,12 +936,12 @@ class AnalyticsPageState extends State<AnalyticsPage> {
             borderRadius: BorderRadius.circular(8),
             child:
                 imageUrl != null
-                    ? Image.network(
-                      imageUrl,
+                    ? CachedNetworkImage(
+                      imageUrl: imageUrl,
                       width: 56,
                       height: 64,
                       fit: BoxFit.cover,
-                      errorBuilder:
+                      errorWidget:
                           (_, __, ___) =>
                               const Icon(Icons.broken_image, size: 56),
                     )
@@ -1025,12 +1026,12 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                     borderRadius: BorderRadius.circular(8),
                     child:
                         image != null
-                            ? Image.network(
-                              image,
+                            ? CachedNetworkImage(
+                              imageUrl: image,
                               width: 48,
                               height: 56,
                               fit: BoxFit.cover,
-                              errorBuilder:
+                              errorWidget:
                                   (_, __, ___) =>
                                       const Icon(Icons.broken_image, size: 48),
                             )
@@ -1173,12 +1174,12 @@ class AnalyticsPageState extends State<AnalyticsPage> {
                         imageUrl != null
                             ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                imageUrl,
+                              child: CachedNetworkImage(
+                                imageUrl: imageUrl,
                                 width: 44,
                                 height: 44,
                                 fit: BoxFit.cover,
-                                errorBuilder:
+                                errorWidget:
                                     (_, __, ___) => const Icon(
                                       Icons.broken_image,
                                       size: 40,
