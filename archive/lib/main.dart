@@ -8,6 +8,7 @@ import 'launch_gate.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
+import 'rating_label_provider.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -18,6 +19,7 @@ void main() async {
   final container = ProviderContainer();
   await container.read(themeModeProvider.notifier).loadTheme();
   await container.read(themeColorProvider.notifier).loadColor();
+  await container.read(ratingLabelsProvider.notifier).load();
 
   // トラッキング許可ダイアログ
   //final status = await AppTrackingTransparency.requestTrackingAuthorization();

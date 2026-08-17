@@ -114,6 +114,9 @@ class L10nEn extends L10n {
   String get main_page_update_now => 'Update';
 
   @override
+  String get list_page_home => 'Home';
+
+  @override
   String get list_page_my_list => 'My Lists';
 
   @override
@@ -127,6 +130,37 @@ class L10nEn extends L10n {
 
   @override
   String get list_page_input_list_name => 'Enter list name';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get list_page_rating_rename_title => 'Rename rating';
+
+  @override
+  String get list_page_reorder => 'Reorder';
+
+  @override
+  String get list_page_reorder_done => 'Done';
+
+  @override
+  String get list_page_reorder_hint => 'Drag to change the order';
+
+  @override
+  String get list_page_all_item_fixed => '\"All items\" cannot be reordered';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return 'Saved $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => ' items';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count items';
+  }
 
   @override
   String get ranking_page_dragable => 'Drag to reorder';
@@ -228,6 +262,17 @@ class L10nEn extends L10n {
   String get detail_page_modify => 'Edit';
 
   @override
+  String get detail_page_share => 'Share';
+
+  @override
+  String get detail_page_copied => 'Copied';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return 'Saved to $listName';
+  }
+
+  @override
   String get detail_page_save => 'Save';
 
   @override
@@ -245,6 +290,21 @@ class L10nEn extends L10n {
 
   @override
   String get detail_page_title_placeholder => 'Title';
+
+  @override
+  String get detail_page_cast_short => 'Cast';
+
+  @override
+  String get detail_page_genre_short => 'Genre';
+
+  @override
+  String get detail_page_series_short => 'Series';
+
+  @override
+  String get detail_page_maker_short => 'Maker';
+
+  @override
+  String get detail_page_label_short => 'Label';
 
   @override
   String get detail_page_cast => 'Cast (# multiple)';
@@ -496,6 +556,13 @@ class L10nEn extends L10n {
   String get analytics_page_view_count_top5 => 'Top 5 View Counts';
 
   @override
+  String get analytics_page_no_view_records_title => 'No view records yet';
+
+  @override
+  String get analytics_page_no_view_records_hint =>
+      'Records will appear once you log views in item details';
+
+  @override
   String get analytics_page_no_data => 'No data available';
 
   @override
@@ -677,7 +744,7 @@ class L10nEn extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return 'Views: $viewCount';
+    return 'Views $viewCount';
   }
 
   @override

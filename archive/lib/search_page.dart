@@ -19,6 +19,8 @@ import 'search_tab_index_provider.dart';
 import 'ai_service.dart';
 import 'pro_detail.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'circle_app_bar_icon.dart';
+import 'theme_provider.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -173,6 +175,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
 
     //アプリ内・Webタブ管理
     ref.watch(searchTabIndexProvider);
@@ -183,60 +187,68 @@ class SearchPageState extends ConsumerState<SearchPage> {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        //backgroundColor: Color(0xFF121212),
+        backgroundColor: pageBg,
         appBar: AppBar(
-          title: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            //セグメントボタン
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SegmentedButton<bool>(
+          backgroundColor: pageBg,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 12,
+          title: Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<bool>(
+                  emptySelectionAllowed: false,
+                  showSelectedIcon: false,
                   style: ButtonStyle(
-                    elevation: MaterialStateProperty.all(0),
+                    elevation: WidgetStateProperty.all(0),
                     visualDensity: VisualDensity.standard,
-                    padding: MaterialStateProperty.all(
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    ),
-                    shape: MaterialStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    padding: WidgetStateProperty.all(
+                      const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 10,
                       ),
                     ),
-                    side: MaterialStateProperty.resolveWith((states) {
-                      return BorderSide.none; // 枠線を消す
-                    }),
-                    backgroundColor: MaterialStateProperty.resolveWith((
-                      states,
-                    ) {
-                      if (states.contains(MaterialState.selected)) {
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    side: WidgetStateProperty.resolveWith(
+                      (_) => BorderSide.none,
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
                         return colorScheme.primary;
                       }
-                      return Colors.grey[300];
+                      return isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.grey.shade200;
                     }),
-                    foregroundColor: MaterialStateProperty.resolveWith((
-                      states,
-                    ) {
-                      if (states.contains(MaterialState.selected)) {
+                    foregroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
                         return Colors.white;
                       }
-                      return Colors.black;
+                      return isDark ? Colors.white : Colors.black87;
                     }),
+                    textStyle: WidgetStateProperty.all(
+                      const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   segments: [
                     ButtonSegment(
                       value: false,
                       label: Text(
-                        L10n.of(context)!.search_page_segment_button_app, //アプリ内
-                      ), //アプリ内
-                      icon: Icon(Icons.apps),
+                        L10n.of(context)!.search_page_segment_button_app,
+                      ),
                     ),
                     ButtonSegment(
                       value: true,
                       label: Text(
-                        L10n.of(context)!.search_page_segment_button_web, //Web
-                      ), //Web
-                      icon: Icon(Icons.public),
+                        L10n.of(context)!.search_page_segment_button_web,
+                      ),
                     ),
                   ],
                   selected: {isWeb},
@@ -245,184 +257,221 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         value.first ? 0 : 1;
                   },
                 ),
-
-                /// ルーレットボタン
-                IconButton(
-                  icon: const Icon(
-                    IconData(0xea5c, fontFamily: 'FlutterIcon'),
-                    size: 24,
-                  ),
-                  tooltip: "Random",
-                  onPressed: () {
-                    if (_savedItems.isEmpty) return;
-
-                    _showRouletteModal();
-                  },
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              CircleAppBarIcon(
+                icon: const IconData(0xea5c, fontFamily: 'FlutterIcon'),
+                tooltip: "Random",
+                onPressed: () {
+                  if (_savedItems.isEmpty) return;
+                  _showRouletteModal();
+                },
+              ),
+            ],
           ),
-          //backgroundColor: Color(0xFF121212),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _searchTextField(),
-                SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+        body: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    //クリアボタン
-                    ElevatedButton(
-                      onPressed: _clearAllSelections,
-                      style: ButtonStyle(
-                        elevation: MaterialStateProperty.all(0),
-                        backgroundColor: MaterialStateProperty.all(
-                          Colors.grey[300],
-                        ),
-                        foregroundColor: MaterialStateProperty.all(
-                          Colors.black,
-                        ),
-                        shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      child: Text(L10n.of(context)!.clear), //クリア
-                    ),
-                    SizedBox(width: 8),
-                    //検索ボタン
-                    ElevatedButton(
-                      onPressed: () async {
-                        _ignoreNextFocus = true;
-
-                        //検索バーへのフォーカスを外す
-                        FocusScope.of(context).unfocus();
-
-                        //検索履歴のオーバーレイを非表示
-                        _removeOverlay();
-
-                        //検索文字列
-                        final text = _searchController.text.trim();
-
-                        /*
-                        if (isWeb && text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                L10n.of(context)!.search_page_text_empty,
-                              ),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-
-                          return; //検索欄が空の場合は何もしない
-                        }
-                        ;
-                        */
-
-                        //選択したカテゴリ数をカウント
-                        final selectedCategoryCount =
-                            _countSelectedCategories();
-
-                        //複数カテゴリ指定はプレミアム限定
-                        if (!isWeb && selectedCategoryCount >= 2) {
-                          await _showPremiumInfoDialog();
-                          return;
-                        }
-
-                        // 選択中のお気に入りURL（なければ null）
-                        final favorites = ref.read(favoriteSitesProvider);
-
-                        final String? selectedFavoriteUrl =
-                            _selectedFavoriteIndex != null
-                                ? favorites[_selectedFavoriteIndex!]['url']
-                                : null;
-
-                        _addSearchHistory(text);
-
-                        final bool? updated =
-                            isWeb
-                                ? await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => SearchResultPage(
-                                          initialUrl: _buildWebSearchUrl(
-                                            text,
-                                            selectedFavoriteUrl,
-                                          ),
-                                          title:
-                                              L10n.of(
-                                                context,
-                                              )!.search_page_web_title,
-                                        ),
-                                  ),
-                                )
-                                : await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => GridPage(
-                                          selectedItems:
-                                              getSelectedItemsByKey(),
-                                          searchText: text,
-                                          rating: '',
-                                          listName: '',
-                                        ),
-                                  ),
-                                );
-
-                        //戻ってきたフレームでunFocusを解除
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _ignoreNextFocus = false;
-                        });
-                      },
-                      style: ButtonStyle(
-                        elevation: MaterialStateProperty.all(0),
-                        backgroundColor: MaterialStateProperty.all(
-                          colorScheme.primary,
-                        ),
-                        foregroundColor: MaterialStateProperty.all(
-                          Colors.white,
-                        ),
-                        shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      child: Text(L10n.of(context)!.search_page_search), //検索
-                    ),
+                    _searchTextField(),
+                    const SizedBox(height: 20),
+                    isWeb ? _buildWebSearchSection() : _buildAppSearchSection(),
+                    // 下部固定バーに隠れない余白
+                    const SizedBox(height: 100),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                isWeb ? _buildWebSearchSection() : _buildAppSearchSection(),
-
-                const SizedBox(height: 140),
-                /*** UI切り替え箇所End ***/
-              ],
+              ),
             ),
-          ),
+            // 下部にフロート固定 (背景は透過、スクロールコンテンツが後ろを流れる)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 12 + MediaQuery.of(context).padding.bottom,
+              child: _buildBottomActionBar(colorScheme, isDark),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  //====================
-  //検索バーのウィジェット
-  //====================
+  // ── 下部アクションバー (クリア + 検索 + 件数) ──────
+  Widget _buildBottomActionBar(ColorScheme colorScheme, bool isDark) {
+    final clearBg = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.grey.shade200;
+    final clearFg = isDark ? Colors.white : Colors.black87;
+    final resultCount = isWeb ? null : _computeResultCount();
+    return Row(
+      children: [
+        Material(
+          color: clearBg,
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: _clearAllSelections,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 14,
+              ),
+              child: Text(
+                L10n.of(context)!.clear,
+                style: TextStyle(
+                  color: clearFg,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Material(
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(24),
+            elevation: 4,
+            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: _performSearch,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      L10n.of(context)!.search_page_search,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (resultCount != null)
+                      Text(
+                        L10n.of(context)!.list_page_item_count(resultCount),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 検索遷移処理 (下部「検索」ボタンから呼び出し)
+  Future<void> _performSearch() async {
+    _ignoreNextFocus = true;
+    FocusScope.of(context).unfocus();
+    _removeOverlay();
+
+    final text = _searchController.text.trim();
+
+    // 複数カテゴリ指定はプレミアム限定
+    final selectedCategoryCount = _countSelectedCategories();
+    if (!isWeb && selectedCategoryCount >= 2) {
+      await _showPremiumInfoDialog();
+      return;
+    }
+
+    final favorites = ref.read(favoriteSitesProvider);
+    final String? selectedFavoriteUrl = _selectedFavoriteIndex != null
+        ? favorites[_selectedFavoriteIndex!]['url']
+        : null;
+
+    _addSearchHistory(text);
+
+    if (!mounted) return;
+    if (isWeb) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SearchResultPage(
+            initialUrl: _buildWebSearchUrl(text, selectedFavoriteUrl),
+            title: L10n.of(context)!.search_page_web_title,
+          ),
+        ),
+      );
+    } else {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GridPage(
+            selectedItems: getSelectedItemsByKey(),
+            searchText: text,
+            rating: '',
+            listName: '',
+          ),
+        ),
+      );
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ignoreNextFocus = false;
+    });
+  }
+
+  // 現在の入力・選択で絞り込んだ結果件数を算出
+  int _computeResultCount() {
+    final text = _searchController.text.trim().toLowerCase();
+    final filters = getSelectedItemsByKey();
+    return _savedItems.where((item) {
+      // 条件①: searchText で絞り込み (title に含まれる)
+      if (text.isNotEmpty) {
+        final title = (item['title'] ?? '').toString().toLowerCase();
+        if (!title.contains(text)) return false;
+      }
+      // 条件②: カテゴリ絞り込み (キー AND、キー内は OR)
+      for (final entry in filters.entries) {
+        final rawValue = (item[entry.key] ?? '').toString().toLowerCase();
+        final anyMatch = entry.value.any(
+          (v) => rawValue.contains(v.toLowerCase()),
+        );
+        if (!anyMatch) return false;
+      }
+      return true;
+    }).length;
+  }
+
   Widget _searchTextField() {
     return Row(
       children: [
         Expanded(
           child: Container(
             key: _searchBarKey,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.brightness == Brightness.dark
+                  ? const Color(0xFF2C2C2C)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: Theme.of(context).colorScheme.brightness ==
+                      Brightness.dark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
             child: TextField(
               controller: _searchController,
               onChanged: (text) {},
@@ -480,10 +529,18 @@ class SearchPageState extends ConsumerState<SearchPage> {
               style: const TextStyle(color: Colors.black, fontSize: 16),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.grey[200],
+                fillColor: Colors.transparent,
                 border: OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 prefixIcon: Icon(
                   isWeb ? Icons.public : Icons.search,
@@ -810,14 +867,27 @@ class SearchPageState extends ConsumerState<SearchPage> {
           showAll ? options.length : _maxVisibleChips(options.length);
       final hasHiddenOptions = options.length > visibleCount;
 
+      final isDark = colorScheme.brightness == Brightness.dark;
+      final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+      final chipBg = isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.grey.shade200;
+      final chipFg = isDark ? Colors.white : Colors.black87;
+
       return Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color:
-              colorScheme.brightness == Brightness.light
-                  ? Colors.grey[200]
-                  : const Color(0xFF2C2C2C),
-          borderRadius: BorderRadius.circular(12),
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -829,21 +899,40 @@ class SearchPageState extends ConsumerState<SearchPage> {
                 });
               }
             },
-            title: Text(
-              '$label ($selectedCount/${options.length})',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            title: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: chipFg,
+                      fontSize: 15,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '  $selectedCount/${options.length}',
+                    style: TextStyle(
+                      color: chipFg.withValues(alpha: 0.55),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
             children: [
               Padding(
-                padding: const EdgeInsets.all(8),
+                padding:
+                    const EdgeInsets.fromLTRB(16, 0, 16, 14),
                 child: Wrap(
-                  spacing: 6,
+                  spacing: 8,
                   runSpacing: 8,
                   children: [
                     ...List.generate(visibleCount, (i) {
+                      final selected =
+                          _selectedListByKey[key]?[i] ?? false;
                       return ChoiceChip(
                         visualDensity: const VisualDensity(
                           horizontal: -1,
@@ -851,28 +940,31 @@ class SearchPageState extends ConsumerState<SearchPage> {
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         labelPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 2,
+                          horizontal: 12,
+                          vertical: 4,
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         side: BorderSide.none,
                         showCheckmark: false,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         label: Text(
                           options[i],
                           style: TextStyle(
-                            color: Colors.black,
+                            color: selected ? Colors.white : chipFg,
                             fontSize: 13,
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
                           ),
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: chipBg,
                         selectedColor: colorScheme.primary,
-                        selected: _selectedListByKey[key]?[i] ?? false,
-                        onSelected: (selected) {
+                        selected: selected,
+                        onSelected: (v) {
                           setState(() {
-                            _selectedListByKey[key]?[i] = selected;
+                            _selectedListByKey[key]?[i] = v;
                           });
                         },
                       );

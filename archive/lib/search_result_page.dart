@@ -17,6 +17,8 @@ import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
 import 'list_reload_provider.dart';
 import 'save_limit_helper.dart';
+import 'rating_label_provider.dart';
+import 'circle_app_bar_icon.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -277,21 +279,20 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         elevation: 6,
         backgroundColor: colorScheme.surface,
 
-        // 戻る専用
+        // 戻る (長押しで履歴)
         leading: GestureDetector(
-          onTap: () async {
-            if (_canGoBack) {
-              await _controller.goBack();
-            } else {
-              Navigator.pop(context);
-            }
-          },
           onLongPress: () {
-            _showHistoryDialog(); // ← 履歴表示
+            _showHistoryDialog();
           },
-          child: const Padding(
-            padding: EdgeInsets.all(12), // タップ領域を確保
-            child: Icon(Icons.arrow_back),
+          child: CircleAppBarIcon(
+            icon: Icons.arrow_back,
+            onPressed: () async {
+              if (_canGoBack) {
+                await _controller.goBack();
+              } else {
+                Navigator.pop(context);
+              }
+            },
           ),
         ),
 
@@ -299,23 +300,24 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         titleSpacing: 0,
 
         actions: [
-          IconButton(
+          CircleAppBarIcon(
+            icon: isFav ? Icons.star : Icons.star_border,
             tooltip: L10n.of(context)!.favorite,
-            icon: Icon(isFav ? Icons.star : Icons.star_border),
             onPressed: _toggleFavorite,
           ),
-          IconButton(
+          CircleAppBarIcon(
+            icon: Icons.ios_share,
             tooltip: 'Share',
-            icon: const Icon(Icons.ios_share),
             onPressed: _shareCurrentUrl,
           ),
-          IconButton(
+          CircleAppBarIcon(
+            icon: Icons.close,
             tooltip: L10n.of(context)!.close,
-            icon: const Icon(Icons.close),
             onPressed: () {
               Navigator.pop(context, true);
             },
           ),
+          const SizedBox(width: 4),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(2),
@@ -1179,7 +1181,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                       children: [
                         _ratingButton(
                           isSelected: dialogSelectedRating == 'critical',
-                          label: L10n.of(context)!.critical,
+                          label: ratingLabelOf(
+                            context,
+                            ref.watch(ratingLabelsProvider),
+                            kRatingCritical,
+                          ),
                           imagePath: 'assets/icons/critical.png',
                           grayPath: 'assets/icons/critical_gray.png',
                           onTap: () {
@@ -1193,7 +1199,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                         ),
                         _ratingButton(
                           isSelected: dialogSelectedRating == 'normal',
-                          label: L10n.of(context)!.normal,
+                          label: ratingLabelOf(
+                            context,
+                            ref.watch(ratingLabelsProvider),
+                            kRatingNormal,
+                          ),
                           imagePath: 'assets/icons/normal.png',
                           grayPath: 'assets/icons/normal_gray.png',
                           onTap: () {
@@ -1207,7 +1217,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                         ),
                         _ratingButton(
                           isSelected: dialogSelectedRating == 'maniac',
-                          label: L10n.of(context)!.maniac,
+                          label: ratingLabelOf(
+                            context,
+                            ref.watch(ratingLabelsProvider),
+                            kRatingManiac,
+                          ),
                           imagePath: 'assets/icons/maniac.png',
                           grayPath: 'assets/icons/maniac_gray.png',
                           onTap: () {

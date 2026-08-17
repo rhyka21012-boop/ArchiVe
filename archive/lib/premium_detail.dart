@@ -4,6 +4,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'main.dart';
 import 'l10n/app_localizations.dart';
 import 'purchase_page.dart';
+import 'circle_app_bar_icon.dart';
 
 /// ===============================
 /// 外部から呼ぶためのゲートクラス
@@ -229,8 +230,8 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
+        leading: CircleAppBarIcon(
+          icon: Icons.close,
           onPressed: () => Navigator.pop(context, false),
         ),
       ),

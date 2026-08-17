@@ -114,6 +114,9 @@ class L10nZh extends L10n {
   String get main_page_update_now => '立即更新';
 
   @override
+  String get list_page_home => '主页';
+
+  @override
   String get list_page_my_list => '我的列表';
 
   @override
@@ -127,6 +130,37 @@ class L10nZh extends L10n {
 
   @override
   String get list_page_input_list_name => '输入列表名称';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get list_page_rating_rename_title => '修改评价名称';
+
+  @override
+  String get list_page_reorder => '排序';
+
+  @override
+  String get list_page_reorder_done => '完成';
+
+  @override
+  String get list_page_reorder_hint => '拖动以更改顺序';
+
+  @override
+  String get list_page_all_item_fixed => '「全部项目」无法排序';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return '已保存 $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => '项';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count项';
+  }
 
   @override
   String get ranking_page_dragable => '拖动排序';
@@ -226,6 +260,17 @@ class L10nZh extends L10n {
   String get detail_page_modify => '编辑';
 
   @override
+  String get detail_page_share => '分享';
+
+  @override
+  String get detail_page_copied => '已复制';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return '已保存到 $listName';
+  }
+
+  @override
   String get detail_page_save => '保存';
 
   @override
@@ -242,6 +287,21 @@ class L10nZh extends L10n {
 
   @override
   String get detail_page_title_placeholder => '标题';
+
+  @override
+  String get detail_page_cast_short => '演员';
+
+  @override
+  String get detail_page_genre_short => '类型';
+
+  @override
+  String get detail_page_series_short => '系列';
+
+  @override
+  String get detail_page_maker_short => '制作方';
+
+  @override
+  String get detail_page_label_short => '厂牌';
 
   @override
   String get detail_page_cast => '演员 (# 多个)';
@@ -488,6 +548,12 @@ class L10nZh extends L10n {
   String get analytics_page_view_count_top5 => '浏览量前5名';
 
   @override
+  String get analytics_page_no_view_records_title => '尚无浏览记录';
+
+  @override
+  String get analytics_page_no_view_records_hint => '在作品详情中记录浏览次数后会显示';
+
+  @override
   String get analytics_page_no_data => '暂无数据';
 
   @override
@@ -669,7 +735,7 @@ class L10nZh extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return '浏览次数：$viewCount';
+    return '浏览 $viewCount';
   }
 
   @override
@@ -1257,6 +1323,9 @@ class L10nZhHans extends L10nZh {
   String get main_page_update_now => '立即更新';
 
   @override
+  String get list_page_home => '主页';
+
+  @override
   String get list_page_my_list => '我的列表';
 
   @override
@@ -1270,6 +1339,37 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get list_page_input_list_name => '输入列表名称';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get list_page_rating_rename_title => '修改评价名称';
+
+  @override
+  String get list_page_reorder => '排序';
+
+  @override
+  String get list_page_reorder_done => '完成';
+
+  @override
+  String get list_page_reorder_hint => '拖动以更改顺序';
+
+  @override
+  String get list_page_all_item_fixed => '「全部项目」无法排序';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return '已保存 $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => '项';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count项';
+  }
 
   @override
   String get ranking_page_dragable => '拖动排序';
@@ -1369,6 +1469,17 @@ class L10nZhHans extends L10nZh {
   String get detail_page_modify => '编辑';
 
   @override
+  String get detail_page_share => '分享';
+
+  @override
+  String get detail_page_copied => '已复制';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return '已保存到 $listName';
+  }
+
+  @override
   String get detail_page_save => '保存';
 
   @override
@@ -1385,6 +1496,21 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get detail_page_title_placeholder => '标题';
+
+  @override
+  String get detail_page_cast_short => '演员';
+
+  @override
+  String get detail_page_genre_short => '类型';
+
+  @override
+  String get detail_page_series_short => '系列';
+
+  @override
+  String get detail_page_maker_short => '制作方';
+
+  @override
+  String get detail_page_label_short => '厂牌';
 
   @override
   String get detail_page_cast => '演员 (# 多个)';
@@ -1631,6 +1757,12 @@ class L10nZhHans extends L10nZh {
   String get analytics_page_view_count_top5 => '浏览量前5名';
 
   @override
+  String get analytics_page_no_view_records_title => '尚无浏览记录';
+
+  @override
+  String get analytics_page_no_view_records_hint => '在作品详情中记录浏览次数后会显示';
+
+  @override
   String get analytics_page_no_data => '暂无数据';
 
   @override
@@ -1812,7 +1944,7 @@ class L10nZhHans extends L10nZh {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return '浏览次数：$viewCount';
+    return '浏览 $viewCount';
   }
 
   @override

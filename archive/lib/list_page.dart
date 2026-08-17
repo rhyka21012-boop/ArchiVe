@@ -1,8 +1,7 @@
-import 'my_ad_widget_rect.dart';
+import 'dart:convert';
 import 'app_group_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'grid_page.dart';
 import 'random_image.dart';
@@ -14,6 +13,12 @@ import 'tutorial_page.dart';
 import 'list_tab_index_provider.dart';
 import 'random_image_reload_provider.dart';
 import 'list_reload_provider.dart';
+import 'rating_label_provider.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
+import 'theme_provider.dart';
+
+// 一覧画面の外側余白
+const double _kListPageHPadding = 20.0;
 
 class ListPage extends ConsumerStatefulWidget {
   const ListPage({super.key});
@@ -29,7 +34,17 @@ class ListPageState extends ConsumerState<ListPage>
   bool _isPremium = false; //サブスク購入状態を保持
   bool _isPro = false;
 
-  //final theme = Theme.of(context);
+  // 保存数バッジ用
+  int _savedCount = 0;
+  int _saveLimit = 100;
+
+  // 評価別カウント
+  int _criticalCount = 0;
+  int _normalCount = 0;
+  int _maniacCount = 0;
+
+  // 並べ替えモード
+  bool _reorderMode = false;
 
   late final ProviderSubscription<int> _tabSub;
 
@@ -59,7 +74,7 @@ class ListPageState extends ConsumerState<ListPage>
       ref.read(listTabIndexProvider.notifier).state = _tabController.index;
     });
 
-    // Provider → Tab（★これが重要）
+    // Provider → Tab
     _tabSub = ref.listenManual<int>(listTabIndexProvider, (prev, next) {
       if (_tabController.index != next) {
         _tabController.animateTo(next);
@@ -82,11 +97,35 @@ class ListPageState extends ConsumerState<ListPage>
 
   Future<void> _loadLists() async {
     final prefs = await SharedPreferences.getInstance();
+    final metadata = prefs.getStringList('saved_metadata') ?? [];
+    final extra = prefs.getInt('extra_save_limit') ?? 0;
+
+    int cCritical = 0;
+    int cNormal = 0;
+    int cManiac = 0;
+    for (final s in metadata) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        final r = map['rating']?.toString() ?? '';
+        if (r == 'critical') {
+          cCritical++;
+        } else if (r == 'normal') {
+          cNormal++;
+        } else if (r == 'maniac') {
+          cManiac++;
+        }
+      } catch (_) {}
+    }
 
     if (!mounted) return;
 
     setState(() {
       _listNames = prefs.getStringList('all_lists') ?? [];
+      _savedCount = metadata.length;
+      _saveLimit = 100 + extra;
+      _criticalCount = cCritical;
+      _normalCount = cNormal;
+      _maniacCount = cManiac;
     });
 
     // Share Extension がリスト一覧を読めるよう App Groups に同期する
@@ -119,7 +158,7 @@ class ListPageState extends ConsumerState<ListPage>
     _checkSubscriptionStatus();
   }
 
-  /// AppBar タイトル（サブスク状態に応じて変化、色はテーマカラー）
+  /// アプリタイトル（サブスク状態に応じて変化）
   Widget _buildAppTitle(ColorScheme colorScheme) {
     final label = _isPro
         ? 'ArchiVe Pro'
@@ -137,353 +176,578 @@ class ListPageState extends ConsumerState<ListPage>
     );
   }
 
+  /// 保存数バッジ（右上）
+  Widget _buildSaveCountBadge(ColorScheme colorScheme, bool isDark) {
+    final label = _isPremium
+        ? '${L10n.of(context)!.save} $_savedCount / ∞'
+        : '${L10n.of(context)!.save} $_savedCount / $_saveLimit';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ColorScheme colorScheme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        _kListPageHPadding,
+        8,
+        _kListPageHPadding,
+        4,
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildAppTitle(colorScheme)),
+          _buildSaveCountBadge(colorScheme, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabBar(ColorScheme colorScheme, bool isDark) {
+    // outer padding を 20 に固定、labelPadding は右側のみで
+    // 1つ目のタブの文字先頭が ArchiVe タイトル・リストカードと同じ x に揃うようにする
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _kListPageHPadding),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        padding: EdgeInsets.zero,
+        labelPadding: const EdgeInsets.only(right: 24),
+        dividerColor: Colors.transparent,
+        indicatorColor: colorScheme.primary,
+        indicatorSize: TabBarIndicatorSize.label,
+        // 選択中のラベル文字色は他の見出しと同じ黒/白系 (indicator の下線だけがテーマカラー)
+        labelColor: colorScheme.onPrimary,
+        unselectedLabelColor: isDark ? Colors.white70 : Colors.grey[500],
+        labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        unselectedLabelStyle:
+            const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        tabs: [
+          Tab(text: L10n.of(context)!.list_page_home),
+          Tab(text: L10n.of(context)!.list_page_my_ranking),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingCards(ColorScheme colorScheme, bool isDark) {
+    // ライト: 濃い彩度のベタ塗り、ダーク: 若干トーンダウンした彩度
+    final labels = ref.watch(ratingLabelsProvider);
+    final specs = <_RatingSpec>[
+      _RatingSpec(
+        label: ratingLabelOf(context, labels, kRatingCritical),
+        count: _criticalCount,
+        rating: kRatingCritical,
+        bg: isDark ? const Color(0xFFB0201F) : const Color(0xFFC62828),
+      ),
+      _RatingSpec(
+        label: ratingLabelOf(context, labels, kRatingNormal),
+        count: _normalCount,
+        rating: kRatingNormal,
+        bg: isDark ? const Color(0xFFD08A15) : const Color(0xFFF5A623),
+      ),
+      _RatingSpec(
+        label: ratingLabelOf(context, labels, kRatingManiac),
+        count: _maniacCount,
+        rating: kRatingManiac,
+        bg: isDark ? const Color(0xFF5E1A85) : const Color(0xFF7B1FA2),
+      ),
+    ];
+
+    return SizedBox(
+      height: 80,
+      child: Row(
+        children: [
+          for (int i = 0; i < specs.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: _ratingCard(specs[i], colorScheme, isDark)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _ratingCard(_RatingSpec spec, ColorScheme colorScheme, bool isDark) {
+    return Material(
+      color: spec.bg,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 3,
+      shadowColor: Colors.black.withValues(alpha: 0.32),
+      child: Stack(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GridPage(
+                    selectedItems: <String, List<String>>{},
+                    searchText: '',
+                    rating: spec.rating,
+                    listName: '',
+                    onDeleted: () async {
+                      await _loadLists();
+                    },
+                  ),
+                ),
+              );
+              await _loadLists();
+            },
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(14, 10, _reorderMode ? 32 : 14, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    spec.label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${spec.count}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: L10n.of(context)!.list_page_item_unit,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_reorderMode)
+            Positioned(
+              top: 2,
+              right: 2,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showRatingRenameDialog(spec),
+                  customBorder: const CircleBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.white.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showRatingRenameDialog(_RatingSpec spec) async {
+    final controller = TextEditingController(text: spec.label);
+    final colorScheme = Theme.of(context).colorScheme;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: colorScheme.secondary,
+          title: Text(
+            L10n.of(context)!.list_page_rating_rename_title,
+            style: TextStyle(color: colorScheme.onPrimary),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: TextStyle(color: colorScheme.onPrimary),
+            decoration: InputDecoration(
+              hintText: L10n.of(context)!.list_page_input_list_name,
+              hintStyle: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await ref
+                    .read(ratingLabelsProvider.notifier)
+                    .setLabel(spec.rating, null);
+                if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              },
+              child: Text(
+                L10n.of(context)!.reset,
+                style: TextStyle(color: colorScheme.onPrimary),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text(
+                L10n.of(context)!.cancel,
+                style: TextStyle(color: colorScheme.onPrimary),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await ref
+                    .read(ratingLabelsProvider.notifier)
+                    .setLabel(spec.rating, controller.text);
+                if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(L10n.of(context)!.save),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionHeader(ColorScheme colorScheme, bool isDark) {
+    final userListCount = _listNames.length + 1; // 「全てのアイテム」を含める
+    final subColor = colorScheme.onPrimary.withValues(alpha: 0.55);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              L10n.of(context)!.list_page_my_list,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+          ),
+          Text(
+            L10n.of(context)!.list_page_item_count(userListCount),
+            style: TextStyle(fontSize: 12, color: subColor),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text('・', style: TextStyle(fontSize: 12, color: subColor)),
+          ),
+          InkWell(
+            borderRadius: BorderRadius.circular(6),
+            onTap: () {
+              setState(() {
+                _reorderMode = !_reorderMode;
+              });
+              if (_reorderMode) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text(L10n.of(context)!.list_page_reorder_hint),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                _reorderMode
+                    ? L10n.of(context)!.list_page_reorder_done
+                    : L10n.of(context)!.list_page_reorder,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingListCard({
+    required Key keyToUse,
+    required bool isAllItem,
+    required String listName,
+    required int reloadSeed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.32),
+      child: GestureDetector(
+        key: keyToUse,
+        onTap: _reorderMode
+            ? null
+            : () async {
+                if (isAllItem) {
+                  final isTutorial = ref.read(isTutorialModeProvider);
+                  final step = ref.read(tutorialStepProvider);
+
+                  if (isTutorial && step != TutorialStep.tapList) {
+                    return;
+                  }
+                }
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GridPage(
+                      selectedItems: <String, List<String>>{},
+                      searchText: '',
+                      rating: '',
+                      listName: listName,
+                      onDeleted: () async {
+                        await _loadLists();
+                      },
+                    ),
+                  ),
+                );
+
+                await _loadLists();
+                setState(() {});
+              },
+        child: RandomImageContainer(
+          key: ValueKey('${isAllItem ? "all" : listName}_$reloadSeed'),
+          listName:
+              isAllItem ? L10n.of(context)!.all_item_list_name : listName,
+          onDeleted: () async {
+            await _loadLists();
+            setState(() {});
+          },
+          onChanged: () async {
+            await _loadLists();
+            setState(() {});
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListsGrid(
+    ColorScheme colorScheme,
+    bool isDark,
+    int reloadSeed,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= 600;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isTablet ? 3 : 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2,
+          ),
+          itemCount: _listNames.length + 1, //+1で「全てのアイテム」
+          itemBuilder: (context, index) {
+            final isAllItem = index == 0;
+            final listName = isAllItem ? '' : _listNames[index - 1];
+            final lastListName = ref.read(tutorialTargetListNameProvider);
+            final keyToUse = isAllItem
+                ? ValueKey('all_$reloadSeed')
+                : (listName == lastListName
+                    ? firstListKey
+                    : ValueKey(listName));
+
+            return AnimatedDelay(
+              delay: Duration(milliseconds: index * 100),
+              child: _buildFloatingListCard(
+                keyToUse: keyToUse,
+                isAllItem: isAllItem,
+                listName: listName,
+                reloadSeed: reloadSeed,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildReorderableLists(
+    ColorScheme colorScheme,
+    bool isDark,
+    int reloadSeed,
+  ) {
+    // 通常グリッドと同じレイアウト（2列 / タブレット3列）を保ったまま並べ替える。
+    // 「全てのアイテム」は先頭固定で、ドラッグしても位置が変わらないよう
+    // onReorder 内で index 0 が絡む操作をブロックする。
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth >= 600;
+        return ReorderableGridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isTablet ? 3 : 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2,
+          ),
+          dragWidgetBuilderV2: DragWidgetBuilderV2(
+            isScreenshotDragWidget: false,
+            builder: (index, child, screenshot) {
+              return Material(
+                color: Colors.transparent,
+                elevation: 8,
+                shadowColor: Colors.black.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(16),
+                child: child,
+              );
+            },
+          ),
+          itemCount: _listNames.length + 1,
+          itemBuilder: (context, index) {
+            final isAllItem = index == 0;
+            final listName = isAllItem ? '' : _listNames[index - 1];
+            // ReorderableGridView は itemBuilder が返す最上位 Widget に key を要求する
+            return KeyedSubtree(
+              key: ValueKey(
+                isAllItem ? 'reorder_all_$reloadSeed' : 'reorder_$listName',
+              ),
+              child: _buildFloatingListCard(
+                keyToUse: ValueKey(
+                  isAllItem
+                      ? 'reorder_all_inner_$reloadSeed'
+                      : 'reorder_inner_$listName',
+                ),
+                isAllItem: isAllItem,
+                listName: listName,
+                reloadSeed: reloadSeed,
+              ),
+            );
+          },
+          onReorder: (oldIndex, newIndex) async {
+            // 「全てのアイテム」を動かす／先頭に差し込む操作は無効化しユーザーに通知
+            if (oldIndex == 0 || newIndex == 0) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content:
+                        Text(L10n.of(context)!.list_page_all_item_fixed),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              return;
+            }
+            setState(() {
+              final item = _listNames.removeAt(oldIndex - 1);
+              _listNames.insert(newIndex - 1, item);
+            });
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setStringList('all_lists', _listNames);
+            AppGroupService.syncAllLists(_listNames);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMyListsTab(
+    ColorScheme colorScheme,
+    bool isDark,
+    int reloadSeed,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: _kListPageHPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 12),
+          _buildRatingCards(colorScheme, isDark),
+          const SizedBox(height: 20),
+          _buildSectionHeader(colorScheme, isDark),
+          const SizedBox(height: 8),
+          _reorderMode
+              ? _buildReorderableLists(colorScheme, isDark, reloadSeed)
+              : _buildListsGrid(colorScheme, isDark, reloadSeed),
+          const SizedBox(height: 120),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     //チュートリアル管理
     final isTutorial = ref.watch(isTutorialModeProvider);
     final step = ref.watch(tutorialStepProvider);
 
-    //FABの表示管理
-    final tabIndex = ref.watch(listTabIndexProvider);
-
     //ランダム画像更新管理
     final reloadSeed = ref.watch(randomImageReloadProvider);
 
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final bgColor = isDark ? colorScheme.surface : kHomeSurfaceLight;
+
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: colorScheme.surface,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            title: _buildAppTitle(colorScheme),
-
-            centerTitle: true,
-
-            //backgroundColor: colorScheme.surface,
-            /*
-          actions: [
-            IconButton(
-              onPressed: _loadLists,
-              icon: Icon(Icons.refresh),
-              color:
-                  colorScheme.brightness == Brightness.dark
-                      ? Colors.white
-                      : Colors.black,
-            ),
-          ],
-          */
-            bottom: TabBar(
-              dividerColor: Colors.transparent,
-              controller: _tabController,
-              isScrollable: true,
-              physics: const NeverScrollableScrollPhysics(),
-              tabs: [
-                Tab(
-                  //icon: Icon(Icons.folder),
-                  text: L10n.of(context)!.list_page_my_list,
-                ),
-                Tab(
-                  //icon: Icon(Icons.emoji_events),
-                  text: L10n.of(context)!.list_page_my_ranking,
+          backgroundColor: bgColor,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _buildHeader(colorScheme, isDark),
+                _buildTabBar(colorScheme, isDark),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildMyListsTab(colorScheme, isDark, reloadSeed),
+                      Center(child: RankingPage()),
+                    ],
+                  ),
                 ),
               ],
-              indicatorColor: colorScheme.primary,
-              labelColor: colorScheme.primary,
-              unselectedLabelColor:
-                  colorScheme.brightness == Brightness.dark
-                      ? Colors.white
-                      : Colors.grey[800],
             ),
-          ),
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              SingleChildScrollView(
-                child: Column(
-                  //mainAxisAlignment: MainAxisAlignment.center,
-                  //crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 2),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SizedBox(
-                        height: 90,
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                mainAxisExtent: 75,
-                                childAspectRatio: 1.7,
-                              ),
-                          itemCount: 3,
-                          itemBuilder: (context, index) {
-                            final listNames = [
-                              L10n.of(context)!.critical,
-                              L10n.of(context)!.normal,
-                              L10n.of(context)!.maniac,
-                            ];
-                            final colors =
-                                colorScheme.brightness == Brightness.light
-                                    ? [
-                                      Colors.red[800]!.withOpacity(1.0),
-                                      Colors.yellow[800]!.withOpacity(1.0),
-                                      Colors.purple[800]!.withOpacity(1.0),
-                                    ]
-                                    : [
-                                      Colors.red[800]!.withOpacity(0.9),
-                                      Colors.yellow[800]!.withOpacity(0.9),
-                                      Colors.purple[800]!.withOpacity(0.9),
-                                    ];
-                            final iconPaths = [
-                              'assets/icons/critical.png',
-                              'assets/icons/normal.png',
-                              'assets/icons/maniac.png',
-                            ];
-                            final onTapHandlers = [
-                              () async {
-                                // クリティカル用の処理
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => GridPage(
-                                          selectedItems:
-                                              <String, List<String>>{},
-                                          searchText: '',
-                                          rating: 'critical',
-                                          listName: '',
-                                          onDeleted: () async {
-                                            _loadLists();
-                                          },
-                                        ),
-                                  ),
-                                );
-                              },
-                              () async {
-                                // ノーマル用の処理
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => GridPage(
-                                          selectedItems:
-                                              <String, List<String>>{},
-                                          searchText: '',
-                                          rating: 'normal',
-                                          listName: '',
-                                          onDeleted: () async {
-                                            _loadLists();
-                                          },
-                                        ),
-                                  ),
-                                );
-                              },
-                              () async {
-                                // マニアック用の処理
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => GridPage(
-                                          selectedItems:
-                                              <String, List<String>>{},
-                                          searchText: '',
-                                          rating: 'maniac',
-                                          listName: '',
-                                          onDeleted: () async {
-                                            _loadLists();
-                                          },
-                                        ),
-                                  ),
-                                );
-                              },
-                            ];
-                            return GestureDetector(
-                              onTap: () {
-                                onTapHandlers[index]();
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: colors[index],
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      iconPaths[index],
-                                      width: 35,
-                                      height: 35,
-                                    ),
-
-                                    Text(
-                                      listNames[index],
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: '',
-                                      ),
-                                    ),
-                                    /*
-                                index != 0
-                                    ? Image.asset(
-                                      iconPaths[index],
-                                      width: 20,
-                                      height: 20,
-                                    )
-                                    : const SizedBox.shrink(),
-                                    */
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    //中心部分の広告は廃止
-                    //プレミアムじゃなければ広告を表示
-                    //if (!_isPremium) MyAdWidgetRect(),
-                    Container(
-                      padding: EdgeInsets.all(8.0),
-                      alignment: Alignment.bottomCenter,
-                      height: 40.0,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        //color: Color(0xFF121212),
-                        color: colorScheme.surface,
-                      ),
-                      child: Text(
-                        L10n.of(context)!.list_page_my_list,
-                        style: TextStyle(
-                          color: colorScheme.onPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    //const MyNativeAdWidget(),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isTablet = constraints.maxWidth >= 600;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: isTablet ? 3 : 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: 2,
-                                ),
-                            itemCount:
-                                _listNames.length + 1, //+1することで、先頭に「全アイテム」分を追加
-
-                            itemBuilder: (context, index) {
-                              final isAllItem = index == 0;
-                              final listName =
-                                  isAllItem ? '' : _listNames[index - 1];
-
-                              final lastListName = ref.read(
-                                tutorialTargetListNameProvider,
-                              );
-
-                              final keyToUse =
-                                  isAllItem
-                                      ? ValueKey('all_$reloadSeed')
-                                      : (listName == lastListName
-                                          ? firstListKey
-                                          : ValueKey(listName));
-
-                              return AnimatedDelay(
-                                delay: Duration(milliseconds: index * 100),
-                                child: GestureDetector(
-                                  key: keyToUse,
-                                  onTap: () async {
-                                    if (isAllItem) {
-                                      final isTutorial = ref.read(
-                                        isTutorialModeProvider,
-                                      );
-                                      final step = ref.read(
-                                        tutorialStepProvider,
-                                      );
-
-                                      if (isTutorial &&
-                                          step != TutorialStep.tapList) {
-                                        return;
-                                      }
-                                    }
-
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => GridPage(
-                                              selectedItems:
-                                                  <String, List<String>>{},
-                                              searchText: '',
-                                              rating: '',
-                                              listName: listName,
-                                              onDeleted: () async {
-                                                await _loadLists();
-                                              },
-                                            ),
-                                      ),
-                                    );
-
-                                    await _loadLists();
-                                    setState(() {});
-                                  },
-                                  child: RandomImageContainer(
-                                    key: ValueKey(
-                                      '${isAllItem ? "all" : listName}_$reloadSeed',
-                                    ),
-                                    listName:
-                                        isAllItem
-                                            ? L10n.of(
-                                              context,
-                                            )!.all_item_list_name
-                                            : listName,
-                                    onDeleted: () async {
-                                      await _loadLists();
-                                      setState(() {});
-                                    },
-                                    onChanged: () async {
-                                      await _loadLists();
-                                      setState(() {});
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Center(child: RankingPage()),
-            ],
           ),
           floatingActionButton: ListPageFAB(
             fabKey: fabKey,
             onPressed: _showAddListModal,
           ),
-
           floatingActionButtonLocation: CustomFABLocation(),
         ),
         // ===== チュートリアル用オーバーレイ =====
@@ -501,29 +765,24 @@ class ListPageState extends ConsumerState<ListPage>
           TutorialOverlayPseudoTap(
             holeRect: listRect!,
             onTap: () async {
-              // チュートリアルを終了させない
-              // GridPage 側で createItem フェーズを進める
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (_) => GridPage(
-                        selectedItems: <String, List<String>>{},
-                        searchText: '',
-                        rating: '',
-                        listName:
-                            ref
-                                .read(tutorialTargetListNameProvider.notifier)
-                                .state ??
-                            '',
-                        onDeleted: () async {
-                          await _loadLists();
-                        },
-                      ),
+                  builder: (_) => GridPage(
+                    selectedItems: <String, List<String>>{},
+                    searchText: '',
+                    rating: '',
+                    listName: ref
+                            .read(tutorialTargetListNameProvider.notifier)
+                            .state ??
+                        '',
+                    onDeleted: () async {
+                      await _loadLists();
+                    },
+                  ),
                 ),
               );
 
-              // 戻ってきたらリストを再ロード
               await _loadLists();
               setState(() {});
             },
@@ -713,6 +972,20 @@ class ListPageState extends ConsumerState<ListPage>
   }
 }
 
+class _RatingSpec {
+  final String label;
+  final int count;
+  final String rating;
+  final Color bg;
+
+  const _RatingSpec({
+    required this.label,
+    required this.count,
+    required this.rating,
+    required this.bg,
+  });
+}
+
 //チュートリアル - 案内コメント
 class _TutorialBalloon extends StatelessWidget {
   final String text;
@@ -721,8 +994,6 @@ class _TutorialBalloon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -813,7 +1084,7 @@ class TutorialOverlayPseudoTap extends ConsumerWidget {
 }
 
 // =======================
-// CustomPainterはそのまま
+// CustomPainter
 // =======================
 class _HolePainter extends CustomPainter {
   final Rect hole;

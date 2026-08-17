@@ -6,6 +6,7 @@ import 'l10n/app_localizations.dart';
 import 'login_page.dart';
 import 'main.dart';
 import 'purchase_page.dart';
+import 'circle_app_bar_icon.dart';
 
 // Pro のテーマカラー：ティールグラデーション
 const _proColorDeep = Color(0xFF00695C);
@@ -274,8 +275,8 @@ class _ProPurchasePageState extends State<ProPurchasePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
+        leading: CircleAppBarIcon(
+          icon: Icons.close,
           onPressed: () => Navigator.pop(context, false),
         ),
       ),

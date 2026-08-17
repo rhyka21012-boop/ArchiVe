@@ -35,11 +35,32 @@
   "main_page_update_info": "Aviso de atualização",
   "main_page_update_later": "Mais tarde",
   "main_page_update_now": "Atualizar",
+  "list_page_home": "Início",
   "list_page_my_list": "As minhas listas",
   "list_page_my_ranking": "As minhas classificações",
   "list_page_make_list": "Criar lista",
   "list_page_add_list": "Adicionar lista",
   "list_page_input_list_name": "Introduzir nome da lista",
+  "reset": "Redefinir",
+  "list_page_rating_rename_title": "Renomear avaliação",
+  "list_page_reorder": "Reordenar",
+  "list_page_reorder_done": "Concluído",
+  "list_page_reorder_hint": "Arraste para alterar a ordem",
+  "list_page_all_item_fixed": "«Todos os itens» não pode ser reordenado",
+  "list_page_save_count": "Guardado {count} / {limit}",
+  "@list_page_save_count": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "list_page_item_unit": " itens",
+  "list_page_item_count": "{count} itens",
+  "@list_page_item_count": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "ranking_page_dragable": "Arraste para reorganizar",
   "ranking_page_no_title": "(Sem título)",
   "ranking_page_search_title": "Pesquisar título",
@@ -71,12 +92,25 @@
   "detail_page_delete": "Eliminar",
   "detail_page_access": "Navegador",
   "detail_page_modify": "Editar",
+  "detail_page_share": "Partilhar",
+  "detail_page_copied": "Copiado",
+  "detail_page_saved_to": "Guardado em {listName}",
+  "@detail_page_saved_to": {
+    "placeholders": {
+      "listName": {"type": "String"}
+    }
+  },
   "detail_page_save": "Guardar",
   "detail_page_thumbnail_placeholder": "A miniatura aparecerá após guardar",
   "detail_page_add_image": "Adicionar imagem ★",
   "detail_page_rate": "Avaliação",
   "detail_page_title": "Título",
   "detail_page_title_placeholder": "Título",
+  "detail_page_cast_short": "Elenco",
+  "detail_page_genre_short": "Género",
+  "detail_page_series_short": "Série",
+  "detail_page_maker_short": "Produtora",
+  "detail_page_label_short": "Editora",
   "detail_page_cast": "Elenco (# múltiplos)",
   "detail_page_cast_placeholder": "#Elenco1 #Elenco2 ...",
   "detail_page_genre": "Género (# múltiplos)",
@@ -156,6 +190,8 @@
   "analytics_page_recent_additions": "Itens adicionados recentemente",
   "analytics_page_piechart_others": "Outros\n{percent}%",
   "analytics_page_view_count_top5": "Top 5 Visualizações",
+  "analytics_page_no_view_records_title": "Ainda sem registos de visualização",
+  "analytics_page_no_view_records_hint": "As visualizações registadas nos detalhes serão apresentadas aqui",
   "analytics_page_no_data": "Sem dados disponíveis",
   "analytics_page_evaluation": "Avaliação",
   "analytics_page_cast": "Elenco",
@@ -209,7 +245,7 @@
   "settings_page_terms": "Termos de Serviço (Apple Standard EULA)",
   "settings_page_save_count_increased": "Limite de armazenamento aumentado em +5",
   "setting_page_unlimited": "Ilimitado",
-  "view_counter_view_count": "Visualizações: {viewCount}",
+  "view_counter_view_count": "Visualizações {viewCount}",
   "random_image_no_image": "Não foi possível carregar a imagem",
   "random_image_change_list_name": "Alterar nome da lista",
   "random_image_change_list_name_dialog": "Alterar nome da lista",

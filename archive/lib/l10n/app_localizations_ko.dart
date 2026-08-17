@@ -114,6 +114,9 @@ class L10nKo extends L10n {
   String get main_page_update_now => '업데이트';
 
   @override
+  String get list_page_home => '홈';
+
+  @override
   String get list_page_my_list => '내 리스트';
 
   @override
@@ -127,6 +130,37 @@ class L10nKo extends L10n {
 
   @override
   String get list_page_input_list_name => '리스트 이름 입력';
+
+  @override
+  String get reset => '초기화';
+
+  @override
+  String get list_page_rating_rename_title => '평가 이름 변경';
+
+  @override
+  String get list_page_reorder => '정렬';
+
+  @override
+  String get list_page_reorder_done => '완료';
+
+  @override
+  String get list_page_reorder_hint => '드래그하여 순서를 변경할 수 있습니다';
+
+  @override
+  String get list_page_all_item_fixed => '「모든 항목」은 순서를 변경할 수 없습니다';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return '저장 $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => '개';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count개';
+  }
 
   @override
   String get ranking_page_dragable => '드래그하여 순서 변경';
@@ -227,6 +261,17 @@ class L10nKo extends L10n {
   String get detail_page_modify => '수정';
 
   @override
+  String get detail_page_share => '공유';
+
+  @override
+  String get detail_page_copied => '복사됨';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return '$listName에 저장';
+  }
+
+  @override
   String get detail_page_save => '저장';
 
   @override
@@ -243,6 +288,21 @@ class L10nKo extends L10n {
 
   @override
   String get detail_page_title_placeholder => '제목';
+
+  @override
+  String get detail_page_cast_short => '출연';
+
+  @override
+  String get detail_page_genre_short => '장르';
+
+  @override
+  String get detail_page_series_short => '시리즈';
+
+  @override
+  String get detail_page_maker_short => '제작사';
+
+  @override
+  String get detail_page_label_short => '레이블';
 
   @override
   String get detail_page_cast => '출연 (# 여러 개)';
@@ -490,6 +550,12 @@ class L10nKo extends L10n {
   String get analytics_page_view_count_top5 => '조회수 TOP 5';
 
   @override
+  String get analytics_page_no_view_records_title => '아직 조회 기록이 없습니다';
+
+  @override
+  String get analytics_page_no_view_records_hint => '작품 상세에서 조회수를 기록하면 표시됩니다';
+
+  @override
   String get analytics_page_no_data => '데이터가 없습니다';
 
   @override
@@ -671,7 +737,7 @@ class L10nKo extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return '조회수: $viewCount';
+    return '조회 $viewCount';
   }
 
   @override

@@ -366,21 +366,51 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     // Premium/Pro 加入者には赤バッジ非表示
     final showAdBadge = watchedAdsToday < 3 && !_isPremium && !_isPro;
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
     final selectedColor = ref.watch(themeColorProvider);
-    //final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      backgroundColor: pageBg,
       appBar: AppBar(
-        title: Text(L10n.of(context)!.settings),
+        backgroundColor: pageBg,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          L10n.of(context)!.settings,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.school),
-            tooltip: L10n.of(context)!.tutorial,
-            onPressed: () async {
-              await _restartTutorial(context);
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+            child: Material(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(22),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: () async {
+                  await _restartTutorial(context);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    L10n.of(context)!.tutorial,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -413,119 +443,141 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           _buildSubscriptionStatusCard(context, colorScheme),
           //サブスクリプション管理ボタン（加入者のみ表示）
           if (_isPremium || _isPro) _buildManageSubscriptionTile(context),
-          //カード（作品保存数の状態）
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            color:
-                colorScheme.brightness == Brightness.light
-                    ? Colors.grey[200]
-                    : Color(0xFF2C2C2C),
-            elevation: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // タイトル
-                  Row(
-                    children: [
-                      Icon(Icons.inventory_2, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        L10n.of(context)!.settings_page_save_status,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+          //作品保存数の状態カード (白 + 影 + プログレスバー)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: _whiteCard(
+              isDark: isDark,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      L10n.of(context)!.settings_page_save_status,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // 保存数表示
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(L10n.of(context)!.settings_page_save_count),
-                      Text(
-                        maxSaveLimit == 999999
-                            ? '$currentCount (${L10n.of(context)!.setting_page_unlimited})'
-                            : '$currentCount / $maxSaveLimit',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // 広告視聴回数
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(L10n.of(context)!.settings_page_watch_count),
-                      Text(
-                        L10n.of(
-                          context,
-                        )!.settings_page_watch_ad_today(watchedAdsToday),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // 広告ボタン
-                  SizedBox(
-                    width: double.infinity,
-                    child: Stack(
-                      clipBehavior: Clip.none,
+                    ),
+                    const SizedBox(height: 14),
+                    // 保存数 + プログレスバー
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed:
-                                watchedAdsToday >= 3
-                                    ? null
-                                    : () async {
+                        Text(
+                          L10n.of(context)!.settings_page_save_count,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        Text(
+                          maxSaveLimit == 999999
+                              ? '$currentCount (${L10n.of(context)!.setting_page_unlimited})'
+                              : '$currentCount / $maxSaveLimit',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: maxSaveLimit == 999999
+                            ? 1.0
+                            : (maxSaveLimit == 0
+                                ? 0
+                                : (currentCount / maxSaveLimit).clamp(0, 1)),
+                        minHeight: 6,
+                        backgroundColor:
+                            colorScheme.onSurface.withValues(alpha: 0.08),
+                        valueColor:
+                            AlwaysStoppedAnimation(colorScheme.primary),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          L10n.of(context)!.settings_page_watch_count,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        Text(
+                          L10n.of(context)!
+                              .settings_page_watch_ad_today(watchedAdsToday),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    // 広告視聴ボタン (light grey full-width pill)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Material(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: watchedAdsToday >= 3
+                                  ? null
+                                  : () async {
                                       await _showRewardedAd();
                                     },
-                            icon: const Icon(
-                              Icons.play_circle_fill,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              L10n.of(context)!.settings_page_watch_ad,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.grey.shade800,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    L10n.of(context)!.settings_page_watch_ad,
+                                    style: TextStyle(
+                                      color: watchedAdsToday >= 3
+                                          ? colorScheme.onSurface
+                                              .withValues(alpha: 0.4)
+                                          : (isDark
+                                              ? Colors.white
+                                              : Colors.black87),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
+                          if (showAdBadge)
+                            Positioned(top: -4, right: -4, child: _AdBadge()),
+                        ],
+                      ),
+                    ),
+                    if (watchedAdsToday >= 3) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        L10n.of(context)!.settings_page_ad_limit_reached,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
-
-                        // 🔴 赤バッチ
-                        if (showAdBadge)
-                          Positioned(top: 3, right: 0, child: _AdBadge()),
-                      ],
-                    ),
-                  ),
-
-                  if (watchedAdsToday >= 3) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      L10n.of(context)!.settings_page_ad_limit_reached,
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -534,49 +586,61 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             context,
             L10n.of(context)!.settings_page_section_account,
           ),
-          // サインイン状態は Pro 加入者のみ表示
-          if (_isPro) ...[
-            if (_currentUser == null)
-              ListTile(
-                leading: const Icon(Icons.login),
-                title: Text(L10n.of(context)!.login_page_title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(L10n.of(context)!.settings_page_not_signed_in),
-                onTap: _openLoginPage,
-              )
-            else
-              ListTile(
-                leading: const Icon(Icons.account_circle),
-                title: Text(
-                  _currentUser!.email ?? _currentUser!.uid,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  _currentUser!.displayName ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: TextButton.icon(
-                  onPressed: _confirmSignOut,
-                  icon: const Icon(Icons.logout, size: 16),
-                  label: Text(L10n.of(context)!.logout),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.onSurface,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _groupCard(
+              isDark: isDark,
+              colorScheme: colorScheme,
+              rows: [
+                if (_isPro && _currentUser == null)
+                  ListTile(
+                    title: Text(
+                      L10n.of(context)!.login_page_title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle:
+                        Text(L10n.of(context)!.settings_page_not_signed_in),
+                    onTap: _openLoginPage,
                   ),
+                if (_isPro && _currentUser != null)
+                  ListTile(
+                    title: Text(
+                      _currentUser!.email ?? _currentUser!.uid,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      _currentUser!.displayName ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: TextButton.icon(
+                      onPressed: _confirmSignOut,
+                      icon: const Icon(Icons.logout, size: 16),
+                      label: Text(L10n.of(context)!.logout),
+                      style: TextButton.styleFrom(
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ListTile(
+                  title: const Text(
+                    'クラウドにバックアップ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: _confirmBackup,
                 ),
-              ),
-          ],
-          // バックアップ/復元は全ユーザーに表示（タップ時に Pro 購入→サインイン）
-          ListTile(
-            leading: const Icon(Icons.cloud_upload),
-            title: const Text('クラウドにバックアップ', style: TextStyle(fontWeight: FontWeight.bold)),
-            onTap: _confirmBackup,
-          ),
-          ListTile(
-            leading: const Icon(Icons.cloud_download),
-            title: const Text('バックアップから復元', style: TextStyle(fontWeight: FontWeight.bold)),
-            onTap: _confirmRestore,
+                ListTile(
+                  title: const Text(
+                    'バックアップから復元',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: _confirmRestore,
+                ),
+              ],
+            ),
           ),
 
           // ===== 外観 =====
@@ -584,76 +648,101 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             context,
             L10n.of(context)!.settings_page_section_appearance,
           ),
-          SwitchListTile(
-            title: Text(L10n.of(context)!.settings_page_dark_mode, style: const TextStyle(fontWeight: FontWeight.bold)),
-            value: isDarkMode,
-            onChanged: (value) {
-              ref.read(themeModeProvider.notifier).updateTheme(value);
-            },
-          ),
-          ListTile(
-            title: Text(
-              L10n.of(context)!.settings_page_theme_color,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            trailing: DropdownButton<ThemeColorType>(
-              value: selectedColor,
-              items: ThemeColorType.values.map((type) {
-                final isProOnly = isProOnlyThemeColor(type);
-                final isPremiumOnly = isPremiumOnlyThemeColor(type);
-                final showLock = (isProOnly && !_isPro) ||
-                    (isPremiumOnly && !_isPremium);
-                final lockColor = isProOnly
-                    ? const Color(0xFF00897B)
-                    : const Color(0xFFB8860B);
-                final swatch = themeColorSwatch(type);
-                return DropdownMenuItem(
-                  value: type,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        themeColorLabel(context, type),
-                        style: TextStyle(
-                          color: swatch,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (showLock) ...[
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.lock,
-                          size: 12,
-                          color: lockColor,
-                        ),
-                      ],
-                    ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _groupCard(
+              isDark: isDark,
+              colorScheme: colorScheme,
+              rows: [
+                SwitchListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_dark_mode,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                );
-              }).toList(),
-              onChanged: (value) async {
-                if (value == null) return;
-                // Pro 限定カラー（teal）は Pro 必須
-                if (isProOnlyThemeColor(value) && !_isPro) {
-                  if (!await ProGate.ensurePro(context)) return;
-                  if (!mounted) return;
-                }
-                // Premium 限定カラー（gold）は Premium 必須
-                else if (isPremiumOnlyThemeColor(value) && !_isPremium) {
-                  if (!await PremiumGate.ensurePremium(context)) return;
-                  if (!mounted) return;
-                  setState(() => _isPremium = true);
-                }
-                ref.read(themeColorProvider.notifier).setColor(value);
-              },
+                  value: isDarkMode,
+                  onChanged: (value) {
+                    ref
+                        .read(themeModeProvider.notifier)
+                        .updateTheme(value);
+                  },
+                ),
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_theme_color,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: DropdownButton<ThemeColorType>(
+                    value: selectedColor,
+                    underline: const SizedBox.shrink(),
+                    items: ThemeColorType.values.map((type) {
+                      final isProOnly = isProOnlyThemeColor(type);
+                      final isPremiumOnly = isPremiumOnlyThemeColor(type);
+                      final showLock = (isProOnly && !_isPro) ||
+                          (isPremiumOnly && !_isPremium);
+                      final lockColor = isProOnly
+                          ? const Color(0xFF00897B)
+                          : const Color(0xFFB8860B);
+                      final swatch = themeColorSwatch(type);
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: swatch,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              themeColorLabel(context, type),
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (showLock) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.lock,
+                                size: 12,
+                                color: lockColor,
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      if (isProOnlyThemeColor(value) && !_isPro) {
+                        if (!await ProGate.ensurePro(context)) return;
+                        if (!mounted) return;
+                      } else if (isPremiumOnlyThemeColor(value) &&
+                          !_isPremium) {
+                        if (!await PremiumGate.ensurePremium(context)) return;
+                        if (!mounted) return;
+                        setState(() => _isPremium = true);
+                      }
+                      ref.read(themeColorProvider.notifier).setColor(value);
+                    },
+                  ),
+                ),
+                SwitchListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_thumbnail_visibility,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  value: ref.watch(showThumbnailProvider),
+                  onChanged: (value) {
+                    ref.read(showThumbnailProvider.notifier).set(value);
+                  },
+                ),
+              ],
             ),
-          ),
-          SwitchListTile(
-            title: Text(L10n.of(context)!.settings_page_thumbnail_visibility, style: const TextStyle(fontWeight: FontWeight.bold)),
-            value: ref.watch(showThumbnailProvider),
-            onChanged: (value) {
-              ref.read(showThumbnailProvider.notifier).set(value);
-            },
           ),
 
           // ===== アプリについて =====
@@ -661,14 +750,29 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             context,
             L10n.of(context)!.settings_page_section_about,
           ),
-          ListTile(
-            title: Text(L10n.of(context)!.detail_page_review_now, style: const TextStyle(fontWeight: FontWeight.bold)),
-            trailing: const Icon(Icons.rate_review),
-            onTap: _requestReview,
-          ),
-          ListTile(
-            title: Text(L10n.of(context)!.settings_page_app_version, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(_appVersion),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _groupCard(
+              isDark: isDark,
+              colorScheme: colorScheme,
+              rows: [
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.detail_page_review_now,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                  onTap: _requestReview,
+                ),
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_app_version,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(_appVersion),
+                ),
+              ],
+            ),
           ),
 
           // ===== 法的情報 =====
@@ -676,40 +780,62 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             context,
             L10n.of(context)!.settings_page_section_legal,
           ),
-          ListTile(
-            title: Text(L10n.of(context)!.settings_page_plivacy_policy, style: const TextStyle(fontWeight: FontWeight.bold)),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () async {
-              const url = 'https://walkinggoblins-site.web.app/privacy.html';
-              final uri = Uri.parse(url);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(L10n.of(context)!.settings_page_disable_link),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _groupCard(
+              isDark: isDark,
+              colorScheme: colorScheme,
+              rows: [
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_plivacy_policy,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                );
-              }
-            },
-          ),
-          ListTile(
-            title: Text(L10n.of(context)!.settings_page_terms, style: const TextStyle(fontWeight: FontWeight.bold)),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () async {
-              const url =
-                  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
-              final uri = Uri.parse(url);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(L10n.of(context)!.settings_page_disable_link),
+                  trailing: const Icon(Icons.open_in_new, size: 18),
+                  onTap: () async {
+                    const url =
+                        'https://walkinggoblins-site.web.app/privacy.html';
+                    final uri = Uri.parse(url);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              L10n.of(context)!.settings_page_disable_link),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_terms,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                );
-              }
-            },
+                  trailing: const Icon(Icons.open_in_new, size: 18),
+                  onTap: () async {
+                    const url =
+                        'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+                    final uri = Uri.parse(url);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              L10n.of(context)!.settings_page_disable_link),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -720,7 +846,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildSectionHeader(BuildContext context, String label) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
       child: Text(
         label,
         style: TextStyle(
@@ -729,6 +855,52 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           color: colorScheme.onSurface.withValues(alpha: 0.55),
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+
+  // 白背景 + 影の丸角カード (グループ化用)
+  Widget _whiteCard({required Widget child, required bool isDark}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: child,
+    );
+  }
+
+  // 複数行を Divider 区切りで内包するグループカード
+  Widget _groupCard({
+    required List<Widget> rows,
+    required bool isDark,
+    required ColorScheme colorScheme,
+  }) {
+    final dividerColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.grey.shade200;
+    return _whiteCard(
+      isDark: isDark,
+      child: Column(
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Divider(height: 1, color: dividerColor),
+              ),
+            rows[i],
+          ],
+        ],
       ),
     );
   }
@@ -877,7 +1049,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     const tealDeep = Color(0xFF00695C);
     const tealLight = Color(0xFF26A69A);
     final isDark = colorScheme.brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200];
 
     // Pro が最上位なので先に判定
     if (_isPro) {
@@ -906,71 +1077,72 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       );
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: cardColor,
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: _openPlansPage,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: gold.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: _whiteCard(
+        isDark: isDark,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: _openPlansPage,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: gold.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.star_border,
+                        color: gold,
+                        size: 24,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.star_border,
-                      color: gold,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          L10n.of(context)!.settings_page_current_plan,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colorScheme.onSurface.withValues(alpha: 0.55),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.3,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            L10n.of(context)!.settings_page_current_plan,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.55),
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.3,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          L10n.of(context)!.settings_page_free_plan,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 2),
+                          Text(
+                            L10n.of(context)!.settings_page_free_plan,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.chevron_right, color: gold),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                L10n.of(context)!.settings_page_premium_details_link,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                    const Icon(Icons.chevron_right, color: gold),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                Text(
+                  L10n.of(context)!.settings_page_premium_details_link,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

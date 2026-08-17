@@ -17,6 +17,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'view_counter.dart';
 import 'premium_detail.dart';
@@ -27,6 +28,8 @@ import 'tutorial_page.dart';
 import 'random_image_reload_provider.dart';
 import 'search_result_page.dart';
 import "save_limit_helper.dart";
+import 'rating_label_provider.dart';
+import 'circle_app_bar_icon.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -611,6 +614,309 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     super.dispose();
   }
 
+  // 編集モード時の AppBar (削除 / ブラウザ / 保存など従来のアクション)
+  AppBar _buildEditingAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final chipBg = Colors.white.withValues(alpha: 0.9);
+    return AppBar(
+      backgroundColor: const Color(0xFF121212).withOpacity(0.3),
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: CircleAppBarIcon(
+        icon: Icons.arrow_back,
+        onPressed: () => Navigator.of(context).maybePop(),
+        backgroundColor: chipBg,
+      ),
+      title: Text(
+        L10n.of(context)!.detail_page_item_detail,
+        style: const TextStyle(color: Colors.white),
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+      actions: [
+        CircleAppBarIcon(
+          icon: Icons.delete,
+          tooltip: L10n.of(context)!.detail_page_delete,
+          onPressed: _confirmDelete,
+          backgroundColor: chipBg,
+        ),
+        Padding(
+          key: _saveIconKey,
+          padding:
+              const EdgeInsets.only(right: 12, top: 6, bottom: 6, left: 4),
+          child: _pillButton(
+            label: L10n.of(context)!.detail_page_save,
+            bg: colorScheme.primary,
+            fg: Colors.white,
+            onTap: _saveChanges,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 閲覧モード時の AppBar (円形バック / タイトル / 共有ピル / 編集ピル)
+  AppBar _buildReadOnlyAppBar(BuildContext context, ColorScheme colorScheme) {
+    // パレット由来の背景に対しても読みやすい文字色を選ぶ
+    final headerTextColor = _dominantColor == Colors.transparent
+        ? Colors.black87
+        : (_dominantColor.computeLuminance() > 0.5
+            ? Colors.black87
+            : Colors.white);
+    final chipBg = headerTextColor == Colors.white
+        ? Colors.white.withValues(alpha: 0.9)
+        : Colors.white;
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 8, top: 6, bottom: 6),
+        child: Material(
+          color: chipBg,
+          shape: const CircleBorder(),
+          elevation: 1,
+          shadowColor: Colors.black26,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => Navigator.pop(context),
+            child: const SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(Icons.arrow_back, size: 20, color: Colors.black87),
+            ),
+          ),
+        ),
+      ),
+      title: Text(
+        L10n.of(context)!.detail_page_item_detail,
+        style: TextStyle(
+          color: headerTextColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+      actions: [
+        CircleAppBarIcon(
+          icon: Icons.ios_share,
+          tooltip: L10n.of(context)!.detail_page_share,
+          onPressed: _shareItem,
+          backgroundColor: chipBg,
+        ),
+        CircleAppBarIcon(
+          icon: Icons.open_in_new,
+          tooltip: L10n.of(context)!.detail_page_access,
+          onPressed: _launchUrl,
+          backgroundColor: chipBg,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12, top: 6, bottom: 6, left: 4),
+          child: _pillButton(
+            label: L10n.of(context)!.detail_page_modify,
+            bg: colorScheme.primary,
+            fg: Colors.white,
+            onTap: () => setState(() => isEditing = true),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _pillButton({
+    required String label,
+    required Color bg,
+    required Color fg,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(22),
+      elevation: 1,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: fg,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 評価アイコン3種 (編集/閲覧モード共通)
+  Widget _buildRatingSection(ColorScheme colorScheme, {bool showLabel = true}) {
+    final labels = ref.watch(ratingLabelsProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showLabel)
+          Text(
+            L10n.of(context)!.detail_page_rate,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onPrimary,
+            ),
+          ),
+        // 3等分の Expanded スロットに割り当てることで、評価名の長さに関わらず
+        // ボタン位置が固定される。長い名前は省略表示。
+        Row(
+          children: [
+            Expanded(
+              child: _ratingButton(
+                'critical',
+                ratingLabelOf(context, labels, kRatingCritical),
+                'assets/icons/critical.png',
+                'assets/icons/critical_gray.png',
+              ),
+            ),
+            Expanded(
+              child: _ratingButton(
+                'normal',
+                ratingLabelOf(context, labels, kRatingNormal),
+                'assets/icons/normal.png',
+                'assets/icons/normal_gray.png',
+              ),
+            ),
+            Expanded(
+              child: _ratingButton(
+                'maniac',
+                ratingLabelOf(context, labels, kRatingManiac),
+                'assets/icons/maniac.png',
+                'assets/icons/maniac_gray.png',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 閲覧モードのタイトル (太字大 - サブタイトルは廃止)
+  Widget _buildReadOnlyTitle(ColorScheme colorScheme) {
+    final title = _titleController.text.trim().isEmpty
+        ? (widget.url ?? '')
+        : _titleController.text.trim();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: colorScheme.onPrimary,
+          height: 1.3,
+        ),
+      ),
+    );
+  }
+
+  // 閲覧モードの情報カード (リスト / URL / 出演 / ジャンル / シリーズ / メーカー / レーベル)
+  Widget _buildReadOnlyInfoCard(ColorScheme colorScheme) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final url = _urlController.text.trim();
+    final rows = <_InfoRowSpec>[
+      if ((widget.listName ?? '').isNotEmpty)
+        _InfoRowSpec(L10n.of(context)!.detail_page_list, widget.listName!),
+      if (url.isNotEmpty)
+        _InfoRowSpec(
+          'URL',
+          url,
+          trailing: _CopyIconButton(
+            value: url,
+            iconColor: isDark ? Colors.white70 : Colors.grey.shade500,
+            copiedLabel: L10n.of(context)!.detail_page_copied,
+          ),
+        ),
+      if (_castController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_cast_short,
+          _castController.text.trim(),
+        ),
+      if (_genreController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_genre_short,
+          _genreController.text.trim(),
+        ),
+      if (_seriesController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_series_short,
+          _seriesController.text.trim(),
+        ),
+      if (_makerController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_maker_short,
+          _makerController.text.trim(),
+        ),
+      if (_labelController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_label_short,
+          _labelController.text.trim(),
+        ),
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final labelColor = isDark ? Colors.white60 : Colors.grey.shade500;
+    final valueColor = isDark ? Colors.white : Colors.black87;
+    final dividerColor =
+        isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200;
+
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(16),
+      elevation: isDark ? 0 : 3,
+      shadowColor: Colors.black.withValues(alpha: 0.25),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: [
+            for (int i = 0; i < rows.length; i++) ...[
+              if (i > 0) Divider(height: 1, color: dividerColor),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 76,
+                      child: Text(
+                        rows[i].label,
+                        style: TextStyle(fontSize: 13, color: labelColor),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        rows[i].value,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: valueColor,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    if (rows[i].trailing != null) ...[
+                      const SizedBox(width: 8),
+                      rows[i].trailing!,
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _ratingButton(
     String type,
     String label,
@@ -642,10 +948,19 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               width: 40,
               height: 40,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: colorScheme.onPrimary),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimary,
+                ),
+              ),
             ),
           ],
         ),
@@ -675,39 +990,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
                 offset: _showChrome ? Offset.zero : const Offset(0, -1.5),
-                child: AppBar(
-              backgroundColor: const Color(0xFF121212).withOpacity(0.3),
-              title: Text(
-                L10n.of(context)!.detail_page_item_detail,
-                style: TextStyle(color: Colors.white),
-              ),
-              iconTheme: const IconThemeData(color: Colors.white),
-              actions: [
-                _buildIconWithLabel(
-                  Icons.delete,
-                  L10n.of(context)!.detail_page_delete, //削除アイコン
-                  _confirmDelete,
-                ),
-                _buildIconWithLabel(
-                  Icons.open_in_new,
-                  L10n.of(context)!.detail_page_access, //ブラウザアイコン
-                  _launchUrl,
-                ),
-                if (!isEditing)
-                  _buildIconWithLabel(
-                    Icons.edit,
-                    L10n.of(context)!.detail_page_modify, //編集アイコン
-                    () => setState(() => isEditing = true),
-                  ),
-                if (isEditing)
-                  _buildIconWithLabel(
-                    Icons.save,
-                    L10n.of(context)!.detail_page_save, //保存アイコン
-                    _saveChanges,
-                    key: _saveIconKey,
-                  ),
-              ],
-            ),
+                child: isEditing
+                    ? _buildEditingAppBar(context)
+                    : _buildReadOnlyAppBar(context, colorScheme),
               ),
             ),
             floatingActionButton:
@@ -1074,99 +1359,72 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          L10n.of(context)!.detail_page_rate,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _ratingButton(
-                              'critical',
-                              L10n.of(context)!.critical,
-                              'assets/icons/critical.png',
-                              'assets/icons/critical_gray.png',
-                            ),
-                            _ratingButton(
-                              'normal',
-                              L10n.of(context)!.normal,
-                              'assets/icons/normal.png',
-                              'assets/icons/normal_gray.png',
-                            ),
-                            _ratingButton(
-                              'maniac',
-                              L10n.of(context)!.maniac,
-                              'assets/icons/maniac.png',
-                              'assets/icons/maniac_gray.png',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ),
-                    //リスト一覧
-                    _buildListDropdownButton(),
+                    SizedBox(height: isEditing ? 10 : 4),
+                    if (isEditing) ...[
+                      _buildRatingSection(colorScheme),
+                      //リスト一覧
+                      _buildListDropdownButton(),
 
-                    //URL入力欄
-                    _buildTextField(_urlController, 'URL', 'https://...'),
+                      //URL入力欄
+                      _buildTextField(_urlController, 'URL', 'https://...'),
 
-                    //タイトル入力欄
-                    _buildTextField(
-                      _titleController,
-                      L10n.of(context)!.detail_page_title,
-                      L10n.of(context)!.detail_page_title_placeholder,
-                      withFetchTitle: true,
-                    ),
+                      //タイトル入力欄
+                      _buildTextField(
+                        _titleController,
+                        L10n.of(context)!.detail_page_title,
+                        L10n.of(context)!.detail_page_title_placeholder,
+                        withFetchTitle: true,
+                      ),
 
-                    //出演入力欄
-                    _buildTextField(
-                      _castController,
-                      L10n.of(context)!.detail_page_cast,
-                      L10n.of(context)!.detail_page_cast_placeholder,
-                      autocompleteKey: 'cast',
-                    ),
+                      //出演入力欄
+                      _buildTextField(
+                        _castController,
+                        L10n.of(context)!.detail_page_cast,
+                        L10n.of(context)!.detail_page_cast_placeholder,
+                        autocompleteKey: 'cast',
+                      ),
 
-                    //ジャンル入力欄
-                    _buildTextField(
-                      _genreController,
-                      L10n.of(context)!.detail_page_genre,
-                      L10n.of(context)!.detail_page_genre_placeholder,
-                      autocompleteKey: 'genre',
-                    ),
+                      //ジャンル入力欄
+                      _buildTextField(
+                        _genreController,
+                        L10n.of(context)!.detail_page_genre,
+                        L10n.of(context)!.detail_page_genre_placeholder,
+                        autocompleteKey: 'genre',
+                      ),
 
-                    //シリーズ入力欄
-                    _buildTextField(
-                      _seriesController,
-                      L10n.of(context)!.detail_page_series,
-                      L10n.of(context)!.detail_page_series_placeholder,
-                      autocompleteKey: 'series',
-                    ),
+                      //シリーズ入力欄
+                      _buildTextField(
+                        _seriesController,
+                        L10n.of(context)!.detail_page_series,
+                        L10n.of(context)!.detail_page_series_placeholder,
+                        autocompleteKey: 'series',
+                      ),
 
-                    //メーカー入力欄
-                    _buildTextField(
-                      _makerController,
-                      L10n.of(context)!.detail_page_maker,
-                      L10n.of(context)!.detail_page_maker_placeholder,
-                      autocompleteKey: 'maker',
-                    ),
+                      //メーカー入力欄
+                      _buildTextField(
+                        _makerController,
+                        L10n.of(context)!.detail_page_maker,
+                        L10n.of(context)!.detail_page_maker_placeholder,
+                        autocompleteKey: 'maker',
+                      ),
 
-                    //レーベル入力欄
-                    _buildTextField(
-                      _labelController,
-                      L10n.of(context)!.detail_page_label,
-                      L10n.of(context)!.detail_page_label_placeholder,
-                      autocompleteKey: 'label',
-                    ),
+                      //レーベル入力欄
+                      _buildTextField(
+                        _labelController,
+                        L10n.of(context)!.detail_page_label,
+                        L10n.of(context)!.detail_page_label_placeholder,
+                        autocompleteKey: 'label',
+                      ),
 
-                    //メモ欄
-                    _buildMemoTextField(),
+                      //メモ欄
+                      _buildMemoTextField(),
+                    ] else ...[
+                      _buildReadOnlyTitle(colorScheme),
+                      const SizedBox(height: 14),
+                      _buildRatingSection(colorScheme, showLabel: false),
+                      const SizedBox(height: 16),
+                      _buildReadOnlyInfoCard(colorScheme),
+                    ],
 
                     const SizedBox(height: 70),
                   ],
@@ -2013,6 +2271,17 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     );
   }
 
+  // 閲覧モードのヘッダーから呼び出す共有アクション
+  Future<void> _shareItem() async {
+    final url = _urlController.text.trim();
+    final title = _titleController.text.trim();
+    final text = title.isNotEmpty && url.isNotEmpty
+        ? '$title\n$url'
+        : (url.isNotEmpty ? url : title);
+    if (text.isEmpty) return;
+    await Share.share(text);
+  }
+
   Future<void> _launchUrl() async {
     final url = _urlController.text.trim();
 
@@ -2474,6 +2743,49 @@ class _TutorialBalloon extends StatelessWidget {
             context,
           ).textTheme.bodyMedium?.copyWith(color: Colors.black, height: 1.4),
         ),
+      ),
+    );
+  }
+}
+
+class _InfoRowSpec {
+  final String label;
+  final String value;
+  final Widget? trailing;
+  const _InfoRowSpec(this.label, this.value, {this.trailing});
+}
+
+class _CopyIconButton extends StatelessWidget {
+  final String value;
+  final Color iconColor;
+  final String copiedLabel;
+
+  const _CopyIconButton({
+    required this.value,
+    required this.iconColor,
+    required this.copiedLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: () async {
+        await Clipboard.setData(ClipboardData(text: value));
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(copiedLabel),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(Icons.copy_rounded, size: 18, color: iconColor),
       ),
     );
   }

@@ -23,7 +23,10 @@ import 'pro_detail.dart';
 import 'share_dialog.dart';
 import 'sync_service.dart';
 import 'list_reload_provider.dart';
-import 'my_native_ad_widget.dart';
+// import 'my_native_ad_widget.dart'; // 一覧内ネイティブ広告は廃止
+import 'theme_provider.dart';
+import 'rating_label_provider.dart';
+import 'circle_app_bar_icon.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -162,6 +165,9 @@ class GridPageState extends ConsumerState<GridPage> {
       itemsToShow = _sortedItems;
     }
 
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
+    final sectionName = _sectionName();
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -170,51 +176,78 @@ class GridPageState extends ConsumerState<GridPage> {
       child: Stack(
         children: [
           Scaffold(
-            //backgroundColor: Color(0xFF121212),
+            backgroundColor: pageBg,
             appBar: AppBar(
-              //backgroundColor: Color(0xFF121212),
-              title: Text(
-                _isSelectionMode
-                    ? "${_selectedIndexes.length} seleted" //選択モード中は選択数を表示
-                    : L10n.of(
-                      context,
-                    )!.grid_page_item_count(itemsToShow.length),
-              ),
-              leading:
-                  _isSelectionMode
-                      ? IconButton(
-                        icon: const Icon(Icons.close), //選択モード中は閉じるアイコンを表示
-                        onPressed: () {
-                          setState(() {
-                            _isSelectionMode = false;
-                            _selectedIndexes.clear();
-                          });
-                        },
-                      )
-                      : null,
-              actions:
-                  _isSelectionMode
-                      ? [
-                        IconButton(
-                          icon: const Icon(Icons.drive_file_move),
-                          tooltip: L10n.of(context)!.grid_page_move_action,
-                          onPressed: () => _moveSelectedToList(itemsToShow),
+              backgroundColor: pageBg,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              title: _isSelectionMode
+                  ? Text("${_selectedIndexes.length} seleted")
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            sectionName,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: _confirmDeleteSelected,
-                        ),
-                      ]
-                      : [
-                        IconButton(
-                          onPressed: () => _openShareDialog(itemsToShow),
-                          icon: const Icon(Icons.share),
-                        ),
-                        IconButton(
-                          onPressed: _showSortModal,
-                          icon: Icon(Icons.sort),
+                        const SizedBox(width: 10),
+                        Text(
+                          L10n.of(context)!
+                              .grid_page_item_count(itemsToShow.length),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: (isDark ? Colors.white : Colors.black87)
+                                .withValues(alpha: 0.55),
+                          ),
                         ),
                       ],
+                    ),
+              leading: _isSelectionMode
+                  ? CircleAppBarIcon(
+                      icon: Icons.close,
+                      onPressed: () {
+                        setState(() {
+                          _isSelectionMode = false;
+                          _selectedIndexes.clear();
+                        });
+                      },
+                    )
+                  : CircleAppBarIcon(
+                      icon: Icons.arrow_back,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+              actions: _isSelectionMode
+                  ? [
+                      CircleAppBarIcon(
+                        icon: Icons.drive_file_move,
+                        tooltip: L10n.of(context)!.grid_page_move_action,
+                        onPressed: () => _moveSelectedToList(itemsToShow),
+                      ),
+                      CircleAppBarIcon(
+                        icon: Icons.delete,
+                        onPressed: _confirmDeleteSelected,
+                      ),
+                      const SizedBox(width: 4),
+                    ]
+                  : [
+                      CircleAppBarIcon(
+                        icon: Icons.share,
+                        onPressed: () => _openShareDialog(itemsToShow),
+                      ),
+                      CircleAppBarIcon(
+                        icon: Icons.sort,
+                        onPressed: _showSortModal,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
             ),
             body:
                 itemsToShow.isEmpty
@@ -339,12 +372,12 @@ class GridPageState extends ConsumerState<GridPage> {
                             ? (_isYoutubeGrid ? 0.8 : 1.6)
                             : (_isYoutubeGrid ? 0.7 : 1.4);
 
-                        // 非Premium時のみ N件ごとに広告セルを1つ挿入
-                        const adInterval = 10;
-                        final adCount = _isPremium
-                            ? 0
-                            : itemsToShow.length ~/ adInterval;
-                        final totalCount = itemsToShow.length + adCount;
+                        // 一覧内ネイティブ広告は廃止（コメントアウト）
+                        // const adInterval = 10;
+                        // final adCount = _isPremium
+                        //     ? 0
+                        //     : itemsToShow.length ~/ adInterval;
+                        final totalCount = itemsToShow.length;
 
                         return CustomScrollView(
                           controller: _scrollController,
@@ -359,20 +392,16 @@ class GridPageState extends ConsumerState<GridPage> {
                                   ),
                               delegate: SliverChildBuilderDelegate(
                                 (context, displayIndex) {
-                                  // 広告セル判定
-                                  if (!_isPremium &&
-                                      displayIndex > 0 &&
-                                      (displayIndex + 1) % (adInterval + 1) ==
-                                          0) {
-                                    return const GridCardNativeAd();
-                                  }
-                                  final realIndex = _isPremium
-                                      ? displayIndex
-                                      : displayIndex -
-                                          (displayIndex ~/ (adInterval + 1));
+                                  // 広告セル判定（廃止）
+                                  // if (!_isPremium &&
+                                  //     displayIndex > 0 &&
+                                  //     (displayIndex + 1) % (adInterval + 1) ==
+                                  //         0) {
+                                  //   return const GridCardNativeAd();
+                                  // }
                                   return _buildGridItem(
                                     context,
-                                    realIndex,
+                                    displayIndex,
                                     colorScheme,
                                   );
                                 },
@@ -385,28 +414,19 @@ class GridPageState extends ConsumerState<GridPage> {
                     )
                     : ListView.builder(
                       controller: _scrollController,
-                      itemCount: () {
-                        // 非Premiumのみ N件ごとに広告を1枠挿入
-                        const adInterval = 10;
-                        if (_isPremium) return itemsToShow.length;
-                        final adCount = itemsToShow.length ~/ adInterval;
-                        return itemsToShow.length + adCount;
-                      }(),
+                      // 一覧内ネイティブ広告は廃止
+                      itemCount: itemsToShow.length,
                       itemBuilder: (context, index) {
-                        const adInterval = 10;
-                        // 広告位置判定（非Premium時のみ）
-                        if (!_isPremium &&
-                            index > 0 &&
-                            (index + 1) % (adInterval + 1) == 0) {
-                          return const ListTileNativeAd();
-                        }
-                        final realIndex = _isPremium
-                            ? index
-                            : index - (index ~/ (adInterval + 1));
-                        if (realIndex >= itemsToShow.length) {
+                        // const adInterval = 10;
+                        // if (!_isPremium &&
+                        //     index > 0 &&
+                        //     (index + 1) % (adInterval + 1) == 0) {
+                        //   return const ListTileNativeAd();
+                        // }
+                        if (index >= itemsToShow.length) {
                           return const SizedBox.shrink();
                         }
-                        final item = itemsToShow[realIndex];
+                        final item = itemsToShow[index];
                         String? rating = item['rating'];
                         String? iconPath;
                         switch (rating) {
@@ -447,11 +467,11 @@ class GridPageState extends ConsumerState<GridPage> {
                             if (result == true) (await _searchMetadata());
                           },
                           child: Card(
-                            elevation: 0,
-                            color:
-                                colorScheme.brightness == Brightness.light
-                                    ? Colors.grey[200]
-                                    : const Color(0xFF2C2C2C),
+                            elevation: isDark ? 0 : 4,
+                            shadowColor: Colors.black.withValues(alpha: 0.32),
+                            color: isDark
+                                ? const Color(0xFF2C2C2C)
+                                : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -763,9 +783,10 @@ class GridPageState extends ConsumerState<GridPage> {
               duration: const Duration(milliseconds: 200),
               opacity: _removingIndexes.contains(index) ? 0 : 1,
               child: Card(
-                elevation: 0,
+                elevation: colorScheme.brightness == Brightness.dark ? 0 : 4,
+                shadowColor: Colors.black.withValues(alpha: 0.32),
                 color: colorScheme.brightness == Brightness.light
-                    ? Colors.grey[200]
+                    ? Colors.white
                     : const Color(0xFF2C2C2C),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1307,6 +1328,16 @@ class GridPageState extends ConsumerState<GridPage> {
         ),
       ),
     );
+  }
+
+  // AppBar に表示するセクション名 (リスト名 / 評価名 / 全てのアイテム)
+  String _sectionName() {
+    if (widget.listName.isNotEmpty) return widget.listName;
+    if (widget.rating.isNotEmpty) {
+      final labels = ref.watch(ratingLabelsProvider);
+      return ratingLabelOf(context, labels, widget.rating);
+    }
+    return L10n.of(context)!.all_item_list_name;
   }
 
   //評価ごとの色

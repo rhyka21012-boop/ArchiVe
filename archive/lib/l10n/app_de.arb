@@ -35,11 +35,32 @@
   "main_page_update_info": "Update-Hinweis",
   "main_page_update_later": "Später",
   "main_page_update_now": "Aktualisieren",
+  "list_page_home": "Start",
   "list_page_my_list": "Meine Listen",
   "list_page_my_ranking": "Meine Rankings",
   "list_page_make_list": "Liste erstellen",
   "list_page_add_list": "Liste hinzufügen",
   "list_page_input_list_name": "Listennamen eingeben",
+  "reset": "Zurücksetzen",
+  "list_page_rating_rename_title": "Bewertung umbenennen",
+  "list_page_reorder": "Sortieren",
+  "list_page_reorder_done": "Fertig",
+  "list_page_reorder_hint": "Zum Ändern der Reihenfolge ziehen",
+  "list_page_all_item_fixed": "„Alle Einträge“ kann nicht neu angeordnet werden",
+  "list_page_save_count": "Gespeichert {count} / {limit}",
+  "@list_page_save_count": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "list_page_item_unit": " Einträge",
+  "list_page_item_count": "{count} Einträge",
+  "@list_page_item_count": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "ranking_page_dragable": "Ziehen zum Sortieren",
   "ranking_page_no_title": "(Kein Titel)",
   "ranking_page_search_title": "Titel suchen",
@@ -71,12 +92,25 @@
   "detail_page_delete": "Löschen",
   "detail_page_access": "Browser",
   "detail_page_modify": "Bearbeiten",
+  "detail_page_share": "Teilen",
+  "detail_page_copied": "Kopiert",
+  "detail_page_saved_to": "In {listName} gespeichert",
+  "@detail_page_saved_to": {
+    "placeholders": {
+      "listName": {"type": "String"}
+    }
+  },
   "detail_page_save": "Speichern",
   "detail_page_thumbnail_placeholder": "Vorschaubild erscheint nach dem Speichern",
   "detail_page_add_image": "Bild hinzufügen ★",
   "detail_page_rate": "Bewertung",
   "detail_page_title": "Titel",
   "detail_page_title_placeholder": "Titel",
+  "detail_page_cast_short": "Darsteller",
+  "detail_page_genre_short": "Genre",
+  "detail_page_series_short": "Serie",
+  "detail_page_maker_short": "Hersteller",
+  "detail_page_label_short": "Label",
   "detail_page_cast": "Darsteller (# mehrere)",
   "detail_page_cast_placeholder": "#Darsteller1 #Darsteller2 ...",
   "detail_page_genre": "Genre (# mehrere)",
@@ -156,6 +190,8 @@
   "analytics_page_recent_additions": "Kürzlich hinzugefügte Elemente",
   "analytics_page_piechart_others": "Andere\n{percent}%",
   "analytics_page_view_count_top5": "Top 5 Aufrufe",
+  "analytics_page_no_view_records_title": "Noch keine Aufrufe erfasst",
+  "analytics_page_no_view_records_hint": "In den Item-Details erfasste Aufrufe werden hier angezeigt",
   "analytics_page_no_data": "Keine Daten verfügbar",
   "analytics_page_evaluation": "Bewertung",
   "analytics_page_cast": "Darsteller",
@@ -209,7 +245,7 @@
   "settings_page_terms": "Nutzungsbedingungen (Apple Standard EULA)",
   "settings_page_save_count_increased": "Speicherlimit um +5 erhöht",
   "setting_page_unlimited": "Unbegrenzt",
-  "view_counter_view_count": "Aufrufe: {viewCount}",
+  "view_counter_view_count": "Aufrufe {viewCount}",
   "random_image_no_image": "Bild konnte nicht geladen werden",
   "random_image_change_list_name": "Listennamen ändern",
   "random_image_change_list_name_dialog": "Listennamen ändern",

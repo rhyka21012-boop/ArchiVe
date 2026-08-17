@@ -6,19 +6,23 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'premium_detail.dart';
 import 'pro_detail.dart';
 import 'ai_service.dart';
 import 'l10n/app_localizations.dart';
+import 'rating_label_provider.dart';
+import 'circle_app_bar_icon.dart';
+import 'theme_provider.dart';
 
-class AnalyticsPage extends StatefulWidget {
+class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
   @override
-  State<AnalyticsPage> createState() => AnalyticsPageState();
+  ConsumerState<AnalyticsPage> createState() => AnalyticsPageState();
 }
 
-class AnalyticsPageState extends State<AnalyticsPage> {
+class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   // ─── State ────────────────────────────────────────────────────
   Map<String, int> ratingCounts = {
     'critical': 0,
@@ -576,32 +580,45 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   // ─── Build ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
+
     return Scaffold(
+      backgroundColor: pageBg,
       appBar: AppBar(
-        title: Text(L10n.of(context)!.analytics),
+        backgroundColor: pageBg,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          L10n.of(context)!.analytics,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           if (kDebugMode)
-            IconButton(
-              icon: Icon(
-                _debugBypassPremium ? Icons.lock_open : Icons.lock,
-                color: _debugBypassPremium ? Colors.green : null,
-              ),
+            CircleAppBarIcon(
+              icon: _debugBypassPremium ? Icons.lock_open : Icons.lock,
+              iconColor: _debugBypassPremium ? Colors.green : null,
               tooltip: 'Debug: Premium toggle',
-              onPressed: () => setState(() => _debugBypassPremium = !_debugBypassPremium),
+              onPressed: () =>
+                  setState(() => _debugBypassPremium = !_debugBypassPremium),
             ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          CircleAppBarIcon(
+            icon: Icons.refresh,
             onPressed: _loadAll,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
             children: [
               if (!_monthlyReportDismissed) _buildMonthlyReportCard(),
-              _buildSummarySection(),
+              _buildKpiRow(),
+              const SizedBox(height: 20),
+              _buildRecentSection(),
               _buildTop5ViewSection(),
               _buildRatingSection(),
               if (listCounts.isNotEmpty) _buildListCountSection(),
@@ -649,7 +666,7 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  // ─── Section wrapper ────────────────────────────────────────────
+  // ─── Section wrapper (白カード + 影 + シンプルヘッダ) ─────────
   Widget _section({
     required IconData icon,
     required String title,
@@ -659,71 +676,61 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      elevation: 0,
-      color: isDark ? const Color(0xFF2E2E2E) : Colors.grey.shade100,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  accentColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                  accentColor.withValues(alpha: isDark ? 0.05 : 0.02),
-                ],
-              ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: accentColor, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurface.withValues(alpha: 0.55),
-                          ),
-                        ),
-                    ],
-                  ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (subtitle != null)
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurface.withValues(alpha: 0.55),
+                    ),
+                  ),
+              ],
             ),
-          ),
-          Padding(padding: const EdgeInsets.all(16), child: child),
-        ],
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
       ),
     );
   }
 
-  // ─── KPI Card ───────────────────────────────────────────────────
+  // ─── KPI Card (アイコン無しの minimal 版 - サンプル準拠) ─────
   Widget _kpiCard(
     String label,
     String value,
@@ -731,42 +738,94 @@ class AnalyticsPageState extends State<AnalyticsPage> {
     Color color,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
     return Expanded(
-      child: Card(
-        elevation: 0,
-        color: colorScheme.brightness == Brightness.dark ? Colors.grey.shade800 : colorScheme.surface,
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 22),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+                height: 1.1,
               ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurface.withValues(alpha: 0.55),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.55)),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  // ─── KPI Row (Summary から独立させて画面直下に配置) ─────────
+  Widget _buildKpiRow() {
+    final ratedCount = totalWorks - (ratingCounts['unrated'] ?? 0);
+    final ratingRate = totalWorks > 0
+        ? '${(ratedCount / totalWorks * 100).toStringAsFixed(0)}%'
+        : '-%';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Row(
+        children: [
+          _kpiCard(
+            L10n.of(context)!.analytics_page_kpi_saved_count,
+            '$totalWorks',
+            Icons.video_library,
+            const Color(0xFF2196F3),
+          ),
+          _kpiCard(
+            L10n.of(context)!.analytics_page_kpi_total_view_count,
+            '$totalViewCount',
+            Icons.play_circle,
+            const Color(0xFF4CAF50),
+          ),
+          _kpiCard(
+            L10n.of(context)!.analytics_page_kpi_rating_rate,
+            ratingRate,
+            Icons.star,
+            const Color(0xFFFF9800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── 最近追加した作品 セクション ────────────────────────────
+  Widget _buildRecentSection() {
+    if (recentItems.isEmpty) return const SizedBox.shrink();
+    return _section(
+      icon: Icons.history,
+      title: L10n.of(context)!.analytics_page_recent_additions,
+      accentColor: const Color(0xFF2196F3),
+      child: _buildRecentList(),
     );
   }
 
@@ -1081,13 +1140,15 @@ class AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   String _ratingLabel(String? rating) {
+    if (rating == null || rating.isEmpty) {
+      return L10n.of(context)!.unrated;
+    }
+    final labels = ref.read(ratingLabelsProvider);
     switch (rating) {
-      case 'critical':
-        return L10n.of(context)!.critical;
-      case 'normal':
-        return L10n.of(context)!.normal;
-      case 'maniac':
-        return L10n.of(context)!.maniac;
+      case kRatingCritical:
+      case kRatingNormal:
+      case kRatingManiac:
+        return ratingLabelOf(context, labels, rating);
       default:
         return L10n.of(context)!.unrated;
     }
@@ -1095,17 +1156,69 @@ class AnalyticsPageState extends State<AnalyticsPage> {
 
   // ─── Top5 view count section ────────────────────────────────────
   Widget _buildTop5ViewSection() {
+    // データが無い場合は破線枠のプレースホルダーで空状態を強調
+    if (top5Viewings.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Text(
+                L10n.of(context)!.analytics_page_view_count_top5,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            _DashedBorderBox(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 32,
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      L10n.of(context)!.analytics_page_no_view_records_title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.55),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      L10n.of(context)!.analytics_page_no_view_records_hint,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return _section(
       icon: Icons.bar_chart,
       title: L10n.of(context)!.analytics_page_view_count_top5,
-      subtitle: L10n.of(context)!.analytics_page_total_view_subtitle(totalViewCount),
+      subtitle:
+          L10n.of(context)!.analytics_page_total_view_subtitle(totalViewCount),
       accentColor: const Color(0xFF4CAF50),
       child: SizedBox(
         height: 300,
-        child:
-            top5Viewings.isEmpty
-                ? Center(child: Text(L10n.of(context)!.analytics_page_no_data))
-                : BarChart(_top5BarChartData()),
+        child: BarChart(_top5BarChartData()),
       ),
     );
   }
@@ -1560,4 +1673,76 @@ class AnalyticsPageState extends State<AnalyticsPage> {
         ? title
         : '${title.substring(0, maxLength)}...';
   }
+}
+
+// 破線ボーダー付きの空状態カード
+class _DashedBorderBox extends StatelessWidget {
+  final Widget child;
+  final Color? borderColor;
+  final double radius;
+
+  const _DashedBorderBox({
+    required this.child,
+    this.borderColor,
+    this.radius = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = borderColor ??
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.18);
+    return CustomPaint(
+      painter: _DashedRRectPainter(color: color, radius: radius),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: SizedBox(width: double.infinity, child: child),
+      ),
+    );
+  }
+}
+
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double dashLength;
+  final double gapLength;
+  final double strokeWidth;
+
+  _DashedRRectPainter({
+    required this.color,
+    required this.radius,
+    this.dashLength = 5,
+    this.gapLength = 4,
+    this.strokeWidth = 1.2,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashLength).clamp(0, metric.length).toDouble();
+        canvas.drawPath(metric.extractPath(distance, end), paint);
+        distance = end + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRectPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.dashLength != dashLength ||
+      oldDelegate.gapLength != gapLength ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

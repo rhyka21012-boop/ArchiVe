@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'my_flutter_app_icons.dart';
+import 'theme_provider.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -116,8 +117,9 @@ class _RankingPageState extends State<RankingPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final isDark = colorScheme.brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: isDark ? colorScheme.surface : kHomeSurfaceLight,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -182,15 +184,15 @@ class _RankingPageState extends State<RankingPage> {
     const imgH = 64.0;
     final colorScheme = Theme.of(context).colorScheme;
 
+    final isDark = colorScheme.brightness == Brightness.dark;
     return Card(
       key: ValueKey('rank_${item['title']}_$index'),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      elevation: 0,
-      color: colorScheme.brightness == Brightness.light
-          ? Colors.grey[200]
-          : const Color(0xFF2C2C2C),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: isDark ? 0 : 2.5,
+      shadowColor: Colors.black.withValues(alpha: 0.24),
+      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () async {
           await Navigator.push(
@@ -236,7 +238,7 @@ class _RankingPageState extends State<RankingPage> {
               // ─── メインコンテンツ ────────────────────────────
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
                   child: Row(
                     children: [
                       // 順位バッジ（1位はクラウン付き）
@@ -259,21 +261,32 @@ class _RankingPageState extends State<RankingPage> {
                                   L10n.of(context)!.ranking_page_no_title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white
+                                    : Colors.black87,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // 削除ボタン
+                      // 削除ボタン (右端に寄せて余白を最小化)
+                      const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(
                           Icons.close,
                           color: Colors.grey,
                           size: 20,
                         ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        splashRadius: 20,
                         onPressed: () async {
                           setState(() => _rankingItems.removeAt(index));
                           await _saveRanking();

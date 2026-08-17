@@ -71,18 +71,22 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
     final bool showThumbnail = ref.watch(showThumbnailProvider);
     final imageUrl = _randomItem?['image'];
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final bool showImageAsBg = imageUrl != null && showThumbnail;
+    // 各リスト固有の淡いプライマリ寄せ色をリスト名から決定的に生成
+    final bgColor = _paleListColor(colorScheme.primary, widget.listName, isDark);
+    // 画像がある時は暗いオーバーレイの上に載るので白文字、なければ背景に合わせる
+    final textColor = showImageAsBg
+        ? Colors.white
+        : _readableTextColor(bgColor);
+    final iconColor = textColor;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 200,
         width: 300,
-        decoration: BoxDecoration(
-          color:
-              colorScheme.brightness == Brightness.dark
-                  ? Color(0xFF2C2C2C)
-                  : colorScheme.primary,
-        ),
+        decoration: BoxDecoration(color: bgColor),
         child: Stack(
           fit: StackFit.passthrough,
           children: [
@@ -132,11 +136,13 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
             Center(
               child: Text(
                 widget.listName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [Shadow(blurRadius: 6, color: Colors.black54)],
+                  color: textColor,
+                  shadows: showImageAsBg
+                      ? const [Shadow(blurRadius: 6, color: Colors.black54)]
+                      : null,
                 ),
               ),
             ),
@@ -146,7 +152,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                   top: 0,
                   right: 0,
                   child: IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    icon: Icon(Icons.more_vert, color: iconColor),
                     onPressed: () {
                       showModalBottomSheet(
                         backgroundColor: colorScheme.secondary,
@@ -470,4 +476,30 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
       },
     );
   }
+}
+
+// リスト名から決定的に、プライマリカラー近傍の淡い色を生成する
+Color _paleListColor(Color primary, String seed, bool isDark) {
+  final baseHsl = HSLColor.fromColor(primary);
+  final rng = seed.isEmpty ? 1 : seed.hashCode.abs();
+  final hueShift = (rng % 41) - 20; // ±20°
+  final newHue = ((baseHsl.hue + hueShift) % 360 + 360) % 360;
+  if (isDark) {
+    // 暗色モード: 彩度低め・明度低めのくすんだ色
+    final sat = 0.25 + ((rng >> 8) % 20) / 100.0; // 0.25-0.44
+    final light = 0.18 + ((rng >> 12) % 8) / 100.0; // 0.18-0.25
+    return HSLColor.fromAHSL(1.0, newHue, sat, light).toColor();
+  } else {
+    // 明色モード: パステル調で背景と馴染ませる
+    final sat = 0.35 + ((rng >> 8) % 25) / 100.0; // 0.35-0.59
+    final light = 0.82 + ((rng >> 12) % 10) / 100.0; // 0.82-0.91
+    return HSLColor.fromAHSL(1.0, newHue, sat, light).toColor();
+  }
+}
+
+// 背景色に対して十分にコントラストのある文字色を選ぶ
+Color _readableTextColor(Color bg) {
+  // 相対輝度 (WCAG 準拠の簡易版) を基準に閾値で切り替え
+  final luminance = bg.computeLuminance();
+  return luminance > 0.5 ? Colors.black87 : Colors.white;
 }

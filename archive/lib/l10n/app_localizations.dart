@@ -320,6 +320,12 @@ abstract class L10n {
   /// **'アップデート'**
   String get main_page_update_now;
 
+  /// No description provided for @list_page_home.
+  ///
+  /// In ja, this message translates to:
+  /// **'ホーム'**
+  String get list_page_home;
+
   /// No description provided for @list_page_my_list.
   ///
   /// In ja, this message translates to:
@@ -349,6 +355,60 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'リスト名を入力'**
   String get list_page_input_list_name;
+
+  /// No description provided for @reset.
+  ///
+  /// In ja, this message translates to:
+  /// **'リセット'**
+  String get reset;
+
+  /// No description provided for @list_page_rating_rename_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価名を変更'**
+  String get list_page_rating_rename_title;
+
+  /// No description provided for @list_page_reorder.
+  ///
+  /// In ja, this message translates to:
+  /// **'並べ替え'**
+  String get list_page_reorder;
+
+  /// No description provided for @list_page_reorder_done.
+  ///
+  /// In ja, this message translates to:
+  /// **'完了'**
+  String get list_page_reorder_done;
+
+  /// No description provided for @list_page_reorder_hint.
+  ///
+  /// In ja, this message translates to:
+  /// **'ドラッグして順番を変更できます'**
+  String get list_page_reorder_hint;
+
+  /// No description provided for @list_page_all_item_fixed.
+  ///
+  /// In ja, this message translates to:
+  /// **'「全てのアイテム」は並べ替えできません'**
+  String get list_page_all_item_fixed;
+
+  /// No description provided for @list_page_save_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存 {count} / {limit}'**
+  String list_page_save_count(int count, int limit);
+
+  /// No description provided for @list_page_item_unit.
+  ///
+  /// In ja, this message translates to:
+  /// **'件'**
+  String get list_page_item_unit;
+
+  /// No description provided for @list_page_item_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}件'**
+  String list_page_item_count(int count);
 
   /// No description provided for @ranking_page_dragable.
   ///
@@ -536,6 +596,24 @@ abstract class L10n {
   /// **'編集'**
   String get detail_page_modify;
 
+  /// No description provided for @detail_page_share.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有'**
+  String get detail_page_share;
+
+  /// No description provided for @detail_page_copied.
+  ///
+  /// In ja, this message translates to:
+  /// **'コピーしました'**
+  String get detail_page_copied;
+
+  /// No description provided for @detail_page_saved_to.
+  ///
+  /// In ja, this message translates to:
+  /// **'{listName} に保存'**
+  String detail_page_saved_to(String listName);
+
   /// No description provided for @detail_page_save.
   ///
   /// In ja, this message translates to:
@@ -571,6 +649,36 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'タイトル'**
   String get detail_page_title_placeholder;
+
+  /// No description provided for @detail_page_cast_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'出演'**
+  String get detail_page_cast_short;
+
+  /// No description provided for @detail_page_genre_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'ジャンル'**
+  String get detail_page_genre_short;
+
+  /// No description provided for @detail_page_series_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'シリーズ'**
+  String get detail_page_series_short;
+
+  /// No description provided for @detail_page_maker_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'メーカー'**
+  String get detail_page_maker_short;
+
+  /// No description provided for @detail_page_label_short.
+  ///
+  /// In ja, this message translates to:
+  /// **'レーベル'**
+  String get detail_page_label_short;
 
   /// No description provided for @detail_page_cast.
   ///
@@ -1046,6 +1154,18 @@ abstract class L10n {
   /// **'視聴回数 TOP5'**
   String get analytics_page_view_count_top5;
 
+  /// No description provided for @analytics_page_no_view_records_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'まだ視聴記録がありません'**
+  String get analytics_page_no_view_records_title;
+
+  /// No description provided for @analytics_page_no_view_records_hint.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品詳細で視聴回数を記録すると表示されます'**
+  String get analytics_page_no_view_records_hint;
+
   /// No description provided for @analytics_page_no_data.
   ///
   /// In ja, this message translates to:
@@ -1367,7 +1487,7 @@ abstract class L10n {
   /// No description provided for @view_counter_view_count.
   ///
   /// In ja, this message translates to:
-  /// **'視聴回数:{viewCount}'**
+  /// **'視聴 {viewCount}'**
   String view_counter_view_count(Object viewCount);
 
   /// No description provided for @random_image_no_image.

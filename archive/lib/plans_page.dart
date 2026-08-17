@@ -4,6 +4,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'premium_detail.dart';
 import 'pro_detail.dart';
+import 'circle_app_bar_icon.dart';
 
 /// プラン一覧画面：Premium と Pro を並べて表示し、各カードのタップで購入画面へ
 class PlansPage extends StatefulWidget {
@@ -97,8 +98,8 @@ class _PlansPageState extends State<PlansPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l.plans_page_title),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
+        leading: CircleAppBarIcon(
+          icon: Icons.close,
           onPressed: () => Navigator.pop(context),
         ),
       ),

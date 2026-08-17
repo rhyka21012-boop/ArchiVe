@@ -114,6 +114,9 @@ class L10nEs extends L10n {
   String get main_page_update_now => 'Actualizar';
 
   @override
+  String get list_page_home => 'Inicio';
+
+  @override
   String get list_page_my_list => 'Mis listas';
 
   @override
@@ -127,6 +130,38 @@ class L10nEs extends L10n {
 
   @override
   String get list_page_input_list_name => 'Introducir nombre de la lista';
+
+  @override
+  String get reset => 'Restablecer';
+
+  @override
+  String get list_page_rating_rename_title => 'Renombrar valoración';
+
+  @override
+  String get list_page_reorder => 'Reordenar';
+
+  @override
+  String get list_page_reorder_done => 'Hecho';
+
+  @override
+  String get list_page_reorder_hint => 'Arrastra para cambiar el orden';
+
+  @override
+  String get list_page_all_item_fixed =>
+      '«Todos los elementos» no se puede reordenar';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return 'Guardado $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => ' elementos';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count elementos';
+  }
 
   @override
   String get ranking_page_dragable => 'Arrastra para ordenar';
@@ -230,6 +265,17 @@ class L10nEs extends L10n {
   String get detail_page_modify => 'Editar';
 
   @override
+  String get detail_page_share => 'Compartir';
+
+  @override
+  String get detail_page_copied => 'Copiado';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return 'Guardado en $listName';
+  }
+
+  @override
   String get detail_page_save => 'Guardar';
 
   @override
@@ -247,6 +293,21 @@ class L10nEs extends L10n {
 
   @override
   String get detail_page_title_placeholder => 'Título';
+
+  @override
+  String get detail_page_cast_short => 'Reparto';
+
+  @override
+  String get detail_page_genre_short => 'Género';
+
+  @override
+  String get detail_page_series_short => 'Serie';
+
+  @override
+  String get detail_page_maker_short => 'Productora';
+
+  @override
+  String get detail_page_label_short => 'Sello';
 
   @override
   String get detail_page_cast => 'Reparto (# múltiples)';
@@ -503,6 +564,14 @@ class L10nEs extends L10n {
   String get analytics_page_view_count_top5 => 'Top 5 más vistos';
 
   @override
+  String get analytics_page_no_view_records_title =>
+      'Aún no hay registros de vistas';
+
+  @override
+  String get analytics_page_no_view_records_hint =>
+      'Las vistas registradas en el detalle del elemento aparecerán aquí';
+
+  @override
   String get analytics_page_no_data => 'No hay datos disponibles';
 
   @override
@@ -688,7 +757,7 @@ class L10nEs extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return 'Vistas: $viewCount';
+    return 'Vistas $viewCount';
   }
 
   @override

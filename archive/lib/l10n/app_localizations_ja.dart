@@ -114,6 +114,9 @@ class L10nJa extends L10n {
   String get main_page_update_now => 'アップデート';
 
   @override
+  String get list_page_home => 'ホーム';
+
+  @override
   String get list_page_my_list => 'マイリスト';
 
   @override
@@ -127,6 +130,37 @@ class L10nJa extends L10n {
 
   @override
   String get list_page_input_list_name => 'リスト名を入力';
+
+  @override
+  String get reset => 'リセット';
+
+  @override
+  String get list_page_rating_rename_title => '評価名を変更';
+
+  @override
+  String get list_page_reorder => '並べ替え';
+
+  @override
+  String get list_page_reorder_done => '完了';
+
+  @override
+  String get list_page_reorder_hint => 'ドラッグして順番を変更できます';
+
+  @override
+  String get list_page_all_item_fixed => '「全てのアイテム」は並べ替えできません';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return '保存 $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => '件';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count件';
+  }
 
   @override
   String get ranking_page_dragable => 'ドラッグして順番を変更できます';
@@ -227,6 +261,17 @@ class L10nJa extends L10n {
   String get detail_page_modify => '編集';
 
   @override
+  String get detail_page_share => '共有';
+
+  @override
+  String get detail_page_copied => 'コピーしました';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return '$listName に保存';
+  }
+
+  @override
   String get detail_page_save => '保存';
 
   @override
@@ -243,6 +288,21 @@ class L10nJa extends L10n {
 
   @override
   String get detail_page_title_placeholder => 'タイトル';
+
+  @override
+  String get detail_page_cast_short => '出演';
+
+  @override
+  String get detail_page_genre_short => 'ジャンル';
+
+  @override
+  String get detail_page_series_short => 'シリーズ';
+
+  @override
+  String get detail_page_maker_short => 'メーカー';
+
+  @override
+  String get detail_page_label_short => 'レーベル';
 
   @override
   String get detail_page_cast => '出演 (#で複数入力)';
@@ -490,6 +550,12 @@ class L10nJa extends L10n {
   String get analytics_page_view_count_top5 => '視聴回数 TOP5';
 
   @override
+  String get analytics_page_no_view_records_title => 'まだ視聴記録がありません';
+
+  @override
+  String get analytics_page_no_view_records_hint => '作品詳細で視聴回数を記録すると表示されます';
+
+  @override
   String get analytics_page_no_data => 'データがありません';
 
   @override
@@ -671,7 +737,7 @@ class L10nJa extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return '視聴回数:$viewCount';
+    return '視聴 $viewCount';
   }
 
   @override

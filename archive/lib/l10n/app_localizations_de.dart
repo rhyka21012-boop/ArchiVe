@@ -114,6 +114,9 @@ class L10nDe extends L10n {
   String get main_page_update_now => 'Aktualisieren';
 
   @override
+  String get list_page_home => 'Start';
+
+  @override
   String get list_page_my_list => 'Meine Listen';
 
   @override
@@ -127,6 +130,38 @@ class L10nDe extends L10n {
 
   @override
   String get list_page_input_list_name => 'Listennamen eingeben';
+
+  @override
+  String get reset => 'Zurücksetzen';
+
+  @override
+  String get list_page_rating_rename_title => 'Bewertung umbenennen';
+
+  @override
+  String get list_page_reorder => 'Sortieren';
+
+  @override
+  String get list_page_reorder_done => 'Fertig';
+
+  @override
+  String get list_page_reorder_hint => 'Zum Ändern der Reihenfolge ziehen';
+
+  @override
+  String get list_page_all_item_fixed =>
+      '„Alle Einträge“ kann nicht neu angeordnet werden';
+
+  @override
+  String list_page_save_count(int count, int limit) {
+    return 'Gespeichert $count / $limit';
+  }
+
+  @override
+  String get list_page_item_unit => ' Einträge';
+
+  @override
+  String list_page_item_count(int count) {
+    return '$count Einträge';
+  }
 
   @override
   String get ranking_page_dragable => 'Ziehen zum Sortieren';
@@ -230,6 +265,17 @@ class L10nDe extends L10n {
   String get detail_page_modify => 'Bearbeiten';
 
   @override
+  String get detail_page_share => 'Teilen';
+
+  @override
+  String get detail_page_copied => 'Kopiert';
+
+  @override
+  String detail_page_saved_to(String listName) {
+    return 'In $listName gespeichert';
+  }
+
+  @override
   String get detail_page_save => 'Speichern';
 
   @override
@@ -247,6 +293,21 @@ class L10nDe extends L10n {
 
   @override
   String get detail_page_title_placeholder => 'Titel';
+
+  @override
+  String get detail_page_cast_short => 'Darsteller';
+
+  @override
+  String get detail_page_genre_short => 'Genre';
+
+  @override
+  String get detail_page_series_short => 'Serie';
+
+  @override
+  String get detail_page_maker_short => 'Hersteller';
+
+  @override
+  String get detail_page_label_short => 'Label';
 
   @override
   String get detail_page_cast => 'Darsteller (# mehrere)';
@@ -503,6 +564,14 @@ class L10nDe extends L10n {
   String get analytics_page_view_count_top5 => 'Top 5 Aufrufe';
 
   @override
+  String get analytics_page_no_view_records_title =>
+      'Noch keine Aufrufe erfasst';
+
+  @override
+  String get analytics_page_no_view_records_hint =>
+      'In den Item-Details erfasste Aufrufe werden hier angezeigt';
+
+  @override
   String get analytics_page_no_data => 'Keine Daten verfügbar';
 
   @override
@@ -685,7 +754,7 @@ class L10nDe extends L10n {
 
   @override
   String view_counter_view_count(Object viewCount) {
-    return 'Aufrufe: $viewCount';
+    return 'Aufrufe $viewCount';
   }
 
   @override

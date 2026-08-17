@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 
+/// ホーム画面などライトモードで使用する暖かみのある下地色
+const Color kHomeSurfaceLight = Color(0xFFF5F3EE);
+
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
   ref,
 ) {

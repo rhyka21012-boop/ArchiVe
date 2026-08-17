@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'auth_service.dart';
 import 'l10n/app_localizations.dart';
+import 'circle_app_bar_icon.dart';
 
 /// サインイン画面
 /// Navigator.pop で bool を返す（true: サインイン成功 / false: キャンセル）
@@ -150,8 +151,8 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
+        leading: CircleAppBarIcon(
+          icon: Icons.close,
           onPressed: () => Navigator.pop(context, false),
         ),
       ),
