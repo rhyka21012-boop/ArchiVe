@@ -132,6 +132,32 @@ class _MainPageState extends ConsumerState<MainPage>
   }
 
   Future<void> _checkClipboard() async {
+    // アプリ内でクリップボードに URL を書き込んだ直後 (例: リスト共有URLコピー) は
+    // その URL でフックを発動させたくないため、1回だけスキップする
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('suppress_next_clipboard_check') ?? false) {
+      await prefs.setBool('suppress_next_clipboard_check', false);
+      // 現在の状態を「既読」として保存し、後続の check も誤発火しないようにする
+      if (Platform.isIOS) {
+        try {
+          final result =
+              await _clipboardChannel.invokeMethod<Map>('check');
+          final changeCount =
+              (result?['changeCount'] as num?)?.toInt();
+          if (changeCount != null) {
+            _lastClipboardChangeCount = changeCount;
+            await prefs.setInt(_kPrefClipboardChangeCount, changeCount);
+          }
+        } catch (_) {}
+      } else {
+        final data = await Clipboard.getData(Clipboard.kTextPlain);
+        final text = (data?.text ?? '').trim();
+        _lastCheckedClipboardUrl = text;
+        await prefs.setString(_kPrefClipboardUrl, text);
+      }
+      return;
+    }
+
     if (Platform.isIOS) {
       await _checkClipboardIOS();
     } else {

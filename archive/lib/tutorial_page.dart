@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'main_page.dart';
-import 'premium_detail.dart';
 
 /// チュートリアルをスキップしてホーム or 購入画面に遷移
 Future<void> skipTutorial(BuildContext context, WidgetRef ref) async {
@@ -66,15 +65,11 @@ class _PostTutorialPremiumPromptPageState
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // チュートリアル後の課金導線は廃止。そのまま MainPage に遷移するだけにする。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _didShowPremium) return;
       _didShowPremium = true;
-
-      final navigator = Navigator.of(context);
-      await PremiumGate.ensurePremium(context);
-
-      if (!mounted) return;
-      navigator.pushReplacement(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainPage()),
       );
     });

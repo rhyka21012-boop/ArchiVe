@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'l10n/app_localizations.dart';
@@ -35,10 +36,15 @@ class _ShareDialogState extends State<ShareDialog> {
     try {
       final existing = await ShareService.findShareByListName(widget.listName);
       if (!mounted) return;
-      setState(() {
-        _existing = existing;
-        _loading = false;
-      });
+      if (existing != null) {
+        setState(() {
+          _existing = existing;
+          _loading = false;
+        });
+      } else {
+        // 既存共有が無い場合は自動で作成し、ダイアログ表示直後に URL を出せるようにする
+        await _createShare();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -120,6 +126,10 @@ class _ShareDialogState extends State<ShareDialog> {
   Future<void> _copyUrl() async {
     if (_existing == null) return;
     await Clipboard.setData(ClipboardData(text: _existing!.shareUrl));
+    // MainPage のクリップボードURL検知フックがこの共有URLで発動しないよう
+    // 「次回の1回だけ検知をスキップ」フラグを立てる
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('suppress_next_clipboard_check', true);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
