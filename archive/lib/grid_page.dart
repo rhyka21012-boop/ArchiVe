@@ -717,7 +717,9 @@ class GridPageState extends ConsumerState<GridPage> {
     int index,
     ColorScheme colorScheme,
   ) {
-    final itemsToShow = _searchedItems;
+    // build() と同じ優先順で並び替え結果を反映
+    final itemsToShow =
+        _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
     if (index < 0 || index >= itemsToShow.length) {
       return const SizedBox.shrink();
     }
@@ -1731,7 +1733,9 @@ class GridPageState extends ConsumerState<GridPage> {
   void _sortSearchedItems(String sortType) {
     setState(() {
       switch (sortType) {
-        case 'titleAsc': // ① 'title'順
+        case 'titleAsc': // ① タイトル順 (元リストを先にコピーしてから並び替え)
+          _sortedItems =
+              List<Map<String, dynamic>>.from(_searchedItems);
           _sortedItems.sort((a, b) {
             final titleA = (a['title'] ?? '').toString();
             final titleB = (b['title'] ?? '').toString();
@@ -1744,7 +1748,7 @@ class GridPageState extends ConsumerState<GridPage> {
           break;
 
         case 'old': // ③ 元の順番に戻す
-          _sortedItems = List.from(_searchedItems);
+          _sortedItems = List<Map<String, dynamic>>.from(_searchedItems);
           break;
         case 'countDesc': // ④ 視聴数の降順
           _sortedItems = _searchedItems;
