@@ -457,20 +457,16 @@ class SearchPageState extends ConsumerState<SearchPage> {
           child: Container(
             key: _searchBarKey,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.brightness == Brightness.dark
-                  ? const Color(0xFF2C2C2C)
-                  : Colors.white,
+              // ダークモードでも検索バーは白背景に統一 (中の文字色は常に黒)
+              color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-              boxShadow: Theme.of(context).colorScheme.brightness ==
-                      Brightness.dark
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.10),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: TextField(
               controller: _searchController,
