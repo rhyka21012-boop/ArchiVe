@@ -993,10 +993,10 @@ class L10nEs extends L10n {
   }
 
   @override
-  String get settings_page_free_plan => 'Plan Gratis';
+  String get settings_page_free_plan => 'Plan gratis';
 
   @override
-  String get settings_page_current_plan => 'Plan Actual';
+  String get settings_page_current_plan => 'Plan actual';
 
   @override
   String get settings_page_premium_details_link =>
@@ -1062,7 +1062,8 @@ class L10nEs extends L10n {
       'Todas las funciones Premium más lo siguiente';
 
   @override
-  String get pro_detail_feature_cloud_sync => 'Sincronización en la nube';
+  String get pro_detail_feature_cloud_sync =>
+      'Sincronización en la nube (varios dispositivos)';
 
   @override
   String get pro_detail_feature_ai_tagging => 'Etiquetado automático con IA';
@@ -1093,6 +1094,31 @@ class L10nEs extends L10n {
 
   @override
   String get detail_page_ai_suggest => 'Sugerir etiquetas con IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_title =>
+      'Sugerencias de etiquetas IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      '¡Estas son las etiquetas recomendadas! Selecciona las que quieras aplicar.';
+
+  @override
+  String get detail_page_ai_apply => 'Aplicar';
+
+  @override
+  String get detail_page_ai_no_suggestions => 'Sin sugerencias';
+
+  @override
+  String get detail_page_ai_daily_limit_title =>
+      'Límite diario de IA alcanzado';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'La sugerencia de etiquetas con IA está disponible una vez al día en los planes Gratis / Premium.\nCambia a Pro para uso ilimitado.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Ver plan Pro';
 
   @override
   String get detail_page_ai_loading => 'Analizando con IA...';
@@ -1142,7 +1168,7 @@ class L10nEs extends L10n {
 
   @override
   String analytics_monthly_report_subtitle(int month) {
-    return 'Mes $month';
+    return 'Resumen del mes $month';
   }
 
   @override

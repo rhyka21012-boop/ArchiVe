@@ -28,6 +28,7 @@ import 'random_image_reload_provider.dart';
 import 'list_reload_provider.dart';
 import 'my_flutter_app_icons.dart';
 import 'theme_provider.dart';
+import 'activity_service.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -112,8 +113,34 @@ class _MainPageState extends ConsumerState<MainPage>
       await _checkClipboard();
     });
     _checkSubscriptionStatus();
+    _recordAppLaunch();
 
     _loadAd();
+  }
+
+  /// アプリ起動時のユーザー行動記録 (ActivityService へ)
+  Future<void> _recordAppLaunch() async {
+    try {
+      // プラン判定
+      String plan = 'free';
+      try {
+        final info = await Purchases.getCustomerInfo();
+        if (info.entitlements.all['Pro Plan']?.isActive ?? false) {
+          plan = 'pro';
+        } else if (info.entitlements.all['Premium Plan']?.isActive ?? false) {
+          plan = 'premium';
+        }
+      } catch (_) {}
+      final pkg = await PackageInfo.fromPlatform();
+      final locale = WidgetsBinding
+          .instance.platformDispatcher.locale
+          .toLanguageTag();
+      await ActivityService.recordLaunch(
+        plan: plan,
+        appVersion: pkg.version,
+        locale: locale,
+      );
+    } catch (_) {}
   }
 
   @override
@@ -207,7 +234,8 @@ class _MainPageState extends ConsumerState<MainPage>
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DetailPage(url: text, listName: '選択なし'),
+        builder: (_) =>
+            DetailPage(url: text, listName: '選択なし', autoFetchTitle: true),
       ),
     );
   }
@@ -233,7 +261,8 @@ class _MainPageState extends ConsumerState<MainPage>
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DetailPage(url: text, listName: '選択なし'),
+        builder: (_) =>
+            DetailPage(url: text, listName: '選択なし', autoFetchTitle: true),
       ),
     );
   }

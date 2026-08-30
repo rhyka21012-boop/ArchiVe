@@ -57,7 +57,7 @@ class L10nEn extends L10n {
   String get no => 'No';
 
   @override
-  String get clear => 'clear';
+  String get clear => 'Clear';
 
   @override
   String get favorite => 'Favorite';
@@ -827,7 +827,7 @@ class L10nEn extends L10n {
       'Premium features have been activated.\nThe app will restart.';
 
   @override
-  String get tutorial => 'tutorial';
+  String get tutorial => 'Tutorial';
 
   @override
   String get tutorial_01 => 'First, let’s create a list.';
@@ -1073,6 +1073,29 @@ class L10nEn extends L10n {
   String get detail_page_ai_suggest => 'Suggest tags with AI';
 
   @override
+  String get detail_page_ai_suggest_dialog_title => 'AI tag suggestions';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      'Here are the recommended tags! Please select the ones you want to apply.';
+
+  @override
+  String get detail_page_ai_apply => 'Apply';
+
+  @override
+  String get detail_page_ai_no_suggestions => 'No tag suggestions';
+
+  @override
+  String get detail_page_ai_daily_limit_title => 'Daily AI limit reached';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'AI tag suggestion is available once per day on Free / Premium plans.\nUpgrade to Pro for unlimited access.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'View Pro plan';
+
+  @override
   String get detail_page_ai_loading => 'Analyzing with AI...';
 
   @override
@@ -1120,7 +1143,7 @@ class L10nEn extends L10n {
 
   @override
   String analytics_monthly_report_subtitle(int month) {
-    return 'Month $month report';
+    return 'Summary for month $month';
   }
 
   @override

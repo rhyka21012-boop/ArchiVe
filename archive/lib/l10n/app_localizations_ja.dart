@@ -1053,6 +1053,29 @@ class L10nJa extends L10n {
   String get detail_page_ai_suggest => 'AIでタグ提案';
 
   @override
+  String get detail_page_ai_suggest_dialog_title => 'AIタグの提案';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      'おすすめのタグはこちらです！適用するタグを選択してください。';
+
+  @override
+  String get detail_page_ai_apply => '適用';
+
+  @override
+  String get detail_page_ai_no_suggestions => '提案タグはありませんでした';
+
+  @override
+  String get detail_page_ai_daily_limit_title => '本日の AI 利用上限に達しました';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'AI タグ提案は無料版 / Premium プランで 1 日 1 回までご利用いただけます。\nPro プランなら無制限に使えます。';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Pro プランを見る';
+
+  @override
   String get detail_page_ai_loading => 'AIで分析中...';
 
   @override

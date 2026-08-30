@@ -1061,13 +1061,14 @@ class L10nDe extends L10n {
       'Alle Premium-Funktionen plus die Folgenden';
 
   @override
-  String get pro_detail_feature_cloud_sync => 'Cloud-Synchronisation';
+  String get pro_detail_feature_cloud_sync =>
+      'Cloud-Synchronisation (mehrere Geräte)';
 
   @override
   String get pro_detail_feature_ai_tagging => 'KI-Auto-Tagging';
 
   @override
-  String get pro_detail_feature_ai_recommend => 'KI-Empfohlene Stichwörter';
+  String get pro_detail_feature_ai_recommend => 'KI-empfohlene Stichwörter';
 
   @override
   String get pro_detail_feature_monthly_report => 'KI-Monatsbericht';
@@ -1090,6 +1091,29 @@ class L10nDe extends L10n {
 
   @override
   String get detail_page_ai_suggest => 'Tags mit KI vorschlagen';
+
+  @override
+  String get detail_page_ai_suggest_dialog_title => 'KI-Tag-Vorschläge';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      'Hier sind die empfohlenen Tags! Bitte wähle die zu übernehmenden aus.';
+
+  @override
+  String get detail_page_ai_apply => 'Übernehmen';
+
+  @override
+  String get detail_page_ai_no_suggestions => 'Keine Vorschläge';
+
+  @override
+  String get detail_page_ai_daily_limit_title => 'Tageslimit für KI erreicht';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'KI-Tag-Vorschläge sind in Free / Premium einmal pro Tag verfügbar.\nUpgrade auf Pro für unbegrenzte Nutzung.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Pro-Plan ansehen';
 
   @override
   String get detail_page_ai_loading => 'Mit KI analysieren...';
@@ -1139,7 +1163,7 @@ class L10nDe extends L10n {
 
   @override
   String analytics_monthly_report_subtitle(int month) {
-    return 'Monat $month';
+    return 'Zusammenfassung für Monat $month';
   }
 
   @override

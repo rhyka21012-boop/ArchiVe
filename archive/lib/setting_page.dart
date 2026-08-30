@@ -18,6 +18,9 @@ import 'thumbnail_setting_provider.dart';
 import 'premium_detail.dart';
 import 'pro_detail.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+
+import 'dev_stats_page.dart';
 import 'package:in_app_review/in_app_review.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
@@ -837,6 +840,37 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               ],
             ),
           ),
+
+          // ===== 開発者専用 (デバッグビルドのみ表示) =====
+          if (kDebugMode) ...[
+            _buildSectionHeader(context, 'Developer'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _groupCard(
+                isDark: isDark,
+                colorScheme: colorScheme,
+                rows: [
+                  ListTile(
+                    title: const Text(
+                      '開発者統計 (user_activity)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: const Text(
+                      '保存数 / 起動数 / AI 利用回数などをサーバから取得',
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DevStatsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
         ],
       ),

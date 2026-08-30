@@ -527,10 +527,10 @@ class L10nPt extends L10n {
 
   @override
   String get search_result_page_ad_remainder01 =>
-      'Um anúncio será exibido após o próximo salvamento';
+      'Um anúncio será exibido após a próxima gravação';
 
   @override
-  String get search_result_page_ad_remainder02 => 'Exibir anúncio';
+  String get search_result_page_ad_remainder02 => 'Mostrar anúncio';
 
   @override
   String get analytics => 'Análises';
@@ -617,7 +617,7 @@ class L10nPt extends L10n {
   String get analytics_page_kpi_saved_count => 'Salvos';
 
   @override
-  String get analytics_page_kpi_total_view_count => 'Total de views';
+  String get analytics_page_kpi_total_view_count => 'Total de visualizações';
 
   @override
   String get analytics_page_kpi_rating_rate => 'Taxa de avaliação';
@@ -632,7 +632,7 @@ class L10nPt extends L10n {
 
   @override
   String analytics_page_total_view_subtitle(Object count) {
-    return 'Total de views: $count';
+    return 'Total de visualizações: $count';
   }
 
   @override
@@ -650,14 +650,15 @@ class L10nPt extends L10n {
 
   @override
   String analytics_page_times_unit(Object count) {
-    return '$count views';
+    return '$count visualizações';
   }
 
   @override
-  String get analytics_page_view_count_by_rating => 'Views por avaliação';
+  String get analytics_page_view_count_by_rating =>
+      'Visualizações por avaliação';
 
   @override
-  String get analytics_page_saved_by_list => 'Salvos por lista';
+  String get analytics_page_saved_by_list => 'Guardados por lista';
 
   @override
   String analytics_page_list_count_subtitle(Object count) {
@@ -783,7 +784,7 @@ class L10nPt extends L10n {
   String get premium_detail_premium_title => 'ArchiVe Premium';
 
   @override
-  String get premium_detail_premium_item01 => 'Salvamentos ilimitados';
+  String get premium_detail_premium_item01 => 'Guardados ilimitados';
 
   @override
   String get premium_detail_premium_item02 => 'Adicionar cor de tema Dourado';
@@ -829,7 +830,7 @@ class L10nPt extends L10n {
 
   @override
   String get premium_detail_restart_message =>
-      'Os recursos Premium foram ativados.\nO aplicativo será reiniciado.';
+      'As funcionalidades Premium foram ativadas.\nA aplicação será reiniciada.';
 
   @override
   String get tutorial => 'Tutorial';
@@ -934,10 +935,10 @@ class L10nPt extends L10n {
   String get tutorial_slide_start => 'Começar';
 
   @override
-  String get share_saved => 'Salvo do compartilhamento';
+  String get share_saved => 'Guardado a partir da partilha';
 
   @override
-  String get share_already_saved => 'Este URL já está salvo';
+  String get share_already_saved => 'Este URL já foi guardado';
 
   @override
   String get share_dialog_title => 'Guardar no ArchiVe';
@@ -1053,7 +1054,8 @@ class L10nPt extends L10n {
       'Todas as funcionalidades Premium além das seguintes';
 
   @override
-  String get pro_detail_feature_cloud_sync => 'Sincronização na nuvem';
+  String get pro_detail_feature_cloud_sync =>
+      'Sincronização na nuvem (vários dispositivos)';
 
   @override
   String get pro_detail_feature_ai_tagging => 'Etiquetagem automática IA';
@@ -1084,6 +1086,29 @@ class L10nPt extends L10n {
 
   @override
   String get detail_page_ai_suggest => 'Sugerir etiquetas com IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_title => 'Sugestões de etiquetas IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      'Aqui estão as etiquetas recomendadas! Selecione as que deseja aplicar.';
+
+  @override
+  String get detail_page_ai_apply => 'Aplicar';
+
+  @override
+  String get detail_page_ai_no_suggestions => 'Sem sugestões';
+
+  @override
+  String get detail_page_ai_daily_limit_title => 'Limite diário de IA atingido';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'As sugestões de etiquetas IA estão disponíveis 1 vez por dia nos planos Gratuito / Premium.\nAtualize para Pro para uso ilimitado.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Ver plano Pro';
 
   @override
   String get detail_page_ai_loading => 'Analisando com IA...';
@@ -1133,7 +1158,7 @@ class L10nPt extends L10n {
 
   @override
   String analytics_monthly_report_subtitle(int month) {
-    return 'Mês $month';
+    return 'Resumo do mês $month';
   }
 
   @override

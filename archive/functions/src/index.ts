@@ -17,6 +17,10 @@ interface SuggestTagsRequest {
   url?: string;
   title?: string;
   image?: string;
+  // クライアントから申告される Pro プランフラグ。true の場合は 1日1回制限をスキップ
+  // (RevenueCat 側で検証はしていないため、簡易ゲート。悪意ある改ざんは
+  //  下位の maxInstances 制限と Gemini Flash Lite の低単価でコスト影響を限定)
+  isPro?: boolean;
 }
 
 interface SuggestTagsResponse {
@@ -104,9 +108,31 @@ export const suggestTags = onCall<SuggestTagsRequest>(
       throw new HttpsError("unauthenticated", "Sign-in required");
     }
 
-    const {url, title} = request.data;
+    const {url, title, isPro} = request.data;
     if (!url && !title) {
       throw new HttpsError("invalid-argument", "url or title is required");
+    }
+
+    // ── 1日1回のレート制限 (Pro 以外) ─────────────────────────
+    // ai_usage/{uid} に lastUsedDate (yyyy-MM-dd) を保存
+    const uid = request.auth.uid;
+    const now = new Date();
+    // Asia/Tokyo 基準の日付キー
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const jstNow = new Date(now.getTime() + jstOffsetMs);
+    const todayKey = jstNow.toISOString().slice(0, 10);
+    const usageRef = db.doc(`ai_usage/${uid}`);
+    if (!isPro) {
+      const snap = await usageRef.get();
+      const lastDate = snap.exists ?
+        (snap.data()?.lastUsedDate as string | undefined) :
+        undefined;
+      if (lastDate === todayKey) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "daily_limit",
+        );
+      }
     }
 
     // ページ本文を取得（URLがある場合のみ）
@@ -214,6 +240,21 @@ YouTube → genre:["ゲーム実況","FPS"], cast:["チャンネル名"], maker:
         label: sanitizeArray(parsed.label),
         maker: sanitizeArray(parsed.maker),
       };
+
+      // 成功時のみ、非 Pro の最終利用日を更新
+      // (Pro でも記録しておくと将来のデバッグに便利なので merge で常に更新)
+      try {
+        await usageRef.set(
+          {
+            lastUsedDate: todayKey,
+            lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+            wasPro: !!isPro,
+          },
+          {merge: true},
+        );
+      } catch (e) {
+        console.error("ai_usage write error:", e);
+      }
       return result;
     } catch (e) {
       if (e instanceof HttpsError) throw e;
@@ -567,5 +608,110 @@ ${recentTitles.length > 0 ? `- 最近保存したタイトル例: ${recentTitles
       console.error("Gemini error:", e);
       throw new HttpsError("internal", `AI request failed: ${e}`);
     }
+  },
+);
+
+// ─────────────────────────────────────────────────────────────
+// 開発者向け: user_activity コレクションを集計して返す
+// admin uid 以外は unauthenticated 扱いで拒否
+// (uid は下の adminUids 配列に追加すること)
+// ─────────────────────────────────────────────────────────────
+const adminUids: string[] = [
+  "P6mFygi1B3TcnsUOIBWOG7S2dWv2", // kai
+];
+
+interface ActivityStatsResponse {
+  totalUsers: number;
+  dau: number;
+  wau: number;
+  mau: number;
+  planBreakdown: {free: number; premium: number; pro: number};
+  platformBreakdown: {ios: number; android: number; other: number};
+  totalSaves: number;
+  totalLaunches: number;
+  totalAiSuggests: number;
+  avgSavesPerUser: number;
+  topSavers: Array<{uid: string; saveCount: number; plan?: string}>;
+  generatedAt: string;
+}
+
+export const getActivityStats = onCall<{}>(
+  {
+    maxInstances: 3,
+    timeoutSeconds: 30,
+  },
+  async (request): Promise<ActivityStatsResponse> => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign-in required");
+    }
+    if (!adminUids.includes(request.auth.uid)) {
+      throw new HttpsError("permission-denied", "admin only");
+    }
+
+    const snap = await db.collection("user_activity").get();
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    let totalUsers = 0;
+    let dau = 0;
+    let wau = 0;
+    let mau = 0;
+    let totalSaves = 0;
+    let totalLaunches = 0;
+    let totalAiSuggests = 0;
+    const plans = {free: 0, premium: 0, pro: 0};
+    const platforms = {ios: 0, android: 0, other: 0};
+    const savers: Array<{uid: string; saveCount: number; plan?: string}> = [];
+
+    snap.forEach((doc) => {
+      totalUsers++;
+      const d = doc.data();
+      const saveCount = (d.saveCount as number | undefined) ?? 0;
+      const launchCount = (d.launchCount as number | undefined) ?? 0;
+      const aiCount = (d.aiSuggestCount as number | undefined) ?? 0;
+      totalSaves += saveCount;
+      totalLaunches += launchCount;
+      totalAiSuggests += aiCount;
+
+      const plan = (d.plan as string | undefined) ?? "free";
+      if (plan === "pro") plans.pro++;
+      else if (plan === "premium") plans.premium++;
+      else plans.free++;
+
+      const platform = (d.platform as string | undefined) ?? "other";
+      if (platform === "ios") platforms.ios++;
+      else if (platform === "android") platforms.android++;
+      else platforms.other++;
+
+      const lastSeen = d.lastSeenAt as admin.firestore.Timestamp | undefined;
+      if (lastSeen) {
+        const diff = now - lastSeen.toMillis();
+        if (diff <= dayMs) dau++;
+        if (diff <= 7 * dayMs) wau++;
+        if (diff <= 30 * dayMs) mau++;
+      }
+
+      savers.push({uid: doc.id, saveCount, plan});
+    });
+
+    savers.sort((a, b) => b.saveCount - a.saveCount);
+    const topSavers = savers.slice(0, 20);
+
+    return {
+      totalUsers,
+      dau,
+      wau,
+      mau,
+      planBreakdown: plans,
+      platformBreakdown: platforms,
+      totalSaves,
+      totalLaunches,
+      totalAiSuggests,
+      avgSavesPerUser: totalUsers === 0 ?
+        0 :
+        Math.round((totalSaves / totalUsers) * 10) / 10,
+      topSavers,
+      generatedAt: new Date().toISOString(),
+    };
   },
 );

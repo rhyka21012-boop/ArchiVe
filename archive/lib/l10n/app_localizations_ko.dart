@@ -96,7 +96,7 @@ class L10nKo extends L10n {
   String get main_page_lists => '리스트';
 
   @override
-  String get main_page_search => '검색 & 수집';
+  String get main_page_search => '검색·수집';
 
   @override
   String get main_page_analytics => '통계';
@@ -1024,7 +1024,7 @@ class L10nKo extends L10n {
   String get pro_detail_subtitle => '모든 프리미엄 기능 외에 다음 기능 제공';
 
   @override
-  String get pro_detail_feature_cloud_sync => '클라우드 동기화';
+  String get pro_detail_feature_cloud_sync => '클라우드 동기화 (여러 기기)';
 
   @override
   String get pro_detail_feature_ai_tagging => 'AI 자동 태그';
@@ -1039,7 +1039,7 @@ class L10nKo extends L10n {
   String get pro_detail_feature_public_sharing => '공개 목록 공유';
 
   @override
-  String get pro_detail_feature_theme_teal => '테마 색상 틸 추가';
+  String get pro_detail_feature_theme_teal => '테마 색상 청록 추가';
 
   @override
   String get plans_page_title => '플랜';
@@ -1052,6 +1052,28 @@ class L10nKo extends L10n {
 
   @override
   String get detail_page_ai_suggest => 'AI로 태그 제안';
+
+  @override
+  String get detail_page_ai_suggest_dialog_title => 'AI 태그 제안';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint => '추천 태그입니다! 적용할 태그를 선택해 주세요.';
+
+  @override
+  String get detail_page_ai_apply => '적용';
+
+  @override
+  String get detail_page_ai_no_suggestions => '제안된 태그가 없습니다';
+
+  @override
+  String get detail_page_ai_daily_limit_title => '오늘의 AI 사용 한도에 도달했습니다';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'AI 태그 제안은 무료판 / Premium 요금제에서 하루 1회 이용할 수 있습니다.\nPro 요금제라면 무제한으로 사용할 수 있습니다.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Pro 요금제 보기';
 
   @override
   String get detail_page_ai_loading => 'AI 분석 중...';

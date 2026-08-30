@@ -18,6 +18,8 @@ import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'activity_service.dart';
 
 import 'view_counter.dart';
 import 'premium_detail.dart';
@@ -45,6 +47,8 @@ class DetailPage extends ConsumerStatefulWidget {
   final String? rating;
   final bool isReadOnly;
   final VoidCallback? onCreated;
+  // true の時、URL から自動でタイトルを取得して埋める (クリップボードフックからの遷移用)
+  final bool autoFetchTitle;
 
   const DetailPage({
     super.key,
@@ -61,6 +65,7 @@ class DetailPage extends ConsumerStatefulWidget {
     this.rating,
     this.isReadOnly = false,
     this.onCreated,
+    this.autoFetchTitle = false,
   });
 
   @override
@@ -105,6 +110,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   //final FocusNode _focusNode = FocusNode();
 
   bool _isPremium = false;
+  bool _isPro = false;
+  // 非 Pro 向けに「AI タグ提案 FAB」を今日だけ非表示にするフラグ
+  // (ユーザーが FAB 右上の × を押した日付を prefs に保存し翌日には自動復帰)
+  bool _aiFabHiddenToday = false;
+  // 非 Pro 向けの AI タグ提案 1日1回制限用: 最終利用日 (yyyy-MM-dd)
+  String? _aiLastUsedDate;
+  static const _kPrefAiFabHiddenDate = 'ai_fab_hidden_date';
+  static const _kPrefAiLastUsedDate = 'ai_last_used_date';
 
   //ローカル画像
   //表示されているページ数保持
@@ -146,6 +159,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   bool _isLoadingThumbnail = false;
   bool _showSkipButton = false;
+  // バックグラウンド (init / URL focus-out) 起点の非表示フェッチと
+  // 保存時起点のフェッチを1本のフューチャで管理し、二重発火を防ぐ
+  Future<void>? _thumbnailFetchFuture;
+  // 既に取得済み or 取得試行済みの URL (URL 変更時に再取得を許可するために比較)
+  String? _thumbnailUrlSource;
+  // URL 欄フォーカス変化を検知するためのフォーカスノード
+  final FocusNode _urlFocusNode = FocusNode();
   bool _cancelThumbnailFetch = false;
   Timer? _skipTimer;
 
@@ -239,10 +259,42 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
 
     _checkSubscriptionStatus();
+    _loadAiFabHiddenState();
 
     _loadLists();
 
     _loadLocalImages();
+
+    // クリップボードフックからの遷移時など、URL のみ渡された場合に
+    // タイトルも自動でフェッチしてフィールドに埋める
+    if (widget.autoFetchTitle &&
+        (widget.title == null || widget.title!.trim().isEmpty) &&
+        (widget.url != null && widget.url!.trim().isNotEmpty)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _fetchTitleFromUrl();
+      });
+    }
+
+    // URL 欄のフォーカスが外れたタイミングで、まだ未取得ならサムネを
+    // バックグラウンドでフェッチしておく (保存押下時の待ち時間短縮)
+    _urlFocusNode.addListener(() {
+      if (_urlFocusNode.hasFocus) return;
+      if (!isEditing) return;
+      final url = _urlController.text.trim();
+      if (url.isEmpty) return;
+      _startBackgroundThumbnailFetch(url);
+    });
+
+    // URL があらかじめ入っている場合は開いた直後にバックグラウンドで取得開始
+    if (widget.url != null &&
+        widget.url!.trim().isNotEmpty &&
+        (widget.image == null || widget.image!.isEmpty)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _startBackgroundThumbnailFetch(widget.url!);
+      });
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final step = ref.read(tutorialStepProvider);
@@ -289,44 +341,115 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
   */
 
+  /// 保存ボタン押下時に呼ばれるエントリ。
+  /// - 既にサムネ取得済み → 即 return
+  /// - バックグラウンドフェッチが実行中 → その future をローディングUI付きで await
+  /// - どちらでもなければ、ローディングUI付きで新規フェッチ
   Future<void> _initializeThumbnail(String url) async {
-    // 既にサムネがあるなら取得しない
     if (_thumbnailUrl != null && _thumbnailUrl!.isNotEmpty) return;
-    if (_isLoadingThumbnail) return;
 
-    _cancelThumbnailFetch = false;
-
-    setState(() {
-      _isLoadingThumbnail = true;
-      _showSkipButton = false;
-    });
-
-    // 3秒後にスキップ表示
-    _skipTimer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
+    if (_thumbnailFetchFuture != null) {
+      // 進行中のバックグラウンドフェッチを、ローディングUIを出しつつ待つ
+      _cancelThumbnailFetch = false;
       setState(() {
-        _showSkipButton = true;
-      });
-    });
-
-    final thumb = await fetchThumbnailByWebView(url);
-
-    if (!mounted || _cancelThumbnailFetch) return;
-
-    _skipTimer?.cancel();
-
-    if (thumb != null) {
-      setState(() {
-        _thumbnailUrl = thumb;
-        _isLoadingThumbnail = false;
-      });
-
-      await _saveChanges(exitEditMode: false);
-    } else {
-      setState(() {
-        _isLoadingThumbnail = false;
+        _isLoadingThumbnail = true;
         _showSkipButton = false;
       });
+      _skipTimer?.cancel();
+      _skipTimer = Timer(const Duration(seconds: 3), () {
+        if (!mounted) return;
+        setState(() {
+          _showSkipButton = true;
+        });
+      });
+      try {
+        await _thumbnailFetchFuture;
+      } catch (_) {}
+      _skipTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _isLoadingThumbnail = false;
+          _showSkipButton = false;
+        });
+      }
+      // フェッチ成功でサムネがセットされた場合は永続化
+      if (mounted &&
+          _thumbnailUrl != null &&
+          _thumbnailUrl!.isNotEmpty) {
+        await _saveChanges(exitEditMode: false);
+      }
+      return;
+    }
+
+    // 通常フロー: 表示付き + 永続化
+    await _runThumbnailFetch(url, showUi: true, persist: true);
+  }
+
+  /// URL 入力直後や URL 欄フォーカスアウト時に呼ぶバックグラウンドフェッチ。
+  /// - ローディングUIは出さない
+  /// - フェッチ結果は _thumbnailUrl にセットするのみで、prefs への永続化はしない
+  ///   (ユーザーが保存ボタンを押した時に既存の保存フローで書き込まれる)
+  void _startBackgroundThumbnailFetch(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return;
+    // 既存の画像 (widget.image) がある場合はフェッチしない
+    if (widget.image != null && widget.image!.isNotEmpty) return;
+    // このURLで既にサムネ取得済み
+    if (_thumbnailUrl != null &&
+        _thumbnailUrl!.isNotEmpty &&
+        _thumbnailUrlSource == trimmed) {
+      return;
+    }
+    // 既にフェッチ中
+    if (_thumbnailFetchFuture != null) return;
+    _thumbnailFetchFuture =
+        _runThumbnailFetch(trimmed, showUi: false, persist: false);
+  }
+
+  /// サムネフェッチ本体。showUi/persist で挙動を切り替える。
+  Future<void> _runThumbnailFetch(
+    String url, {
+    required bool showUi,
+    required bool persist,
+  }) async {
+    _cancelThumbnailFetch = false;
+    if (showUi) {
+      setState(() {
+        _isLoadingThumbnail = true;
+        _showSkipButton = false;
+      });
+      _skipTimer?.cancel();
+      _skipTimer = Timer(const Duration(seconds: 3), () {
+        if (!mounted) return;
+        setState(() {
+          _showSkipButton = true;
+        });
+      });
+    }
+    try {
+      final thumb = await fetchThumbnailByWebView(url);
+      if (!mounted || _cancelThumbnailFetch) return;
+      if (thumb != null && thumb.isNotEmpty) {
+        setState(() {
+          _thumbnailUrl = thumb;
+          _thumbnailUrlSource = url;
+        });
+        if (persist) {
+          await _saveChanges(exitEditMode: false);
+        }
+      } else {
+        // 空 URL でも「この URL は試した」記録は残さない
+        // (失敗時は次回同一 URL でも再フェッチできるようにする)
+      }
+    } finally {
+      _thumbnailFetchFuture = null;
+      _skipTimer?.cancel();
+      if (mounted && showUi) {
+        setState(() {
+          _isLoadingThumbnail = false;
+          _showSkipButton = false;
+        });
+      }
     }
   }
 
@@ -581,6 +704,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     //保存完了時
     if (success) {
+      // 新規保存 (URL 一致なし = 追加) のみ ActivityService に記録
+      if (!found) {
+        // ignore: unawaited_futures
+        ActivityService.incrementSaveCount();
+      }
       //RandomImageを更新
       ref.read(randomImageReloadProvider.notifier).state++;
 
@@ -610,6 +738,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     for (final focusNode in _hashButtonFocusNodes.values) {
       focusNode.dispose();
     }
+    _urlFocusNode.dispose();
     _skipTimer?.cancel();
     super.dispose();
   }
@@ -995,8 +1124,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     : _buildReadOnlyAppBar(context, colorScheme),
               ),
             ),
-            floatingActionButton:
-                isEditing ? _buildAiTagFab(colorScheme) : null,
+            floatingActionButton: isEditing &&
+                    !(!_isPro && _aiFabHiddenToday)
+                ? _buildAiTagFab(colorScheme)
+                : null,
             body: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -1606,6 +1737,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                         controller.selection = TextSelection.fromPosition(
                           TextPosition(offset: controller.text.length),
                         );
+                        // ペースト直後にバックグラウンドでサムネ取得を開始
+                        _startBackgroundThumbnailFetch(controller.text);
                       }
                     },
                   ),
@@ -1668,7 +1801,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             borderRadius: BorderRadius.circular(12),
             child: TextField(
               controller: controller,
-              focusNode: focusNode,
+              // URL 欄はフォーカス変化を検知したいので専用のノードを渡す
+              focusNode:
+                  controller == _urlController ? _urlFocusNode : focusNode,
               readOnly: !isEditing,
               decoration: InputDecoration(
                 hintText: hintLabel,
@@ -1995,92 +2130,353 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 220),
         opacity: _showChrome ? 1.0 : 0.0,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: tealLight.withValues(alpha: 0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: tealLight.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(28),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: _isFetchingAi ? null : _aiSuggestTags,
-              borderRadius: BorderRadius.circular(28),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _isFetchingAi
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.auto_awesome,
-                            size: 20,
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(28),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: _isFetchingAi ? null : _aiSuggestTags,
+                  borderRadius: BorderRadius.circular(28),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _isFetchingAi
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.auto_awesome,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                        const SizedBox(width: 8),
+                        Text(
+                          L10n.of(context)!.detail_page_ai_suggest,
+                          style: const TextStyle(
                             color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
-                    const SizedBox(width: 8),
-                    Text(
-                      L10n.of(context)!.detail_page_ai_suggest,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+            // 非 Pro ユーザー向けの「今日だけ非表示」× ボタン
+            if (!_isPro)
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  elevation: 2,
+                  shadowColor: Colors.black26,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: _hideAiFabForToday,
+                    child: const SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  /// AIでタグを提案して各フィールドに自動入力（Pro限定）
+  /// AI でタグを提案し、確認ダイアログでユーザーが採用チップを選んでから反映。
+  /// - Pro: 無制限
+  /// - 無料 / Premium: 1 日 1 回まで。上限到達時は Pro 誘導ダイアログ
   Future<void> _aiSuggestTags() async {
     if (_isFetchingAi) return;
-    // 購入先行型: 未加入ユーザーにサインインを促さず購入画面を表示
-    if (!await ProGate.ensureProPurchaseFirst(context)) return;
-    if (!mounted) return;
 
     final url = _urlController.text.trim();
     final title = _titleController.text.trim();
     if (url.isEmpty && title.isEmpty) return;
 
+    // 非 Pro は 1日1回制限。今日既に使っていたら Pro 案内を出して return
+    if (!_isPro && _aiLastUsedDate == _todayKey()) {
+      await _showAiDailyLimitDialog();
+      return;
+    }
+
     setState(() => _isFetchingAi = true);
+    SuggestedTags? tags;
+    bool serverDailyLimit = false;
     try {
-      final tags = await AiService.suggestTags(url: url, title: title);
-      if (!mounted) return;
-      String toHashtags(List<String> list) =>
-          list.isEmpty ? '' : list.map((t) => '#$t').join(' ');
-      setState(() {
-        if (tags.genre.isNotEmpty) _genreController.text = toHashtags(tags.genre);
-        if (tags.cast.isNotEmpty) _castController.text = toHashtags(tags.cast);
-        if (tags.series.isNotEmpty) _seriesController.text = toHashtags(tags.series);
-        if (tags.label.isNotEmpty) _labelController.text = toHashtags(tags.label);
-        if (tags.maker.isNotEmpty) _makerController.text = toHashtags(tags.maker);
-      });
+      tags = await AiService.suggestTags(
+        url: url,
+        title: title,
+        isPro: _isPro,
+      );
+    } on FirebaseFunctionsException catch (e) {
+      // サーバ側の 1日1回制限に到達
+      if (e.code == 'resource-exhausted') {
+        serverDailyLimit = true;
+      } else if (mounted) {
+        _showMessage('${L10n.of(context)!.detail_page_ai_error}: ${e.message}');
+      }
     } catch (e) {
-      if (!mounted) return;
-      _showMessage('${L10n.of(context)!.detail_page_ai_error}: $e');
+      if (mounted) {
+        _showMessage('${L10n.of(context)!.detail_page_ai_error}: $e');
+      }
     } finally {
       if (mounted) setState(() => _isFetchingAi = false);
     }
+
+    if (!mounted) return;
+
+    if (serverDailyLimit) {
+      // サーバ側でも今日の利用が確認されたので、ローカルも同期
+      if (!_isPro) {
+        final prefs = await SharedPreferences.getInstance();
+        final today = _todayKey();
+        await prefs.setString(_kPrefAiLastUsedDate, today);
+        if (mounted) setState(() => _aiLastUsedDate = today);
+      }
+      await _showAiDailyLimitDialog();
+      return;
+    }
+    if (tags == null) return;
+
+    // 呼び出し成功時のみ、非 Pro の利用日をローカルにも記録
+    if (!_isPro) {
+      final prefs = await SharedPreferences.getInstance();
+      final today = _todayKey();
+      await prefs.setString(_kPrefAiLastUsedDate, today);
+      if (mounted) setState(() => _aiLastUsedDate = today);
+    }
+
+    // AI 提案の実行回数を Firestore に記録 (Pro / 非 Pro 問わず)
+    // ignore: unawaited_futures
+    ActivityService.incrementAiSuggestCount();
+
+    if (tags.isEmpty) {
+      _showMessage(L10n.of(context)!.detail_page_ai_no_suggestions);
+      return;
+    }
+    await _showAiTagSuggestionDialog(tags);
+  }
+
+  /// 1日 1回の上限に達した時の Pro 誘導ダイアログ
+  Future<void> _showAiDailyLimitDialog() async {
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final upgrade = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Text(l.detail_page_ai_daily_limit_title),
+        content: Text(l.detail_page_ai_daily_limit_body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(l.close),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: Text(l.detail_page_ai_upgrade_pro),
+          ),
+        ],
+      ),
+    );
+    if (upgrade != true || !mounted) return;
+    // Pro 購入導線 (既存 ProGate を再利用)
+    final bought = await ProGate.ensureProPurchaseFirst(context);
+    if (bought && mounted) {
+      setState(() => _isPro = true);
+    }
+  }
+
+  Future<void> _showAiTagSuggestionDialog(SuggestedTags tags) async {
+    final l = L10n.of(context)!;
+    // カテゴリごとの提案タグとキー・コントローラのマップ
+    final sections = <_AiTagSection>[
+      _AiTagSection(l.detail_page_cast_short, tags.cast, _castController),
+      _AiTagSection(l.detail_page_genre_short, tags.genre, _genreController),
+      _AiTagSection(l.detail_page_series_short, tags.series, _seriesController),
+      _AiTagSection(l.detail_page_maker_short, tags.maker, _makerController),
+      _AiTagSection(l.detail_page_label_short, tags.label, _labelController),
+    ].where((s) => s.suggestions.isNotEmpty).toList();
+
+    // 初期は全て採用 (true) にしておき、ユーザーは外したいものだけタップ
+    final selected = <String, Set<String>>{
+      for (final s in sections) s.label: {...s.suggestions},
+    };
+
+    final applied = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) {
+        final colorScheme = Theme.of(dialogCtx).colorScheme;
+        return StatefulBuilder(
+          builder: (_, setDlg) => AlertDialog(
+            backgroundColor: colorScheme.secondary,
+            title: Text(l.detail_page_ai_suggest_dialog_title),
+            content: SizedBox(
+              width: 380,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l.detail_page_ai_suggest_dialog_hint,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final section in sections) ...[
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(top: 6, bottom: 6),
+                        child: Text(
+                          section.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: section.suggestions.map((tag) {
+                          final isOn =
+                              selected[section.label]!.contains(tag);
+                          return FilterChip(
+                            label: Text('#$tag'),
+                            selected: isOn,
+                            showCheckmark: false,
+                            visualDensity: const VisualDensity(
+                              horizontal: -1,
+                              vertical: -1,
+                            ),
+                            labelStyle: TextStyle(
+                              color: isOn
+                                  ? Colors.white
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.75),
+                              fontWeight: isOn
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                            ),
+                            selectedColor: colorScheme.primary,
+                            backgroundColor: colorScheme.onSurface
+                                .withValues(alpha: 0.08),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            onSelected: (v) {
+                              setDlg(() {
+                                if (v) {
+                                  selected[section.label]!.add(tag);
+                                } else {
+                                  selected[section.label]!.remove(tag);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: Text(l.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, true),
+                style: TextButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(l.detail_page_ai_apply),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (applied != true || !mounted) return;
+
+    // 既存タグに採用チップを追加し、重複除去して再セット
+    setState(() {
+      for (final s in sections) {
+        final chosen = selected[s.label] ?? const <String>{};
+        if (chosen.isEmpty) continue;
+        final existing = _parseHashtags(s.controller.text);
+        final merged = <String>[
+          ...existing,
+          ...chosen.where((t) => !existing.contains(t)),
+        ];
+        s.controller.text = merged.map((t) => '#$t').join(' ');
+      }
+    });
+  }
+
+  /// "#foo #bar" → ["foo", "bar"] にパース (# なしテキストにも寛容)
+  List<String> _parseHashtags(String raw) {
+    if (raw.trim().isEmpty) return [];
+    return raw
+        .split(RegExp(r'\s*#\s*'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   //メタデータからタイトルを取得
@@ -2371,14 +2767,48 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      final isActive =
+      final isPremium =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
+      if (!mounted) return;
       setState(() {
-        _isPremium = isActive;
+        _isPremium = isPremium;
+        _isPro = isPro;
       });
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
     }
+  }
+
+  /// AI FAB の「今日は非表示」フラグ + 最終利用日を prefs から読み込む
+  Future<void> _loadAiFabHiddenState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hiddenSaved = prefs.getString(_kPrefAiFabHiddenDate);
+    final lastUsed = prefs.getString(_kPrefAiLastUsedDate);
+    if (!mounted) return;
+    setState(() {
+      if (hiddenSaved == _todayKey()) {
+        _aiFabHiddenToday = true;
+      }
+      _aiLastUsedDate = lastUsed;
+    });
+  }
+
+  /// 今日の日付キー (yyyy-MM-dd)
+  String _todayKey() {
+    final n = DateTime.now();
+    final m = n.month.toString().padLeft(2, '0');
+    final d = n.day.toString().padLeft(2, '0');
+    return '${n.year}-$m-$d';
+  }
+
+  /// FAB 右上 × タップ: 今日の日付を prefs に保存し、即座に非表示
+  Future<void> _hideAiFabForToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPrefAiFabHiddenDate, _todayKey());
+    if (!mounted) return;
+    setState(() => _aiFabHiddenToday = true);
   }
 
   /*
@@ -2753,6 +3183,13 @@ class _InfoRowSpec {
   final String value;
   final Widget? trailing;
   const _InfoRowSpec(this.label, this.value, {this.trailing});
+}
+
+class _AiTagSection {
+  final String label;
+  final List<String> suggestions;
+  final TextEditingController controller;
+  const _AiTagSection(this.label, this.suggestions, this.controller);
 }
 
 class _CopyIconButton extends StatelessWidget {

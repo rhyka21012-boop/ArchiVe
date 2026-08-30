@@ -15,5 +15,18 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
                             && resource.data.ownerUid == request.auth.uid;
     }
+
+    // ユーザー行動記録：本人のみ R/W
+    // (集計は Cloud Function `getActivityStats` から admin SDK 経由で読む)
+    match /user_activity/{userId} {
+      allow read, write: if request.auth != null
+                        && request.auth.uid == userId;
+    }
+
+    // AI タグ提案の 1日1回制限：Cloud Function からのみ書き込みを行うため
+    // クライアントからは一切アクセスさせない
+    match /ai_usage/{userId} {
+      allow read, write: if false;
+    }
   }
 }

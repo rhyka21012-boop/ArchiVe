@@ -9,10 +9,12 @@ class AiService {
   );
 
   /// URL + タイトルから AI でタグ候補（ジャンル、出演者、シリーズ、レーベル、制作者）を取得
-  /// 失敗時は空のSuggestedTagsを返す
+  /// [isPro] が true の時はサーバ側の 1日1回制限をスキップ
+  /// 失敗時は空の SuggestedTags を返さず例外を rethrow
   static Future<SuggestedTags> suggestTags({
     required String url,
     required String title,
+    bool isPro = false,
   }) async {
     if (url.isEmpty && title.isEmpty) return SuggestedTags.empty();
 
@@ -32,6 +34,7 @@ class AiService {
       final result = await callable.call<Map<dynamic, dynamic>>({
         'url': url,
         'title': title,
+        'isPro': isPro,
       });
       return SuggestedTags.fromMap(Map<String, dynamic>.from(result.data));
     } on FirebaseFunctionsException catch (e) {

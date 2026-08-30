@@ -990,10 +990,10 @@ class L10nFr extends L10n {
   }
 
   @override
-  String get settings_page_free_plan => 'Plan Gratuit';
+  String get settings_page_free_plan => 'Plan gratuit';
 
   @override
-  String get settings_page_current_plan => 'Plan Actuel';
+  String get settings_page_current_plan => 'Plan actuel';
 
   @override
   String get settings_page_premium_details_link =>
@@ -1059,7 +1059,8 @@ class L10nFr extends L10n {
       'Toutes les fonctionnalités Premium plus les suivantes';
 
   @override
-  String get pro_detail_feature_cloud_sync => 'Synchronisation cloud';
+  String get pro_detail_feature_cloud_sync =>
+      'Synchronisation cloud (multi-appareils)';
 
   @override
   String get pro_detail_feature_ai_tagging => 'Étiquetage automatique IA';
@@ -1089,6 +1090,30 @@ class L10nFr extends L10n {
 
   @override
   String get detail_page_ai_suggest => 'Suggérer avec IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_title => 'Suggestions de tags IA';
+
+  @override
+  String get detail_page_ai_suggest_dialog_hint =>
+      'Voici les tags recommandés ! Choisissez ceux à appliquer.';
+
+  @override
+  String get detail_page_ai_apply => 'Appliquer';
+
+  @override
+  String get detail_page_ai_no_suggestions => 'Aucune suggestion';
+
+  @override
+  String get detail_page_ai_daily_limit_title =>
+      'Limite quotidienne IA atteinte';
+
+  @override
+  String get detail_page_ai_daily_limit_body =>
+      'La suggestion de tags par IA est disponible une fois par jour en Gratuit / Premium.\nPassez à Pro pour un usage illimité.';
+
+  @override
+  String get detail_page_ai_upgrade_pro => 'Voir le plan Pro';
 
   @override
   String get detail_page_ai_loading => 'Analyse par IA...';
@@ -1138,7 +1163,7 @@ class L10nFr extends L10n {
 
   @override
   String analytics_monthly_report_subtitle(int month) {
-    return 'Mois $month';
+    return 'Résumé du mois $month';
   }
 
   @override

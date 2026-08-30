@@ -2102,6 +2102,48 @@ abstract class L10n {
   /// **'AIでタグ提案'**
   String get detail_page_ai_suggest;
 
+  /// No description provided for @detail_page_ai_suggest_dialog_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIタグの提案'**
+  String get detail_page_ai_suggest_dialog_title;
+
+  /// No description provided for @detail_page_ai_suggest_dialog_hint.
+  ///
+  /// In ja, this message translates to:
+  /// **'おすすめのタグはこちらです！適用するタグを選択してください。'**
+  String get detail_page_ai_suggest_dialog_hint;
+
+  /// No description provided for @detail_page_ai_apply.
+  ///
+  /// In ja, this message translates to:
+  /// **'適用'**
+  String get detail_page_ai_apply;
+
+  /// No description provided for @detail_page_ai_no_suggestions.
+  ///
+  /// In ja, this message translates to:
+  /// **'提案タグはありませんでした'**
+  String get detail_page_ai_no_suggestions;
+
+  /// No description provided for @detail_page_ai_daily_limit_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'本日の AI 利用上限に達しました'**
+  String get detail_page_ai_daily_limit_title;
+
+  /// No description provided for @detail_page_ai_daily_limit_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'AI タグ提案は無料版 / Premium プランで 1 日 1 回までご利用いただけます。\nPro プランなら無制限に使えます。'**
+  String get detail_page_ai_daily_limit_body;
+
+  /// No description provided for @detail_page_ai_upgrade_pro.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro プランを見る'**
+  String get detail_page_ai_upgrade_pro;
+
   /// No description provided for @detail_page_ai_loading.
   ///
   /// In ja, this message translates to:
