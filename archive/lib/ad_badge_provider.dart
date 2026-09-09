@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// 1日に視聴可能なリワード広告の上限
+const int kDailyAdWatchLimit = 5;
+
 final adBadgeProvider = StateNotifierProvider<AdBadgeNotifier, int>((ref) {
   return AdBadgeNotifier()..load();
 });
@@ -8,7 +11,7 @@ final adBadgeProvider = StateNotifierProvider<AdBadgeNotifier, int>((ref) {
 class AdBadgeNotifier extends StateNotifier<int> {
   AdBadgeNotifier() : super(0);
 
-  bool get showBadge => state < 3;
+  bool get showBadge => state < kDailyAdWatchLimit;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();

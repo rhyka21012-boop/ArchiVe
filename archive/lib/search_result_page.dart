@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -11,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'l10n/app_localizations.dart';
@@ -19,6 +21,11 @@ import 'list_reload_provider.dart';
 import 'save_limit_helper.dart';
 import 'rating_label_provider.dart';
 import 'circle_app_bar_icon.dart';
+import 'offline_quality_picker.dart';
+import 'browser_home_page.dart';
+import 'browser_session_provider.dart';
+import 'browser_scroll_top_provider.dart';
+import 'download_queue_provider.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -40,11 +47,24 @@ class SearchResultPage extends ConsumerStatefulWidget {
 }
 
 class _SearchResultPageState extends ConsumerState<SearchResultPage> {
-  late final WebViewController _controller;
-  bool _canGoBack = false;
+  // ===== タブ管理 (方式A: IndexedStack、上限 6) =====
+  final List<_BrowserTab> _tabs = [];
+  int _activeTabIndex = 0;
+  static const int _maxTabs = 6;
 
-  String? _currentUrl;
-  String _pageTitle = '';
+  _BrowserTab get _activeTab => _tabs[_activeTabIndex];
+
+  // 既存コード互換のためのゲッタ/セッタ (アクティブタブに委譲)
+  WebViewController get _controller => _activeTab.controller;
+  bool get _canGoBack => _activeTab.canGoBack;
+  set _canGoBack(bool v) => _activeTab.canGoBack = v;
+  String? get _currentUrl => _activeTab.currentUrl;
+  set _currentUrl(String? v) => _activeTab.currentUrl = v;
+  String get _pageTitle => _activeTab.pageTitle;
+  set _pageTitle(String v) => _activeTab.pageTitle = v;
+  int get _progress => _activeTab.progress;
+  set _progress(int v) => _activeTab.progress = v;
+  List<WebHistoryItem> get _history => _activeTab.history;
 
   //プレミアム判定
   bool _isPremium = false;
@@ -69,11 +89,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   RewardedAd? _rewardedAd;
 
-  //検索履歴リスト
-  List<WebHistoryItem> _history = [];
-
-  //プログレスバーの表示
-  int _progress = 0;
+  // (履歴/progress はアクティブタブに委譲済み)
 
   //URLバー
   final TextEditingController _urlBarController = TextEditingController();
@@ -82,6 +98,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   // Twitter風 AppBar/FAB 自動隠し
   bool _showChrome = true;
+  int _lastChromeToggleMs = 0;
+
+  // (検知動画リストはアクティブタブに委譲済み)
 
   // プレイリスト
   int _playlistIndex = 0;
@@ -163,73 +182,23 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    _controller =
-        WebViewController.fromPlatformCreationParams(params)
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..addJavaScriptChannel(
-            'FlutterScroll',
-            onMessageReceived: (msg) {
-              if (msg.message == 'down' && _showChrome) {
-                setState(() => _showChrome = false);
-              } else if ((msg.message == 'up' || msg.message == 'top') &&
-                  !_showChrome) {
-                setState(() => _showChrome = true);
-              }
-            },
-          )
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onProgress: (progress) {
-                setState(() {
-                  _progress = progress;
-                });
-              },
+    // 最初のタブを作成
+    _tabs.add(_createTab(initialUrl));
 
-              // YouTubeアプリ等の外部アプリへの遷移をブロックし、WebView内に留める
-              onNavigationRequest: (NavigationRequest request) {
-                final uri = Uri.tryParse(request.url);
-                if (uri == null) return NavigationDecision.prevent;
-                // http(s)以外のスキーム(youtube://, vnd.youtube://, intent://など)を全て拒否
-                if (uri.scheme != 'http' && uri.scheme != 'https') {
-                  return NavigationDecision.prevent;
-                }
-                return NavigationDecision.navigate;
-              },
-
-              onPageFinished: (url) async {
-                // 悪質な広告・ポップアップをブロック
-                await _injectAdBlocker();
-                // スクロール方向検知 JS を注入
-                await _injectScrollDetector();
-
-                final title = await _getPageTitle();
-
-                //検索履歴を追加
-                if (_history.isEmpty || _history.last != url) {
-                  _history.add(WebHistoryItem(url, title));
-                }
-
-                final canBack = await _controller.canGoBack();
-
-                setState(() {
-                  _canGoBack = canBack;
-                  _currentUrl = url;
-                  _pageTitle = title;
-                  // URLバーを編集中でなければ最新URLに同期
-                  if (!_isUrlBarEditing) {
-                    _urlBarController.text = url;
-                  }
-                });
-              },
-            ),
-          )
-          ..loadRequest(Uri.parse(initialUrl));
-
-    // iOS WKWebView：エッジスワイプで戻る・進むを有効化
-    if (Platform.isIOS && _controller.platform is WebKitWebViewController) {
-      (_controller.platform as WebKitWebViewController)
-          .setAllowsBackForwardNavigationGestures(true);
-    }
+    // アプリ内ブラウザ外 (grid/detail 等) からの新規タブ追加リクエストを受信
+    ref.listenManual<BrowserOpenRequest?>(browserSessionProvider,
+        (prev, next) {
+      if (next == null) return;
+      if (prev?.seq == next.seq) return;
+      // 唯一のタブがホームタブの場合、新規タブは作らずそのホームタブを WebView 化
+      if (_tabs.length == 1 && _tabs.first.isHome) {
+        _handleHomeOpen(next.url);
+        return;
+      }
+      // 既に同じ URL が開かれている場合はスキップ
+      if (_tabs.length == 1 && _tabs.first.currentUrl == next.url) return;
+      _addNewTab(url: next.url);
+    });
 
     _urlBarFocus.addListener(() {
       if (!_urlBarFocus.hasFocus && _isUrlBarEditing) {
@@ -242,6 +211,348 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     });
   }
 
+  /// 新規タブを作成し、初期 URL を読み込む。
+  /// state に追加はしないので呼び出し側で行うこと。
+  /// [initialUrl] が空文字ならホームタブ扱いで WebView 読み込みをスキップする。
+  _BrowserTab _createTab(String initialUrl) {
+    late final PlatformWebViewControllerCreationParams params;
+    if (Platform.isIOS) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const {},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+    late final _BrowserTab tab;
+    final controller = WebViewController.fromPlatformCreationParams(params)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'FlutterScroll',
+        onMessageReceived: (msg) {
+          final nowMs = DateTime.now().millisecondsSinceEpoch;
+          if (nowMs - _lastChromeToggleMs < 400) return;
+          if (msg.message == 'down' && _showChrome) {
+            _lastChromeToggleMs = nowMs;
+            setState(() => _showChrome = false);
+          } else if ((msg.message == 'up' || msg.message == 'top') &&
+              !_showChrome) {
+            _lastChromeToggleMs = nowMs;
+            setState(() => _showChrome = true);
+          }
+        },
+      )
+      // window.open / target="_blank" を新規タブに転送 (ポップアップブロック解除)
+      ..addJavaScriptChannel(
+        'FlutterPopup',
+        onMessageReceived: (msg) {
+          final url = msg.message.trim();
+          if (url.isEmpty) return;
+          if (!url.startsWith('http')) return;
+          if (!mounted) return;
+          _addNewTab(url: url);
+        },
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (progress) {
+            setState(() => tab.progress = progress);
+          },
+          onNavigationRequest: (NavigationRequest request) async {
+            final uri = Uri.tryParse(request.url);
+            if (uri == null) return NavigationDecision.prevent;
+            // http/https は WebView 内で遷移
+            if (uri.scheme == 'http' || uri.scheme == 'https') {
+              return NavigationDecision.navigate;
+            }
+            // それ以外のスキーム (tel:/mailto:/intent:/カスタム 等) は
+            // 外部アプリで開く。WebView 自身は遷移しない。
+            try {
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            } catch (_) {}
+            return NavigationDecision.prevent;
+          },
+          onPageFinished: (url) async {
+            // 新規タブは _addNewTab 内で即 active になるので、
+            // 既存の _controller ベースの inject 関数がそのまま使える
+            await _injectAdBlocker();
+            await _injectScrollDetector();
+            final title = await _getPageTitle();
+            if (tab.history.isEmpty || tab.history.last.url != url) {
+              tab.history.add(WebHistoryItem(url, title));
+            }
+            // ブラウザホーム画面用の閲覧履歴を SharedPreferences に永続化
+            unawaited(_saveVisitHistory(url, title));
+            final canBack = await tab.controller.canGoBack();
+            setState(() {
+              tab.canGoBack = canBack;
+              tab.currentUrl = url;
+              tab.pageTitle = title;
+              if (identical(tab, _activeTab) && !_isUrlBarEditing) {
+                _urlBarController.text = url;
+              }
+            });
+          },
+        ),
+      );
+    if (initialUrl.isNotEmpty) {
+      controller.loadRequest(Uri.parse(initialUrl));
+    }
+    if (Platform.isIOS && controller.platform is WebKitWebViewController) {
+      (controller.platform as WebKitWebViewController)
+          .setAllowsBackForwardNavigationGestures(true);
+    }
+    tab = _BrowserTab(controller, isHome: initialUrl.isEmpty);
+    return tab;
+  }
+
+  /// 新規タブを追加してアクティブ化。
+  /// [url] が null の場合はホームタブとして開く。
+  void _addNewTab({String? url}) {
+    if (_tabs.length >= _maxTabs) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context)!.browser_tab_max_reached),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final start = (url != null && url.isNotEmpty)
+        ? _resolveInitialUrl(url)
+        : ''; // 空 = ホームタブ
+    setState(() {
+      _tabs.add(_createTab(start));
+      _activeTabIndex = _tabs.length - 1;
+      _urlBarController.text = start;
+    });
+  }
+
+  /// タブを閉じる
+  void _closeTab(int index) {
+    if (index < 0 || index >= _tabs.length) return;
+    if (_tabs.length == 1) {
+      // 最後のタブは閉じずにホーム化 (URL クリア + isHome:true)
+      setState(() {
+        _tabs[0].isHome = true;
+        _tabs[0].currentUrl = null;
+        _tabs[0].pageTitle = '';
+        _tabs[0].canGoBack = false;
+        _urlBarController.text = '';
+      });
+      return;
+    }
+    setState(() {
+      _tabs.removeAt(index);
+      if (_activeTabIndex >= _tabs.length) {
+        _activeTabIndex = _tabs.length - 1;
+      } else if (_activeTabIndex > index) {
+        _activeTabIndex -= 1;
+      }
+      _urlBarController.text = _activeTab.currentUrl ?? '';
+    });
+  }
+
+  /// タブ切替
+  void _switchToTab(int index) {
+    if (index < 0 || index >= _tabs.length) return;
+    setState(() {
+      _activeTabIndex = index;
+      _urlBarController.text = _activeTab.currentUrl ?? '';
+    });
+  }
+
+  /// IndexedStack で全タブの WebView を保持しつつアクティブだけ表示
+  Widget _buildTabsStack() {
+    return IndexedStack(
+      index: _activeTabIndex,
+      children: [
+        for (final tab in _tabs)
+          tab.isHome
+              ? BrowserHomeBody(
+                  onOpenUrl: (u) => _handleHomeOpen(u),
+                )
+              : WebViewWidget(controller: tab.controller),
+      ],
+    );
+  }
+
+  /// ホームタブから URL / 検索が投げられた時: 現在のタブを WebView 化して遷移
+  void _handleHomeOpen(String url) {
+    final resolved = _resolveInitialUrl(url);
+    setState(() {
+      _activeTab.isHome = false;
+      _urlBarController.text = resolved;
+    });
+    _controller.loadRequest(Uri.parse(resolved));
+  }
+
+  /// ホームボタン: 現在のタブをホーム画面に戻す
+  void _resetActiveTabToHome() {
+    setState(() {
+      _activeTab.isHome = true;
+      _activeTab.currentUrl = null;
+      _activeTab.pageTitle = '';
+      _urlBarController.text = '';
+    });
+  }
+
+  /// AppBar 右端に置く「タブ数バッジ」(Chrome スタイル: 角丸四角の中に数字)
+  Widget _buildTabCountBadge(ColorScheme cs) {
+    final count = _tabs.length;
+    // Chrome の tab-count と同じく数字はモノスペース風 & 太字。
+    // 桁数によってフォントサイズを微調整して枠内に収める。
+    final label = count > 99 ? ':D' : '$count';
+    final fontSize = count >= 10 ? 11.0 : 13.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: _showTabsSheet,
+          child: Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: cs.onSurface, width: 2),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: cs.onSurface,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w800,
+                height: 1.0,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// タブ切替シート (Chrome スタイル)
+  /// Chrome モバイル風のタブスイッチャー: フルスクリーン相当の 2 列グリッド。
+  Future<void> _showTabsSheet() async {
+    final l = L10n.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
+    // ボトムナビと同じグレー
+    final sheetBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200;
+    final cardBg = isDark ? const Color(0xFF3A3A3A) : Colors.white;
+    // AppBar 相当の高さ分だけ上部に余白を残す (status bar + toolbar)
+    final topInset = MediaQuery.of(context).padding.top + kToolbarHeight;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: sheetBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height - topInset,
+      ),
+      builder: (bctx) {
+        return StatefulBuilder(
+          builder: (bctx, setSheet) {
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: cs.onSurface.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${l.browser_tabs_title} (${_tabs.length}/$_maxTabs)',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(l.browser_new_tab),
+                          onPressed: _tabs.length >= _maxTabs
+                              ? null
+                              : () {
+                                  Navigator.pop(bctx);
+                                  _addNewTab();
+                                },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
+                        itemCount: _tabs.length,
+                        itemBuilder: (_, i) {
+                          final tab = _tabs[i];
+                          final active = i == _activeTabIndex;
+                          final host =
+                              Uri.tryParse(tab.currentUrl ?? '')?.host ?? '';
+                          final title = tab.pageTitle.isNotEmpty
+                              ? tab.pageTitle
+                              : host;
+                          return _TabGridCard(
+                            title: title.isEmpty ? l.browser_new_tab : title,
+                            host: host,
+                            url: tab.currentUrl ?? '',
+                            active: active,
+                            accentColor: cs.primary,
+                            cardBg: cardBg,
+                            onTap: () {
+                              _switchToTab(i);
+                              Navigator.pop(bctx);
+                            },
+                            onClose: () {
+                              final wasLast = _tabs.length == 1;
+                              setSheet(() {
+                                _closeTab(i);
+                              });
+                              // 最後の 1 タブを閉じたら (home 化された) sheet も閉じてホームへ戻る
+                              if (wasLast) Navigator.pop(bctx);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _urlBarController.dispose();
@@ -251,6 +562,15 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ボトムナビの「ブラウザ」タブ再タップで WebView をトップへスクロール
+    ref.listen<int>(browserScrollToTopProvider, (prev, next) {
+      try {
+        _controller.runJavaScript(
+          "window.scrollTo({top: 0, behavior: 'smooth'});",
+        );
+      } catch (_) {}
+    });
+
     final colorScheme = Theme.of(context).colorScheme;
 
     final isFav = ref.watch(
@@ -260,96 +580,31 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
 
     return PopScope(
-      canPop: !_canGoBack,
+      // 常に Navigator の pop を防ぐ (ネスト Navigator に 1 ルートしか無いので pop すると例外)。
+      // WebView に履歴があれば goBack、それ以外は何もしない (ホーム/履歴なしタブ)。
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (_canGoBack) {
+        final tab = _activeTab;
+        if (!tab.isHome && _canGoBack) {
           await _controller.goBack();
         }
+        // ホーム or 履歴無しの場合は何もしない (browserTab 離脱を防ぐ)
       },
       child: Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AnimatedSlide(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          offset: _showChrome ? Offset.zero : const Offset(0, -1.5),
-          child: AppBar(
-        elevation: 6,
-        backgroundColor: colorScheme.surface,
-
-        // 戻る (長押しで履歴)
-        leading: GestureDetector(
-          onLongPress: () {
-            _showHistoryDialog();
-          },
-          child: CircleAppBarIcon(
-            icon: Icons.arrow_back,
-            onPressed: () async {
-              if (_canGoBack) {
-                await _controller.goBack();
-              } else {
-                Navigator.pop(context);
-              }
-            },
-          ),
-        ),
-
-        title: _buildUrlBar(colorScheme),
-        titleSpacing: 0,
-
-        actions: [
-          CircleAppBarIcon(
-            icon: isFav ? Icons.star : Icons.star_border,
-            tooltip: L10n.of(context)!.favorite,
-            onPressed: _toggleFavorite,
-          ),
-          CircleAppBarIcon(
-            icon: Icons.ios_share,
-            tooltip: 'Share',
-            onPressed: _shareCurrentUrl,
-          ),
-          CircleAppBarIcon(
-            icon: Icons.close,
-            tooltip: L10n.of(context)!.close,
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
-          ),
-          const SizedBox(width: 4),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(2),
-          child:
-              _progress < 100
-                  ? LinearProgressIndicator(
-                    value: _progress / 100,
-                    minHeight: 2,
-                  )
-                  : const SizedBox.shrink(),
-        ),
-      ),
-        ),
-      ),
-
+      // AppBar は廃止し、ボトム側 (ボトムナビ直上) に URL バー + アクションを配置
       body: Listener(
         // WebView タップで URLバーのフォーカスを外す
         onPointerDown: (_) {
           if (_urlBarFocus.hasFocus) _urlBarFocus.unfocus();
         },
-        child: AnimatedPadding(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            top: _showChrome
-                ? MediaQuery.of(context).padding.top + kToolbarHeight
-                : 0,
-          ),
+        child: SafeArea(
+          top: true,
+          bottom: false,
           child: _hasPlaylist
               ? Stack(
                   children: [
-                    Positioned.fill(child: WebViewWidget(controller: _controller)),
+                    Positioned.fill(child: _buildTabsStack()),
                     Positioned(
                       bottom: MediaQuery.of(context).padding.bottom,
                       left: 0,
@@ -358,19 +613,93 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                     ),
                   ],
                 )
-              : WebViewWidget(controller: _controller),
+              : _buildTabsStack(),
         ),
       ),
-      floatingActionButton: AnimatedSlide(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-        offset: _showChrome ? Offset.zero : const Offset(0, 2),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 220),
-          opacity: _showChrome ? 1.0 : 0.0,
-          child: _buildSaveFab(colorScheme),
+      // URL バー: ブラウザタブ識別のためグレー背景に。スクロール中も常時表示。
+      bottomNavigationBar: Material(
+        color: colorScheme.brightness == Brightness.dark
+            ? const Color(0xFF2C2C2C)
+            : Colors.grey.shade200,
+        elevation: 6,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_progress < 100)
+                LinearProgressIndicator(
+                  value: _progress / 100,
+                  minHeight: 2,
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 4, vertical: 4),
+                child: Row(
+                  children: [
+                    // 戻る (長押しで履歴) — ホームタブでは非表示
+                    if (!_activeTab.isHome)
+                      GestureDetector(
+                        onLongPress: _showHistoryDialog,
+                        child: CircleAppBarIcon(
+                          icon: Icons.arrow_back,
+                          onPressed: () async {
+                            if (_canGoBack) {
+                              await _controller.goBack();
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      ),
+                    Expanded(child: _buildUrlBar(colorScheme)),
+                    // ホームボタン: WebView タブ表示中のみ
+                    if (!_activeTab.isHome)
+                      CircleAppBarIcon(
+                        icon: Icons.home_outlined,
+                        tooltip: 'Home',
+                        onPressed: _resetActiveTabToHome,
+                      ),
+                    _buildTabCountBadge(colorScheme),
+                    // メニュー (お気に入り / 共有): WebView タブのみ表示
+                    if (!_activeTab.isHome)
+                      CircleAppBarIcon(
+                        icon: Icons.more_vert,
+                        tooltip: 'Menu',
+                        onPressed: () => _showBrowserMenu(isFav),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+      // ホームタブでは「保存」FAB を非表示 (保存対象のページが無いため)
+      floatingActionButton: _activeTab.isHome
+          ? null
+          : AnimatedSlide(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              offset: _showChrome ? Offset.zero : const Offset(0, 2),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                opacity: _showChrome ? 1.0 : 0.0,
+                // 再生リストパネルとの重なりを避けるため、
+                // playlist 表示時はパネル高 + マージンだけ FAB を上に浮かせる
+                child: _hasPlaylist
+                    ? Padding(
+                        padding: EdgeInsets.only(
+                          bottom: (_playlistPanelExpanded
+                                  ? _panelExpandedHeight
+                                  : _panelCollapsedHeight) +
+                              8,
+                        ),
+                        child: _buildSaveFab(colorScheme),
+                      )
+                    : _buildSaveFab(colorScheme),
+              ),
+            ),
       ),
     );
   }
@@ -601,10 +930,64 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     await Share.share(text);
   }
 
+  /// ブラウザメニュー (お気に入り / 共有 等) のボトムシート
+  Future<void> _showBrowserMenu(bool isFav) async {
+    final l = L10n.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
+    // ボトムナビと同じグレーで塗って統一感を出す
+    final sheetBg =
+        isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: sheetBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (bctx) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.onSurface.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(isFav ? Icons.star : Icons.star_border,
+                  color: isFav ? Colors.amber : null),
+              title: Text(l.favorite),
+              onTap: () {
+                Navigator.pop(bctx);
+                _toggleFavorite();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.ios_share),
+              title: const Text('Share'),
+              onTap: () {
+                Navigator.pop(bctx);
+                _shareCurrentUrl();
+              },
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// URLバー：タップで編集可能、Enter で遷移
   Widget _buildUrlBar(ColorScheme colorScheme) {
     final isDark = colorScheme.brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200];
+    // 周囲のグレー背景と区別するため、URL 入力部分は反対トーンで塗る
+    final bg = isDark ? Colors.white12 : Colors.white;
 
     return Container(
       height: 38,
@@ -623,11 +1006,20 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         decoration: InputDecoration(
           border: InputBorder.none,
           isDense: true,
+          hintText: _activeTab.isHome
+              ? L10n.of(context)!.browser_home_url_hint
+              : null,
+          hintStyle: TextStyle(
+            fontSize: 13,
+            color: colorScheme.onSurface.withValues(alpha: 0.45),
+          ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           prefixIcon: Icon(
-            (_currentUrl?.startsWith('https://') ?? false)
-                ? Icons.lock
-                : Icons.public,
+            _activeTab.isHome
+                ? Icons.search
+                : ((_currentUrl?.startsWith('https://') ?? false)
+                    ? Icons.lock
+                    : Icons.public),
             size: 16,
             color: colorScheme.onSurface.withValues(alpha: 0.55),
           ),
@@ -635,19 +1027,24 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
             minWidth: 36,
             minHeight: 36,
           ),
-          suffixIcon: _isUrlBarEditing
-              ? IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  icon: const Icon(Icons.clear, size: 16),
-                  onPressed: () => _urlBarController.clear(),
-                )
-              : IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  onPressed: () => _controller.reload(),
-                ),
+          // ホームタブでは reload/clear のサフィックスも非表示
+          suffixIcon: _activeTab.isHome
+              ? null
+              : (_isUrlBarEditing
+                  ? IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: () => _urlBarController.clear(),
+                    )
+                  : IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      onPressed: () => _controller.reload(),
+                    )),
         ),
         onTap: () {
           if (!_isUrlBarEditing) {
@@ -683,7 +1080,13 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         'https://www.google.com/search?q=${Uri.encodeQueryComponent(trimmed)}',
       );
     }
-    if (uri != null) await _controller.loadRequest(uri);
+    if (uri != null) {
+      // ホームタブなら WebView 表示に切り替え
+      if (_activeTab.isHome) {
+        setState(() => _activeTab.isHome = false);
+      }
+      await _controller.loadRequest(uri);
+    }
   }
 
   Widget _buildSaveFab(ColorScheme colorScheme) {
@@ -757,173 +1160,48 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   // アクション
   // =========================
 
-  /// 悪質な広告・ポップアップをブロックする JavaScript を注入（v2 強化版）
-  /// - window.open / showModalDialog による無断ポップアップを抑止
-  /// - 既知の広告ネットワーク iframe を網羅的に非表示
-  /// - 全画面オーバーレイ広告を非表示
-  /// - MutationObserver で動的追加された広告も即時非表示
-  /// - body scroll lock を解除（ポップアップが scroll を止めるパターン対策）
-  /// - 広告ドメインへの click を抑制
+  /// ブラウザに注入する JavaScript。
+  /// 現在は広告ブロックは一切行わず、以下のみを実装している:
+  ///   - window.open() を Flutter 側にリレーし、新規タブで開く
+  ///   - target="_blank" のリンククリックも同様に新規タブで開く
   Future<void> _injectAdBlocker() async {
     const js = r'''
 (function() {
-  if (window.__archive_adblock_v2) return;
-  window.__archive_adblock_v2 = true;
+  if (window.__archive_popup_handler) return;
+  window.__archive_popup_handler = true;
 
-  // ───────────────────────────────────────────
-  // 1. ポップアップAPIをブロック
-  // ───────────────────────────────────────────
-  try { window.open = function() { return null; }; } catch (e) {}
-  try { window.showModalDialog = function() { return null; }; } catch (e) {}
-
-  // ───────────────────────────────────────────
-  // 2. 広告セレクタ網羅
-  // ───────────────────────────────────────────
-  var adSelectors = [
-    // iframe
-    'iframe[src*="googleads"]',
-    'iframe[src*="googlesyndication"]',
-    'iframe[src*="doubleclick"]',
-    'iframe[src*="adsystem"]',
-    'iframe[src*="adservice"]',
-    'iframe[src*="adnxs"]',
-    'iframe[src*="taboola"]',
-    'iframe[src*="outbrain"]',
-    'iframe[src*="popads"]',
-    'iframe[src*="propellerads"]',
-    'iframe[src*="mgid"]',
-    'iframe[src*="exoclick"]',
-    'iframe[src*="trafficjunky"]',
-    'iframe[id*="google_ads"]',
-    'iframe[id*="ad_iframe"]',
-    'iframe[class*="ad-frame"]',
-    'iframe[name*="google_ads"]',
-    // ad container
-    'div[id^="google_ads_"]',
-    'div[id^="div-gpt-ad"]',
-    'div[id^="ad-"]',
-    'div[id*="-ad-"]',
-    'ins.adsbygoogle',
-    'div[class*="popup-ad"]',
-    'div[class*="overlay-ad"]',
-    'div[class*="interstitial"]',
-    'div[id*="interstitial"]',
-    'div[class*="popup-container"]',
-    'div[class*="modal-overlay"]',
-    'div[class*="banner-ad"]',
-    'div[class*="advertisement"]',
-    'div[id*="modal-overlay"]',
-    'div[class*="popup-mask"]',
-    'div[class*="lightbox-overlay"]',
-    'div[class*="sticky-ad"]',
-    'div[class*="floating-ad"]',
-    'div[class*="bottom-banner"]',
-    'div[id*="cookie-notice"]',
-    'div[class*="cookie-banner"]',
-    'div[class*="newsletter-popup"]',
-    'div[class*="subscribe-popup"]',
-    'aside[class*="ad"]',
-    'section[class*="ad-container"]'
-  ];
-  var selectorStr = adSelectors.join(',');
-
-  // ───────────────────────────────────────────
-  // 3. ホワイトリスト（誤検知防止）
-  // ───────────────────────────────────────────
-  function isSafeElement(el) {
-    var id = (el.id || '').toLowerCase();
-    var cls = (el.className || '').toString().toLowerCase();
-    // header / footer / navigation などは保護
-    if (/header|footer|nav|menu|comment|video|player/.test(id + ' ' + cls)) {
-      return true;
-    }
-    return false;
-  }
-
-  // ───────────────────────────────────────────
-  // 4. 広告非表示処理
-  // ───────────────────────────────────────────
-  function hideAds() {
-    try {
-      // セレクタ一致
-      document.querySelectorAll(selectorStr).forEach(function(el) {
-        el.style.setProperty('display', 'none', 'important');
-        el.style.setProperty('visibility', 'hidden', 'important');
-      });
-
-      // 全画面オーバーレイ検出
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-      document.querySelectorAll('div,section,aside').forEach(function(el) {
-        if (isSafeElement(el)) return;
-        var s = getComputedStyle(el);
-        if (s.position !== 'fixed' && s.position !== 'absolute') return;
-        if (s.display === 'none' || s.visibility === 'hidden') return;
-        var z = parseInt(s.zIndex, 10) || 0;
-        if (z < 100) return;
-        var r = el.getBoundingClientRect();
-        if (r.width >= vw * 0.85 && r.height >= vh * 0.7) {
-          el.style.setProperty('display', 'none', 'important');
-        }
-      });
-
-      // body scroll lock 解除（ポップアップが scroll を止める対策）
-      if (document.body) {
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('position');
-        if (getComputedStyle(document.body).overflow === 'hidden') {
-          document.body.style.setProperty('overflow', 'auto', 'important');
-        }
-      }
-      if (document.documentElement) {
-        if (getComputedStyle(document.documentElement).overflow === 'hidden') {
-          document.documentElement.style.setProperty('overflow', 'auto', 'important');
-        }
-      }
-    } catch (e) {}
-  }
-
-  // ───────────────────────────────────────────
-  // 5. 初回 + 動的監視
-  // ───────────────────────────────────────────
-  hideAds();
+  // window.open を新規タブに転送 (ポップアップブロック解除)
   try {
-    var observer = new MutationObserver(function(mutations) {
-      // 新しく追加された要素があれば再スキャン
-      for (var i = 0; i < mutations.length; i++) {
-        if (mutations[i].addedNodes && mutations[i].addedNodes.length > 0) {
-          hideAds();
-          break;
+    window.open = function(url, name, features) {
+      try {
+        var abs = url ? new URL(url, document.baseURI).href : '';
+        if (abs && /^https?:/i.test(abs)) {
+          FlutterPopup.postMessage(abs);
         }
-      }
-    });
-    observer.observe(document.documentElement || document.body, {
-      childList: true,
-      subtree: true
-    });
+      } catch (e) {}
+      return null;
+    };
   } catch (e) {}
-  // 定期チェック（Shadow DOM などの取りこぼし対策）
-  setInterval(hideAds, 2500);
 
-  // ───────────────────────────────────────────
-  // 6. 広告ドメインへの click をブロック
-  // ───────────────────────────────────────────
-  document.addEventListener('click', function(e) {
-    try {
-      var t = e.target;
-      for (var d = 0; t && d < 6; d++) {
-        if (t.tagName === 'A' && t.href) {
-          var href = (t.href || '').toLowerCase();
-          if (/doubleclick|googleads|googlesyndication|adservice|amazon-adsystem|popads|propellerads|exoclick|trafficjunky/.test(href)) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
+  // target="_blank" のリンククリックも新規タブへ
+  try {
+    document.addEventListener('click', function(ev) {
+      var a = ev.target;
+      while (a && a.tagName !== 'A') a = a.parentNode;
+      if (!a || !a.href) return;
+      var t = (a.target || '').toLowerCase();
+      if (t === '_blank' || t === 'blank') {
+        try {
+          var abs = new URL(a.href, document.baseURI).href;
+          if (/^https?:/i.test(abs)) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            FlutterPopup.postMessage(abs);
           }
-        }
-        t = t.parentElement;
+        } catch (e) {}
       }
-    } catch (err) {}
-  }, true);
+    }, true);
+  } catch (e) {}
 })();
 ''';
     try {
@@ -935,23 +1213,56 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   /// Twitter風 自動隠し用：WebView のスクロール方向を Flutter へ通知
   Future<void> _injectScrollDetector() async {
+    // 頻繁な AppBar の出入りでガタつくのを避けるため:
+    //  - 同じ方向に大きく (150px) 累積してから切替
+    //  - 直近の切替から 500ms 以内は再切替を抑制 (クールダウン)
+    //  - lastSent と同じメッセージは送信しない
     const js = r'''
 (function() {
   if (window.__archive_scroll_detector) return;
   window.__archive_scroll_detector = true;
   var lastY = window.scrollY || 0;
+  var accum = 0;
+  var lastDirection = 0;
+  var lastSent = '';
+  var lastSentAt = 0;
   var ticking = false;
+  var THRESHOLD = 150;   // 150px 累積で切替
+  var COOLDOWN_MS = 500; // 切替後 500ms は再切替しない
   function onScroll() {
     var y = window.scrollY || 0;
     var dy = y - lastY;
-    if (y <= 30) {
-      try { FlutterScroll.postMessage('top'); } catch(e) {}
-    } else if (Math.abs(dy) > 6) {
-      try {
-        FlutterScroll.postMessage(dy > 0 ? 'down' : 'up');
-      } catch(e) {}
-    }
     lastY = y;
+    var nowMs = Date.now();
+    // ページ最上部近く: 常に表示 (クールダウン無視)
+    if (y <= 20) {
+      accum = 0;
+      lastDirection = 0;
+      if (lastSent !== 'top') {
+        try { FlutterScroll.postMessage('top'); } catch(e) {}
+        lastSent = 'top';
+        lastSentAt = nowMs;
+      }
+      ticking = false;
+      return;
+    }
+    if (dy === 0) { ticking = false; return; }
+    var dir = dy > 0 ? 1 : -1;
+    if (dir !== lastDirection) {
+      accum = 0;
+      lastDirection = dir;
+    }
+    accum += Math.abs(dy);
+    if (accum >= THRESHOLD) {
+      accum = 0;
+      var msg = dir > 0 ? 'down' : 'up';
+      // クールダウン中は同じ方向でも送らない
+      if (msg !== lastSent && (nowMs - lastSentAt) >= COOLDOWN_MS) {
+        try { FlutterScroll.postMessage(msg); } catch(e) {}
+        lastSent = msg;
+        lastSentAt = nowMs;
+      }
+    }
     ticking = false;
   }
   window.addEventListener('scroll', function() {
@@ -1053,11 +1364,41 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
   }
 
+  /// ブラウザホーム画面の「履歴」用に閲覧履歴を保存する。
+  /// 最新順、重複 URL は詰めて先頭に、最大 20 件。
+  Future<void> _saveVisitHistory(String url, String title) async {
+    if (url.isEmpty || !url.startsWith('http')) return;
+    // Google 検索結果ページや about:blank などは履歴から除外
+    if (url.startsWith('https://www.google.com/search')) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('browser_history') ?? [];
+      // 既存の同一 URL を除去
+      list.removeWhere((s) {
+        try {
+          return (jsonDecode(s) as Map)['url'] == url;
+        } catch (_) {
+          return false;
+        }
+      });
+      list.insert(
+        0,
+        jsonEncode({
+          'url': url,
+          'title': title,
+          'ts': DateTime.now().millisecondsSinceEpoch,
+        }),
+      );
+      if (list.length > 20) list.removeRange(20, list.length);
+      await prefs.setStringList('browser_history', list);
+    } catch (_) {}
+  }
+
   //URL生成メソッド
-  //初期表示時にGoogl動画タブを開く
-  String _buildGoogleVideoSearchUrl(String query) {
+  //Google 通常検索 (動画タブ自動選択はしない)
+  String _buildGoogleSearchUrl(String query) {
     final encoded = Uri.encodeComponent(query);
-    return 'https://www.google.com/search?q=$encoded&tbm=vid&safe=off';
+    return 'https://www.google.com/search?q=$encoded&safe=off';
   }
 
   //initialUrlがURLの場合に分岐
@@ -1065,7 +1406,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     if (input.startsWith('http')) {
       return input; // そのまま表示
     }
-    return _buildGoogleVideoSearchUrl(input); // 検索語 → 動画検索
+    return _buildGoogleSearchUrl(input); // 検索語 → 通常検索
   }
 
   //作品として保存するダイアログ
@@ -1080,15 +1421,42 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
     final prefs = await SharedPreferences.getInstance();
 
+    // 既に保存済みの URL の場合は保存ダイアログを開かず、
+    // オフライン保存確認フローに直接切り替える
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final alreadySaved = savedList.any((e) {
+      try {
+        return (jsonDecode(e) as Map<String, dynamic>)['url'] == url;
+      } catch (_) {
+        return false;
+      }
+    });
+    if (alreadySaved) {
+      if (!mounted) return;
+      await _promptOfflineForExisting(url: url, title: title);
+      return;
+    }
+
     // リスト一覧取得
     final allLists = prefs.getStringList('all_lists') ?? [];
 
     String selectedList = 'none';
+    // 前回の解像度選択を復元 (null = 「ダウンロードなし」も記憶)
+    // prefs には int を保存、キー未設定 = 未選択、値 -1 = 「なし」を明示
+    int? offlineHeight;
+    final storedH = prefs.getInt('last_offline_height');
+    if (storedH != null && storedH > 0) {
+      offlineHeight = storedH;
+    } else {
+      offlineHeight = null; // 「ダウンロードなし」または未設定
+    }
     final titleController = TextEditingController(text: title);
     final urlController = TextEditingController(text: url);
     final colorScheme = Theme.of(context).colorScheme;
 
-    // サムネを事前取得（ダイアログ表示と並行）
+    // 前回の保存ダイアログの残像をクリアしてから新規取得
+    thumbnailUrl = null;
+    // サムネを事前取得（ダイアログ表示と並行)
     String? pendingThumb;
     _getThumbnailFromPage().then((t) {
       pendingThumb = t;
@@ -1438,6 +1806,35 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    // オフライン保存: 解像度チップ (Premium 以上のみ選択可)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        L10n.of(context)!.offline_quality_title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        L10n.of(context)!.offline_quality_desc,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OfflineQualityChips(
+                      selected: offlineHeight,
+                      onChanged: (h) {
+                        // 動画ダウンロードは無料化 (Premium ゲート撤去)
+                        setState(() => offlineHeight = h);
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -1477,12 +1874,45 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                     //サムネ取得
                     thumbnailUrl = await _getThumbnailFromPage();
 
+                    // 選択した解像度を次回用に保存
+                    // (null = ダウンロードなしも記憶したいので 0 で表現)
+                    final savePrefs = await SharedPreferences.getInstance();
+                    await savePrefs.setInt(
+                        'last_offline_height', offlineHeight ?? 0);
+
+                    final startingDl = offlineHeight != null &&
+                        urlController.text.trim().isNotEmpty;
                     await _saveWorkFromWebView(
                       url: urlController.text,
                       title: titleController.text,
                       listName: selectedList == 'none' ? '' : selectedList,
                       thumbnailUrl: thumbnailUrl,
+                      // DL 開始時は保存 SnackBar を抑制し、後で
+                      // 「ダウンロードを開始しました」を出す
+                      suppressToast: startingDl,
                     );
+                    // オフライン解像度が選択されている場合はダウンロード開始
+                    if (startingDl) {
+                      await ref
+                          .read(downloadQueueProvider.notifier)
+                          .start(
+                            url: urlController.text.trim(),
+                            title: titleController.text.trim().isNotEmpty
+                                ? titleController.text.trim()
+                                : urlController.text.trim(),
+                            itemUrl: urlController.text.trim(),
+                            preferredHeight: offlineHeight,
+                            wasFromNewSave: true,
+                          );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(L10n.of(context)!
+                                .browser_video_download_started),
+                          ),
+                        );
+                      }
+                    }
                     if (context.mounted) Navigator.pop(context);
                   },
                   child: Text(L10n.of(context)!.save), //保存ボタン
@@ -1621,11 +2051,71 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   }
 
   //追加作品の保存
+  /// 既に保存済みの URL の場合に、「オフライン保存もしますか？」と確認する
+  Future<void> _promptOfflineForExisting({
+    required String url,
+    required String title,
+  }) async {
+    final l = L10n.of(context)!;
+    // 既にローカル DL 済みかチェック
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    String? localPath;
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          localPath = map['localVideoPath'] as String?;
+          break;
+        }
+      } catch (_) {}
+    }
+    if (localPath != null && localPath.isNotEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l.search_result_page_url_already_saved_and_downloaded),
+        duration: const Duration(seconds: 2),
+      ));
+      return;
+    }
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text(l.search_result_page_url_already_saved),
+        content: Text(l.search_result_page_url_already_saved_offline_prompt),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            child: Text(l.search_result_page_offline),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    // 動画ダウンロードは無料機能なので Premium ゲート撤去
+    await ref.read(downloadQueueProvider.notifier).start(
+          url: url,
+          title: title.isNotEmpty ? title : url,
+          itemUrl: url,
+        );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l.browser_video_download_started),
+      ));
+    }
+  }
+
   Future<void> _saveWorkFromWebView({
     required String url,
     required String title,
     required String listName,
     String? thumbnailUrl,
+    bool suppressToast = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -1654,13 +2144,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
     if (exists) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.of(context)!.search_result_page_url_already_saved),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      await _promptOfflineForExisting(url: url, title: title);
       return;
     }
 
@@ -1670,9 +2154,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(L10n.of(context)!.search_result_page_has_saved)),
-    );
+    if (!suppressToast) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.search_result_page_has_saved)),
+      );
+    }
 
     //広告表示処理
     await _maybeShowAd();
@@ -1681,7 +2167,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   static Future<bool> _checkPremium() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      final isPremium =
+          customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all['Pro Plan']?.isActive ?? false;
+      return isPremium || isPro;
     } catch (e) {
       debugPrint('Subscription check error: $e');
       return false;
@@ -1830,7 +2320,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                         Navigator.pop(context);
                         await _controller.loadRequest(Uri.parse(item.url));
 
-                        _history = _history.sublist(0, reversedIndex + 1);
+                        // sublist は新規リストを返すため、タブの mutable list を書き換え
+                        final trimmed =
+                            _history.sublist(0, reversedIndex + 1);
+                        _history
+                          ..clear()
+                          ..addAll(trimmed);
 
                         setState(() {});
                       },
@@ -1864,66 +2359,31 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
   }
 
-  //広告表示処理
+  // 保存 (FAB 保存ボタン) を押下した回数をカウントし、3 回に 1 回インターステイシャル。
+  // オフラインダウンロードの有無に関係なくカウント。Premium/Pro はスキップ。
   Future<void> _maybeShowAd() async {
     if (_isPremium) return;
 
     final prefs = await SharedPreferences.getInstance();
-    int count = prefs.getInt("save_ad_count") ?? 0;
-
-    count++;
+    int count = (prefs.getInt("save_ad_count") ?? 0) + 1;
     await prefs.setInt("save_ad_count", count);
 
-    // 初回保護（2回未満は広告なし）
-    if (count < 2) return;
+    if (count % 3 != 0) return;
+    if (_interstitialAd == null) return;
 
-    final remainder = count % 3;
-
-    // ⭐ 予告（3の倍数の1つ前）
-    if (remainder == 2) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.of(context)!.search_result_page_ad_remainder01),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-
-    // ⭐ 3回目（広告表示）
-    if (remainder == 0 && _interstitialAd != null) {
-      if (!mounted) return;
-
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.removeCurrentSnackBar();
-
-      final snackBarController = messenger.showSnackBar(
-        SnackBar(
-          content: Text(L10n.of(context)!.search_result_page_ad_remainder02),
-          duration: Duration(milliseconds: 1200),
-        ),
-      );
-
-      await snackBarController.closed;
-      if (!mounted) return;
-
-      final ad = _interstitialAd!;
-      _interstitialAd = null;
-
-      ad.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _loadInterstitialAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _loadInterstitialAd();
-        },
-      );
-
-      ad.show();
-    }
+    final ad = _interstitialAd!;
+    _interstitialAd = null;
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadInterstitialAd();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadInterstitialAd();
+      },
+    );
+    ad.show();
   }
 
   String get _adUnitId {
@@ -1939,10 +2399,13 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   Future<void> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      final isActive =
+      // Premium または Pro のどちらでも「有料 = 広告非表示」扱い
+      final isPremium =
           customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
       setState(() {
-        _isPremium = isActive;
+        _isPremium = isPremium || isPro;
       });
     } catch (e) {
       debugPrint("Error fetching subscription status: $e");
@@ -1956,4 +2419,185 @@ class WebHistoryItem {
   final String title;
 
   WebHistoryItem(this.url, this.title);
+}
+
+/// アプリ内ブラウザの 1 タブ分の状態。
+class _BrowserTab {
+  final WebViewController controller;
+  bool canGoBack = false;
+  String? currentUrl;
+  String pageTitle = '';
+  int progress = 0;
+  final List<WebHistoryItem> history = [];
+  /// ホームタブ (URL 未入力状態) — WebView は描画せずホームコンテンツを表示
+  bool isHome;
+  _BrowserTab(this.controller, {this.isHome = false});
+}
+
+/// Chrome モバイル風タブグリッドの 1 カード。
+/// - 上部: ファビコン + タイトル + × 閉じる
+/// - 大部分: ホスト頭文字 + URL のプレビュー領域 (画像スナップショットは未対応)
+/// - active 時は primary の枠線でハイライト
+class _TabGridCard extends StatelessWidget {
+  final String title;
+  final String host;
+  final String url;
+  final bool active;
+  final Color accentColor;
+  final Color cardBg;
+  final VoidCallback onTap;
+  final VoidCallback onClose;
+
+  const _TabGridCard({
+    required this.title,
+    required this.host,
+    required this.url,
+    required this.active,
+    required this.accentColor,
+    required this.cardBg,
+    required this.onTap,
+    required this.onClose,
+  });
+
+  static const _palette = [
+    Color(0xFF5B8DEF),
+    Color(0xFFEF6C6C),
+    Color(0xFF66BB6A),
+    Color(0xFFFFA726),
+    Color(0xFFAB47BC),
+    Color(0xFF26A69A),
+    Color(0xFFEC407A),
+    Color(0xFF7E57C2),
+  ];
+
+  Color _colorFor(String h) {
+    if (h.isEmpty) return _palette[0];
+    final hash = h.codeUnits.fold<int>(0, (a, b) => a + b);
+    return _palette[hash % _palette.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
+    final letter =
+        (title.isNotEmpty ? title : host).characters.firstOrNull ?? '?';
+    final tint = _colorFor(host);
+    return Material(
+      color: cardBg,
+      elevation: active ? 6 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: active ? accentColor : Colors.transparent,
+          width: active ? 2 : 0,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ヘッダ: favicon + title + close
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 4, 4),
+              child: Row(
+                children: [
+                  host.isEmpty
+                      ? Icon(
+                          Icons.public,
+                          size: 16,
+                          color: isDark ? Colors.white54 : Colors.grey,
+                        )
+                      : ClipOval(
+                          child: Image.network(
+                            'https://www.google.com/s2/favicons?domain=$host&sz=32',
+                            width: 16,
+                            height: 16,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.public,
+                              size: 16,
+                              color:
+                                  isDark ? Colors.white54 : Colors.grey,
+                            ),
+                          ),
+                        ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onClose,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: cs.onSurface.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // プレビュー領域 (ページスクショの代替: ホスト頭文字プレースホルダ)
+            Expanded(
+              child: Container(
+                color: tint.withValues(alpha: isDark ? 0.25 : 0.14),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: tint,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        letter.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (host.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          host,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: cs.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

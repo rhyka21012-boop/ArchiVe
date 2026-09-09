@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'tutorial_slide.dart';
 import 'main_page.dart';
 import 'tutorial_page.dart';
+import 'consent_page.dart';
 
 class LaunchGate extends StatefulWidget {
   const LaunchGate({super.key});
@@ -13,29 +14,40 @@ class LaunchGate extends StatefulWidget {
 
 class _LaunchGateState extends State<LaunchGate> {
   bool? _isFirst;
+  bool? _consented;
 
   @override
   void initState() {
     super.initState();
-    _checkFirstLaunch();
+    _checkInitialState();
   }
 
-  Future<void> _checkFirstLaunch() async {
+  Future<void> _checkInitialState() async {
     final prefs = await SharedPreferences.getInstance();
+    final isFirst = prefs.getBool('isFirstLaunch') ?? true;
+    final consented = await isConsentAccepted();
+    if (!mounted) return;
     setState(() {
-      _isFirst = prefs.getBool('isFirstLaunch') ?? true;
+      _isFirst = isFirst;
+      _consented = consented;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isFirst == null) {
+    if (_isFirst == null || _consented == null) {
       return const SizedBox(); // Splash
     }
 
-    //if (_isFirst!) {
-    //  return TutorialPage(onComplete: () => completeTutorial(context));
-    //}
+    // 免責/利用規約/プライバシーへの同意が未取得なら最初に見せる
+    if (!_consented!) {
+      return ConsentPage(
+        onAccepted: () {
+          setState(() => _consented = true);
+        },
+      );
+    }
+
     if (_isFirst!) {
       return IntroScreen(
         onFinished: () {

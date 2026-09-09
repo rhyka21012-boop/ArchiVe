@@ -71,15 +71,15 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     'unrated': Color(0xFF9E9E9E),
   };
 
+  /// リスト別/タグ系ランキングで使うグラデーション色。
+  /// プライマリカラーを基準に、rank が下がるほど明るく (薄く) する。
   Color _topColor(int index) {
-    const palette = [
-      Color(0xFF2196F3),
-      Color(0xFF4CAF50),
-      Color(0xFFFF9800),
-      Color(0xFF9C27B0),
-      Color(0xFFF44336),
-    ];
-    return palette[index % palette.length];
+    final primary = Theme.of(context).colorScheme.primary;
+    final hsl = HSLColor.fromColor(primary);
+    // index 0 が最濃、以降 段階的に明るく (0.08 ずつ加算)
+    final add = (index * 0.08).clamp(0.0, 0.4);
+    final l = (hsl.lightness + add).clamp(0.0, 0.85);
+    return hsl.withLightness(l).toColor();
   }
 
   // ─── Init ─────────────────────────────────────────────────────
@@ -626,31 +626,31 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 title: L10n.of(context)!.analytics_page_cast,
                 icon: Icons.person,
                 data: castCounts,
-                accentColor: const Color(0xFF2196F3),
+                accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
                 title: L10n.of(context)!.analytics_page_genre,
                 icon: Icons.category,
                 data: genreCounts,
-                accentColor: const Color(0xFF4CAF50),
+                accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
                 title: L10n.of(context)!.analytics_page_series,
                 icon: Icons.movie_filter,
                 data: seriesCounts,
-                accentColor: const Color(0xFFFF9800),
+                accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
                 title: L10n.of(context)!.analytics_page_maker,
                 icon: Icons.business,
                 data: makerCounts,
-                accentColor: const Color(0xFF9C27B0),
+                accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
                 title: L10n.of(context)!.analytics_page_label,
                 icon: Icons.label,
                 data: labelCounts,
-                accentColor: const Color(0xFFF44336),
+                accentColor: Theme.of(context).colorScheme.primary,
               ),
             ],
           ),
@@ -839,14 +839,9 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final percent = total > 0 ? count / total : 0.0;
-    const badgeColors = [
-      Color(0xFFFFD700),
-      Color(0xFFB0BEC5),
-      Color(0xFFCD7F32),
-    ];
-    final badgeBg =
-        rank <= 3 ? badgeColors[rank - 1] : colorScheme.surfaceContainerHighest;
-    final badgeFg = rank <= 3 ? Colors.white : colorScheme.onSurface;
+    // 順位バッジは 1〜3 位でも色分けせず、全順位で統一
+    final badgeBg = colorScheme.surfaceContainerHighest;
+    final badgeFg = colorScheme.onSurface;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1215,7 +1210,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       title: L10n.of(context)!.analytics_page_view_count_top5,
       subtitle:
           L10n.of(context)!.analytics_page_total_view_subtitle(totalViewCount),
-      accentColor: const Color(0xFF4CAF50),
+      accentColor: Theme.of(context).colorScheme.primary,
       child: SizedBox(
         height: 300,
         child: BarChart(_top5BarChartData()),
@@ -1232,17 +1227,19 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             .toDouble() +
         1;
 
-    const barShades = [
-      Color(0xFF2E7D32),
-      Color(0xFF388E3C),
-      Color(0xFF43A047),
-      Color(0xFF66BB6A),
-      Color(0xFF81C784),
-    ];
+    // プライマリカラーを基準に、rank が下がるほど明るくグラデーション
+    final primary = Theme.of(context).colorScheme.primary;
+    final hsl = HSLColor.fromColor(primary);
+    Color barShade(int i) {
+      final add = (i * 0.08).clamp(0.0, 0.4);
+      final l = (hsl.lightness + add).clamp(0.0, 0.85);
+      return hsl.withLightness(l).toColor();
+    }
 
     return BarChartData(
       maxY: maxY,
       barGroups: List.generate(top5Viewings.length, (i) {
+        final shade = barShade(i);
         return BarChartGroupData(
           x: i,
           barRods: [
@@ -1251,10 +1248,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [
-                  barShades[i % barShades.length],
-                  barShades[i % barShades.length].withValues(alpha: 0.5),
-                ],
+                colors: [shade, shade.withValues(alpha: 0.5)],
               ),
               width: 32,
               borderRadius: const BorderRadius.vertical(
@@ -1556,7 +1550,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       icon: Icons.folder,
       title: L10n.of(context)!.analytics_page_saved_by_list,
       subtitle: L10n.of(context)!.analytics_page_list_count_subtitle(listCounts.length),
-      accentColor: const Color(0xFF00BCD4),
+      accentColor: Theme.of(context).colorScheme.primary,
       child: Column(
         children: List.generate(
           top5.length,
@@ -1565,7 +1559,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             top5[i].key,
             top5[i].value,
             total,
-            const Color(0xFF00BCD4),
+            _topColor(i),
           ),
         ),
       ),

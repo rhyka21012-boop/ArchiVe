@@ -45,11 +45,15 @@ class SaveLimitHelper {
     return false;
   }
 
-  //プレミアムか確認
+  //プレミアム or Pro か確認 (どちらも有料 = 制限解除)
   static Future<bool> _checkPremium() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      final isPremium =
+          customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all['Pro Plan']?.isActive ?? false;
+      return isPremium || isPro;
     } catch (e) {
       debugPrint('Subscription check error: $e');
       return false;
@@ -126,7 +130,7 @@ class SaveLimitHelper {
                       // 今日の広告視聴上限チェック
                       final watchedAds = ref.read(adBadgeProvider);
 
-                      if (watchedAds >= 3) {
+                      if (watchedAds >= kDailyAdWatchLimit) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -149,12 +153,12 @@ class SaveLimitHelper {
                         return;
                       }
 
-                      // 広告再生
+                      // 広告再生 (1 回視聴 = +1 枠, 1日 5 回まで)
                       ad.show(
                         onUserEarnedReward: (_, __) async {
                           final prefs = await SharedPreferences.getInstance();
                           final current = prefs.getInt('extra_save_limit') ?? 0;
-                          await prefs.setInt('extra_save_limit', current + 5);
+                          await prefs.setInt('extra_save_limit', current + 1);
 
                           ref.read(adBadgeProvider.notifier).increment();
                         },

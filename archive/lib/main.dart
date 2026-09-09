@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'launch_gate.dart';
+import 'global_player_layer.dart';
+import 'pip_helper.dart';
+import 'download_ad_service.dart';
 //import 'grid_view_native_ad_factory.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +14,17 @@ import 'theme_provider.dart';
 import 'rating_label_provider.dart';
 
 import 'l10n/app_localizations.dart';
+
+/// アプリのルート Navigator への参照。
+/// GlobalPlayerLayer など Navigator の外にあるレイヤーから、購入導線等の
+/// ページを push する際に使用する。
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// アプリ全体で共有する ScaffoldMessenger 参照。
+/// バックグラウンドタスク完了/失敗通知など、深いネスト以外の場所からも
+/// SnackBar を表示できるようにする。
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +48,12 @@ void main() async {
 
   //RevenueCat を初期化
   await Purchases.configure(PurchasesConfiguration(apiKey));
+
+  // バックグラウンド音声のための AudioSession 初期化
+  await PipHelper().ensureConfigured();
+
+  // ダウンロード完了時インターステイシャル広告のプリロード
+  DownloadAdService().preload();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -90,6 +110,8 @@ class _MyAppState extends State<MyApp> {
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          navigatorKey: rootNavigatorKey,
+          scaffoldMessengerKey: rootScaffoldMessengerKey,
 
           localizationsDelegates: L10n.localizationsDelegates,
           supportedLocales: L10n.supportedLocales,
@@ -105,6 +127,15 @@ class _MyAppState extends State<MyApp> {
           darkTheme: getThemeData(themeColor, true),
           themeMode: themeMode,
           home: const LaunchGate(),
+          // 全ルート上にミニプレイヤーを重ねる (どの画面でも表示される)
+          builder: (context, child) {
+            return Stack(
+              children: [
+                if (child != null) child,
+                const Positioned.fill(child: GlobalPlayerLayer()),
+              ],
+            );
+          },
         );
       },
     );

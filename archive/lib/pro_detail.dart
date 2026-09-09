@@ -7,6 +7,7 @@ import 'login_page.dart';
 import 'main.dart';
 import 'purchase_page.dart';
 import 'circle_app_bar_icon.dart';
+import 'purchase_success_confetti.dart';
 
 // Pro のテーマカラー：ティールグラデーション
 const _proColorDeep = Color(0xFF00695C);
@@ -183,6 +184,7 @@ class _ProPurchasePageState extends State<ProPurchasePage> {
       final info = await Purchases.getCustomerInfo();
       if (info.entitlements.all[ProGate.entitlementId]?.isActive ?? false) {
         if (!mounted) return;
+        showPurchaseSuccessConfetti(context, isPro: true);
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -223,6 +225,7 @@ class _ProPurchasePageState extends State<ProPurchasePage> {
       final info = await Purchases.restorePurchases();
       if (info.entitlements.all[ProGate.entitlementId]?.isActive ?? false) {
         if (!mounted) return;
+        showPurchaseSuccessConfetti(context, isPro: true);
         await showDialog(
           context: context,
           barrierDismissible: false,

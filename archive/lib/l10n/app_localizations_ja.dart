@@ -96,7 +96,28 @@ class L10nJa extends L10n {
   String get main_page_lists => 'リスト';
 
   @override
-  String get main_page_search => '検索・収集';
+  String get main_page_search => '検索';
+
+  @override
+  String get main_page_browser => 'ブラウザ';
+
+  @override
+  String get browser_home_url_hint => 'URL を入力または検索';
+
+  @override
+  String get browser_home_history => '履歴';
+
+  @override
+  String get browser_home_history_empty => '履歴はまだありません';
+
+  @override
+  String get browser_home_history_clear => '履歴をクリア';
+
+  @override
+  String get browser_home_history_clear_confirm => '履歴を全て削除しますか？';
+
+  @override
+  String get browser_home_favorites => 'お気に入りサイト';
 
   @override
   String get main_page_analytics => '統計';
@@ -225,6 +246,29 @@ class L10nJa extends L10n {
   String get grid_page_sort_count_desc => '視聴回数が少ない順';
 
   @override
+  String get grid_page_sort_rating => '評価順';
+
+  @override
+  String get grid_page_sort_offline_first => 'オフライン優先';
+
+  @override
+  String get grid_page_sort_list_name => 'リスト名順';
+
+  @override
+  String get grid_page_sort_random => 'ランダム';
+
+  @override
+  String get grid_page_sort_by_cast => 'キャスト別';
+
+  @override
+  String get grid_page_sort_by_date => '追加日順';
+
+  @override
+  String grid_page_sort_current(String label) {
+    return '並び: $label';
+  }
+
+  @override
   String grid_page_items_selected_delete(Object count) {
     return '選択した$count件を削除しますか？';
   }
@@ -278,7 +322,152 @@ class L10nJa extends L10n {
   String get detail_page_thumbnail_placeholder => '保存するとサムネイルが表示されます';
 
   @override
-  String get detail_page_add_image => '画像を追加★';
+  String get detail_page_add_image => 'サムネイル画像を追加★';
+
+  @override
+  String get detail_page_offline => 'オフライン';
+
+  @override
+  String get detail_page_offline_downloaded => 'オフライン保存済み';
+
+  @override
+  String get detail_page_offline_confirm_title => 'この作品をオフラインに保存しますか？';
+
+  @override
+  String get detail_page_offline_confirm_body =>
+      '動画データをこの端末にダウンロードします。\n※あなたが権利を保有するか、権利者から許諾を得た動画のみ保存してください。';
+
+  @override
+  String get detail_page_offline_no_url => 'URL が入力されていません';
+
+  @override
+  String get detail_page_offline_started => 'ダウンロードを開始しました';
+
+  @override
+  String get detail_page_offline_probing => '利用可能な解像度を確認中…';
+
+  @override
+  String get detail_page_delete_offline_confirm =>
+      'この作品のオフラインデータを削除しますか？\n（オンライン再生には影響しません）';
+
+  @override
+  String get detail_page_offline_deleted => 'オフラインデータを削除しました';
+
+  @override
+  String get consent_page_title => 'ご利用にあたって';
+
+  @override
+  String get consent_page_subtitle => '本アプリのご利用前に、以下をご確認の上ご同意ください。';
+
+  @override
+  String get consent_page_privacy_title => 'プライバシーポリシー';
+
+  @override
+  String get consent_page_privacy_body =>
+      '本アプリは個人情報の適切な取り扱いに努めます。詳細は下記のポリシーをご確認ください。';
+
+  @override
+  String get consent_page_terms_title => '利用規約';
+
+  @override
+  String get consent_page_terms_body => '本アプリの利用に関する規約を必ずお読みください。';
+
+  @override
+  String get consent_page_ip_summary =>
+      '本アプリはユーザーが入力したURLからのダウンロード・オフライン再生を提供する汎用ツールです。著作権および配信元の利用規約はユーザーの責任で遵守してください。';
+
+  @override
+  String get consent_page_agree_checkbox => '上記の内容をすべて理解し、同意します';
+
+  @override
+  String get consent_page_agree => '同意して開始';
+
+  @override
+  String get consent_page_read_more => '全文を読む';
+
+  @override
+  String get settings_page_ip_disclaimer => '知的財産権に関する免責事項';
+
+  @override
+  String get settings_page_ip_disclaimer_body =>
+      '本アプリは、ユーザーが自身の判断で入力した動画URLからのダウンロードとオフライン再生機能を提供する汎用ツールです。特定のウェブサイトのコンテンツを取得することを目的としたものではありません。\n\nユーザーは、以下について自身の責任を負うものとします:\n・保存する動画コンテンツの著作権および配信元サイトの利用規約を遵守すること\n・保存したコンテンツを、私的使用の範囲 (著作権法第30条) を超えて複製・配布・公開・商用利用しないこと\n・第三者の著作権、肖像権、パブリシティ権、その他の権利を侵害しないこと\n・ダウンロード対象サイトの技術的保護手段を回避しないこと (著作権法第30条の2)\n\n本アプリの提供者は、ユーザーによる本アプリの利用に起因または関連して生じた著作権侵害、利用規約違反、その他一切の法的責任を負いません。\n\n疑義がある場合は、動画の著作権者または配信元にご確認の上、ご利用をお控えください。なお、本アプリはユーザーの入力に基づき動作するものであり、特定のサービスの推奨・提携を意味するものではありません。';
+
+  @override
+  String get detail_page_offline_not_direct_video =>
+      'このURLは動画ファイルの直リンクではないため、オフライン保存できません。\n（YouTube等のページURLは対応していません。mp4/m4v/mov/webm/mkv 形式の直リンクをお使いください）';
+
+  @override
+  String get detail_page_offline_failed => 'ダウンロードに失敗しました';
+
+  @override
+  String get download_failed_but_saved => 'URLはブックマークに保存されました（動画本体は未ダウンロード）';
+
+  @override
+  String get download_cancel_confirm_title => 'ダウンロードを中断しますか？';
+
+  @override
+  String get download_cancel_confirm_body =>
+      '進行中のダウンロードを中断してこのタスクを削除します。よろしいですか？';
+
+  @override
+  String get detail_page_offline_hls_not_supported =>
+      'この動画はHLS形式(.m3u8)のためオフライン保存に対応していません。';
+
+  @override
+  String get browser_video_detected_chip => '動画を検出';
+
+  @override
+  String get browser_video_detected_sheet_title => '検出された動画';
+
+  @override
+  String get browser_video_detected_sheet_desc => 'ダウンロードしたい動画を選択してください。';
+
+  @override
+  String get browser_video_download => 'この動画をダウンロード';
+
+  @override
+  String get browser_video_download_started => 'ダウンロードを開始しました';
+
+  @override
+  String get browser_video_download_saved_first => '先に作品として保存してからダウンロードします';
+
+  @override
+  String get search_result_page_offline => 'オフライン保存';
+
+  @override
+  String get search_result_page_offline_desc =>
+      'この作品を端末にダウンロードして、通信なしで再生できるようにします。';
+
+  @override
+  String get download_queue_title => 'ダウンロード';
+
+  @override
+  String get download_clear_finished => '完了分を消去';
+
+  @override
+  String get download_empty => '現在ダウンロードはありません';
+
+  @override
+  String get download_status_queued => '待機中';
+
+  @override
+  String get download_status_completed => '完了';
+
+  @override
+  String get download_status_failed => '失敗';
+
+  @override
+  String get download_cancel_all_confirm => '全てのダウンロードをキャンセルしますか？';
+
+  @override
+  String get download_status_canceled => 'キャンセル';
+
+  @override
+  String get download_premium_required_title => 'Premium 限定機能';
+
+  @override
+  String get download_premium_required_body =>
+      'オフラインダウンロードは Premium 以上のプランでご利用いただけます。';
 
   @override
   String get detail_page_rate => '評価';
@@ -456,7 +645,7 @@ class L10nJa extends L10n {
   String get search_page_hint_web_6 => '例: 料理 簡単 レシピ';
 
   @override
-  String get search_page_select_site => 'サイトで絞る';
+  String get search_page_select_site => 'お気に入りサイト';
 
   @override
   String get search_page_select_site_help_title => 'サイトで絞る';
@@ -500,6 +689,67 @@ class L10nJa extends L10n {
 
   @override
   String get search_result_page_url_already_saved => 'このURLはすでに保存されています';
+
+  @override
+  String get search_result_page_url_already_saved_offline_prompt =>
+      'この作品をオフライン用にダウンロードしますか？';
+
+  @override
+  String get search_result_page_url_already_saved_and_downloaded =>
+      'この作品はすでに保存＆ダウンロード済みです';
+
+  @override
+  String get download_retry => 'リトライ';
+
+  @override
+  String get player_minimize => 'ミニプレイヤーに切り替え';
+
+  @override
+  String get player_close => '閉じる';
+
+  @override
+  String get player_speed => '再生速度';
+
+  @override
+  String player_speed_x(String v) {
+    return '$v倍速';
+  }
+
+  @override
+  String get player_speed_custom => 'カスタム';
+
+  @override
+  String get player_bookmarks => 'ブックマーク';
+
+  @override
+  String get player_bookmarks_empty => 'ブックマークはまだありません';
+
+  @override
+  String get browser_video_size => 'サイズ';
+
+  @override
+  String get browser_video_size_unknown => 'サイズ不明';
+
+  @override
+  String get browser_video_quality => '画質';
+
+  @override
+  String get browser_tab_max_reached => 'タブの上限に達しました。既存のタブを閉じてから新規タブを開いてください。';
+
+  @override
+  String get browser_tabs_title => 'タブ';
+
+  @override
+  String get browser_new_tab => '新しいタブ';
+
+  @override
+  String get offline_quality_title => 'オフライン画質';
+
+  @override
+  String get offline_quality_desc => 'ダウンロードする動画の画質を選択してください';
+
+  @override
+  String get offline_quality_none => 'オフラインダウンロードなし';
 
   @override
   String get search_result_page_has_saved => '作品を保存しました';
@@ -674,6 +924,9 @@ class L10nJa extends L10n {
   String get settings_page_theme_color_orange => 'オレンジ';
 
   @override
+  String get settings_page_theme_color_random => 'ランダム';
+
+  @override
   String get settings_page_theme_color_green => 'グリーン';
 
   @override
@@ -692,21 +945,27 @@ class L10nJa extends L10n {
   String get settings_page_thumbnail_visibility => 'リスト画像の表示/非表示';
 
   @override
-  String get settings_page_save_status => '作品保存数の状態';
+  String get settings_page_save_status => 'アイテム数';
 
   @override
-  String get settings_page_save_count => '保存数';
+  String get settings_page_offline_videos => 'オフライン動画';
+
+  @override
+  String get settings_page_offline_total_size => 'オフライン動画の総容量';
+
+  @override
+  String get settings_page_save_count => 'ブックマーク';
 
   @override
   String get settings_page_watch_count => '本日の視聴回数';
 
   @override
   String settings_page_watch_ad_today(Object watchedAdsToday) {
-    return '$watchedAdsToday / 3 回';
+    return '$watchedAdsToday / 5 回';
   }
 
   @override
-  String get settings_page_watch_ad => '広告を見て +5 枠';
+  String get settings_page_watch_ad => '広告を見て +1 枠';
 
   @override
   String get settings_page_ad_limit_reached => '本日の広告視聴上限に達しました';
@@ -730,7 +989,7 @@ class L10nJa extends L10n {
   String get settings_page_terms => '利用規約（Apple標準EULA）';
 
   @override
-  String get settings_page_save_count_increased => '保存枠が +5 されました';
+  String get settings_page_save_count_increased => '保存枠が +1 されました';
 
   @override
   String get setting_page_unlimited => '無制限';
@@ -1064,6 +1323,9 @@ class L10nJa extends L10n {
 
   @override
   String get detail_page_ai_no_suggestions => '提案タグはありませんでした';
+
+  @override
+  String get detail_page_ai_from_library => '既存のタグから';
 
   @override
   String get detail_page_ai_daily_limit_title => '本日の AI 利用上限に達しました';

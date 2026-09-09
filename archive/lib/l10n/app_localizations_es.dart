@@ -96,7 +96,28 @@ class L10nEs extends L10n {
   String get main_page_lists => 'Listas';
 
   @override
-  String get main_page_search => 'Buscar y guardar';
+  String get main_page_search => 'Buscar';
+
+  @override
+  String get main_page_browser => 'Navegador';
+
+  @override
+  String get browser_home_url_hint => 'Introducir URL o buscar';
+
+  @override
+  String get browser_home_history => 'Historial';
+
+  @override
+  String get browser_home_history_empty => 'Sin historial';
+
+  @override
+  String get browser_home_history_clear => 'Borrar';
+
+  @override
+  String get browser_home_history_clear_confirm => '¿Borrar todo el historial?';
+
+  @override
+  String get browser_home_favorites => 'Sitios favoritos';
 
   @override
   String get main_page_analytics => 'Estadísticas';
@@ -228,6 +249,29 @@ class L10nEs extends L10n {
   String get grid_page_sort_count_desc => 'Menos vistos';
 
   @override
+  String get grid_page_sort_rating => 'Por valoración';
+
+  @override
+  String get grid_page_sort_offline_first => 'Sin conexión primero';
+
+  @override
+  String get grid_page_sort_list_name => 'Por lista';
+
+  @override
+  String get grid_page_sort_random => 'Aleatorio';
+
+  @override
+  String get grid_page_sort_by_cast => 'Por reparto';
+
+  @override
+  String get grid_page_sort_by_date => 'Por fecha añadida';
+
+  @override
+  String grid_page_sort_current(String label) {
+    return 'Orden: $label';
+  }
+
+  @override
   String grid_page_items_selected_delete(Object count) {
     return '¿Eliminar $count elementos seleccionados?';
   }
@@ -283,7 +327,160 @@ class L10nEs extends L10n {
       'La miniatura aparecerá después de guardar';
 
   @override
-  String get detail_page_add_image => 'Añadir imagen ★';
+  String get detail_page_add_image => 'Añadir miniatura ★';
+
+  @override
+  String get detail_page_offline => 'Sin conexión';
+
+  @override
+  String get detail_page_offline_downloaded => 'Guardado sin conexión';
+
+  @override
+  String get detail_page_offline_confirm_title =>
+      '¿Guardar este elemento sin conexión?';
+
+  @override
+  String get detail_page_offline_confirm_body =>
+      'El vídeo se descargará en este dispositivo.\n※Descarga solo vídeos de los que poseas los derechos o tengas permiso.';
+
+  @override
+  String get detail_page_offline_no_url => 'URL vacía';
+
+  @override
+  String get detail_page_offline_started => 'Descarga iniciada';
+
+  @override
+  String get detail_page_offline_probing =>
+      'Comprobando resoluciones disponibles…';
+
+  @override
+  String get detail_page_delete_offline_confirm =>
+      '¿Eliminar la copia sin conexión de este elemento?\n(La reproducción en línea no se ve afectada)';
+
+  @override
+  String get detail_page_offline_deleted => 'Datos sin conexión eliminados';
+
+  @override
+  String get consent_page_title => 'Antes de comenzar';
+
+  @override
+  String get consent_page_subtitle =>
+      'Por favor, lee y acepta lo siguiente antes de usar la aplicación.';
+
+  @override
+  String get consent_page_privacy_title => 'Política de privacidad';
+
+  @override
+  String get consent_page_privacy_body =>
+      'Esta app trata los datos personales con responsabilidad. Consulta la política completa a continuación.';
+
+  @override
+  String get consent_page_terms_title => 'Términos de uso';
+
+  @override
+  String get consent_page_terms_body =>
+      'Por favor, lee los términos que rigen el uso de esta app.';
+
+  @override
+  String get consent_page_ip_summary =>
+      'Esta app es una herramienta general para descargar y reproducir sin conexión URLs que tú introduzcas. Eres responsable de respetar los derechos de autor y las condiciones del sitio de origen.';
+
+  @override
+  String get consent_page_agree_checkbox =>
+      'He leído y acepto todo lo anterior';
+
+  @override
+  String get consent_page_agree => 'Aceptar y empezar';
+
+  @override
+  String get consent_page_read_more => 'Leer el texto completo';
+
+  @override
+  String get settings_page_ip_disclaimer => 'Aviso sobre propiedad intelectual';
+
+  @override
+  String get settings_page_ip_disclaimer_body =>
+      'Esta aplicación es una herramienta de uso general que ofrece descarga y reproducción sin conexión para URLs de vídeo introducidas por el usuario. No está diseñada para obtener contenido de ningún sitio específico.\n\nEl usuario es el único responsable de:\n・Cumplir los derechos de autor del contenido y los términos del sitio de origen\n・No copiar, distribuir, publicar ni utilizar comercialmente el contenido guardado más allá del uso privado\n・No infringir derechos de autor, de imagen u otros de terceros\n・No eludir medidas técnicas de protección del sitio de origen\n\nEl proveedor de la app no asume responsabilidad legal por infracciones o incidencias legales derivadas del uso.\n\nEn caso de duda, abstente de usarla y consulta con el titular de los derechos. La app funciona en base a las entradas del usuario y no implica asociación con ningún servicio concreto.';
+
+  @override
+  String get detail_page_offline_not_direct_video =>
+      'Esta URL no es un enlace directo a un archivo de vídeo, por lo que no se puede guardar sin conexión.\n(No se admiten URL de páginas como YouTube. Utiliza un enlace directo a un archivo mp4/m4v/mov/webm/mkv.)';
+
+  @override
+  String get detail_page_offline_failed => 'Error al descargar';
+
+  @override
+  String get download_failed_but_saved =>
+      'URL añadida a favoritos (archivo de vídeo no descargado)';
+
+  @override
+  String get download_cancel_confirm_title => '¿Cancelar esta descarga?';
+
+  @override
+  String get download_cancel_confirm_body =>
+      'Se cancelará la descarga en curso y se eliminará esta tarea. ¿Continuar?';
+
+  @override
+  String get detail_page_offline_hls_not_supported =>
+      'Este vídeo usa el formato HLS (.m3u8), que no se admite para guardar sin conexión.';
+
+  @override
+  String get browser_video_detected_chip => 'Vídeo detectado';
+
+  @override
+  String get browser_video_detected_sheet_title => 'Vídeos detectados';
+
+  @override
+  String get browser_video_detected_sheet_desc =>
+      'Selecciona un vídeo para descargar.';
+
+  @override
+  String get browser_video_download => 'Descargar este vídeo';
+
+  @override
+  String get browser_video_download_started => 'Descarga iniciada';
+
+  @override
+  String get browser_video_download_saved_first =>
+      'Se guardará la página primero y luego comenzará la descarga';
+
+  @override
+  String get search_result_page_offline => 'Guardar sin conexión';
+
+  @override
+  String get search_result_page_offline_desc =>
+      'Descarga este elemento para reproducirlo sin conexión.';
+
+  @override
+  String get download_queue_title => 'Descargas';
+
+  @override
+  String get download_clear_finished => 'Borrar finalizadas';
+
+  @override
+  String get download_empty => 'No hay descargas activas';
+
+  @override
+  String get download_status_queued => 'En cola';
+
+  @override
+  String get download_status_completed => 'Completado';
+
+  @override
+  String get download_status_failed => 'Fallido';
+
+  @override
+  String get download_cancel_all_confirm => '¿Cancelar todas las descargas?';
+
+  @override
+  String get download_status_canceled => 'Cancelado';
+
+  @override
+  String get download_premium_required_title => 'Función Premium';
+
+  @override
+  String get download_premium_required_body =>
+      'La descarga sin conexión está disponible en los planes Premium y Pro.';
 
   @override
   String get detail_page_rate => 'Calificación';
@@ -464,7 +661,7 @@ class L10nEs extends L10n {
   String get search_page_hint_web_6 => 'Ej.: recetas fáciles';
 
   @override
-  String get search_page_select_site => 'Filtrar por sitio';
+  String get search_page_select_site => 'Sitios favoritos';
 
   @override
   String get search_page_select_site_help_title => 'Filtrar por sitio';
@@ -510,6 +707,68 @@ class L10nEs extends L10n {
   @override
   String get search_result_page_url_already_saved =>
       'Esta URL ya está guardada';
+
+  @override
+  String get search_result_page_url_already_saved_offline_prompt =>
+      '¿Quieres descargar este elemento para uso sin conexión?';
+
+  @override
+  String get search_result_page_url_already_saved_and_downloaded =>
+      'Este elemento ya está guardado y descargado';
+
+  @override
+  String get download_retry => 'Reintentar';
+
+  @override
+  String get player_minimize => 'Cambiar a mini reproductor';
+
+  @override
+  String get player_close => 'Cerrar';
+
+  @override
+  String get player_speed => 'Velocidad de reproducción';
+
+  @override
+  String player_speed_x(String v) {
+    return '${v}x';
+  }
+
+  @override
+  String get player_speed_custom => 'Personalizado';
+
+  @override
+  String get player_bookmarks => 'Marcadores';
+
+  @override
+  String get player_bookmarks_empty => 'Aún no hay marcadores';
+
+  @override
+  String get browser_video_size => 'Tamaño';
+
+  @override
+  String get browser_video_size_unknown => 'Tamaño desconocido';
+
+  @override
+  String get browser_video_quality => 'Calidad';
+
+  @override
+  String get browser_tab_max_reached =>
+      'Se alcanzó el límite de pestañas. Cierra una para abrir una nueva.';
+
+  @override
+  String get browser_tabs_title => 'Pestañas';
+
+  @override
+  String get browser_new_tab => 'Nueva pestaña';
+
+  @override
+  String get offline_quality_title => 'Calidad sin conexión';
+
+  @override
+  String get offline_quality_desc => 'Elige la calidad de vídeo para descargar';
+
+  @override
+  String get offline_quality_none => 'Sin descarga sin conexión';
 
   @override
   String get search_result_page_has_saved => 'El artículo ha sido guardado';
@@ -690,6 +949,9 @@ class L10nEs extends L10n {
   String get settings_page_theme_color_orange => 'Naranja';
 
   @override
+  String get settings_page_theme_color_random => 'Aleatorio';
+
+  @override
   String get settings_page_theme_color_green => 'Verde';
 
   @override
@@ -709,21 +971,27 @@ class L10nEs extends L10n {
       'Mostrar miniaturas en listas';
 
   @override
-  String get settings_page_save_status => 'Estado de guardado';
+  String get settings_page_save_status => 'Elementos';
 
   @override
-  String get settings_page_save_count => 'Elementos guardados';
+  String get settings_page_offline_videos => 'Vídeos sin conexión';
+
+  @override
+  String get settings_page_offline_total_size => 'Tamaño total sin conexión';
+
+  @override
+  String get settings_page_save_count => 'Marcadores';
 
   @override
   String get settings_page_watch_count => 'Vistas de hoy';
 
   @override
   String settings_page_watch_ad_today(Object watchedAdsToday) {
-    return '$watchedAdsToday / 3';
+    return '$watchedAdsToday / 5';
   }
 
   @override
-  String get settings_page_watch_ad => 'Ver anuncio (+5 espacios)';
+  String get settings_page_watch_ad => 'Ver anuncio (+1 espacio)';
 
   @override
   String get settings_page_ad_limit_reached =>
@@ -750,7 +1018,7 @@ class L10nEs extends L10n {
 
   @override
   String get settings_page_save_count_increased =>
-      'Límite de guardado aumentado en +5';
+      'Límite de guardado aumentado en +1';
 
   @override
   String get setting_page_unlimited => 'Ilimitado';
@@ -1108,6 +1376,9 @@ class L10nEs extends L10n {
 
   @override
   String get detail_page_ai_no_suggestions => 'Sin sugerencias';
+
+  @override
+  String get detail_page_ai_from_library => 'Desde etiquetas existentes';
 
   @override
   String get detail_page_ai_daily_limit_title =>

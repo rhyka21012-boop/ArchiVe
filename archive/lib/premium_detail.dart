@@ -5,6 +5,7 @@ import 'main.dart';
 import 'l10n/app_localizations.dart';
 import 'purchase_page.dart';
 import 'circle_app_bar_icon.dart';
+import 'purchase_success_confetti.dart';
 
 /// ===============================
 /// 外部から呼ぶためのゲートクラス
@@ -15,8 +16,12 @@ class PremiumGate {
   static Future<bool> ensurePremium(BuildContext context) async {
     if (await _checkSubscriptionStatus()) return true;
     if (!context.mounted) return false;
-    await Navigator.push(
-      context,
+    // context に Navigator 祖先がない場合 (例: GlobalPlayerLayer は
+    // MaterialApp.builder 内で Navigator の外にいる) は root Navigator を使う
+    final nav = Navigator.maybeOf(context, rootNavigator: true) ??
+        rootNavigatorKey.currentState;
+    if (nav == null) return false;
+    await nav.push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => const PurchasePage(focusedTier: PurchaseTier.premium),
@@ -117,6 +122,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       final customerInfo = await Purchases.getCustomerInfo();
 
       if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
+        if (mounted) showPurchaseSuccessConfetti(context, isPro: false);
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -171,6 +177,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       final customerInfo = await Purchases.restorePurchases();
 
       if (customerInfo.entitlements.all["Premium Plan"]?.isActive ?? false) {
+        if (mounted) showPurchaseSuccessConfetti(context, isPro: false);
         await showDialog(
           context: context,
           barrierDismissible: false,

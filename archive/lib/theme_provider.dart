@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,7 +25,20 @@ enum ThemeColorType {
   purple,
   gold, // Premium UI色
   teal, // Pro 限定
+  random, // 起動毎に無料枠からランダム
 }
+
+/// [random] 選択時に使う候補: 無料枠のカラー
+const List<ThemeColorType> _randomPool = [
+  ThemeColorType.orange,
+  ThemeColorType.green,
+  ThemeColorType.blue,
+  ThemeColorType.white,
+  ThemeColorType.red,
+  ThemeColorType.yellow,
+  ThemeColorType.pink,
+  ThemeColorType.purple,
+];
 
 /// Pro 限定のテーマカラー判定
 bool isProOnlyThemeColor(ThemeColorType type) {
@@ -37,8 +52,20 @@ bool isPremiumOnlyThemeColor(ThemeColorType type) {
 
 final themeColorProvider =
     StateNotifierProvider<ThemeColorNotifier, ThemeColorType>((ref) {
-      return ThemeColorNotifier();
+      return ThemeColorNotifier(ref);
     });
+
+/// ユーザーが実際に選択した値 (random 時も random のまま)。
+/// 設定画面のドロップダウン表示等に使用。
+final themeColorSavedProvider =
+    StateNotifierProvider<_ThemeColorSavedNotifier, ThemeColorType>((ref) {
+  return _ThemeColorSavedNotifier();
+});
+
+class _ThemeColorSavedNotifier extends StateNotifier<ThemeColorType> {
+  _ThemeColorSavedNotifier() : super(ThemeColorType.orange);
+  void set(ThemeColorType v) => state = v;
+}
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   ThemeModeNotifier() : super(ThemeMode.system);
@@ -57,21 +84,38 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 }
 
 class ThemeColorNotifier extends StateNotifier<ThemeColorType> {
-  ThemeColorNotifier() : super(ThemeColorType.orange);
+  final Ref ref;
+  ThemeColorNotifier(this.ref) : super(ThemeColorType.orange);
 
   Future<void> loadColor() async {
     final prefs = await SharedPreferences.getInstance();
     final value = prefs.getString('color');
-    state = ThemeColorType.values.firstWhere(
+    final saved = ThemeColorType.values.firstWhere(
       (e) => e.name == value,
       orElse: () => ThemeColorType.orange,
     );
+    ref.read(themeColorSavedProvider.notifier).set(saved);
+    if (saved == ThemeColorType.random) {
+      state = _pickRandom();
+    } else {
+      state = saved;
+    }
   }
 
   Future<void> setColor(ThemeColorType newColor) async {
     final prefs = await SharedPreferences.getInstance();
-    state = newColor;
     await prefs.setString('color', newColor.name);
+    ref.read(themeColorSavedProvider.notifier).set(newColor);
+    if (newColor == ThemeColorType.random) {
+      state = _pickRandom();
+    } else {
+      state = newColor;
+    }
+  }
+
+  ThemeColorType _pickRandom() {
+    final r = Random();
+    return _randomPool[r.nextInt(_randomPool.length)];
   }
 }
 
@@ -88,6 +132,8 @@ Color themeColorSwatch(ThemeColorType type) {
     ThemeColorType.purple => Colors.deepPurple[300]!,
     ThemeColorType.gold => const Color(0xFFB8860B),
     ThemeColorType.teal => Colors.teal[400]!,
+    // ランダム選択時のプレビュー用色 (ThemeData 生成には使われない — state 側で実色が入る)
+    ThemeColorType.random => Colors.orange[600]!,
   };
 }
 
@@ -140,6 +186,8 @@ String themeColorLabel(BuildContext context, ThemeColorType type) {
       return l10n.settings_page_theme_color_gold;
     case ThemeColorType.teal:
       return l10n.settings_page_theme_color_teal;
+    case ThemeColorType.random:
+      return l10n.settings_page_theme_color_random;
     case ThemeColorType.orange:
     default:
       return l10n.settings_page_theme_color_orange;

@@ -176,6 +176,7 @@ class _RankingPageState extends State<RankingPage> {
     );
   }
 
+
   Widget _buildRankCard(int index) {
     final item = _rankingItems[index];
     final isTop3 = index < 3;

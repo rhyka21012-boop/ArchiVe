@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
+
+import 'offline_cleanup.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'thumbnail_setting_provider.dart';
@@ -311,6 +313,27 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
                                                       'saved_metadata',
                                                     ) ??
                                                     [];
+                                                // このリストに属するアイテムの URL を抽出
+                                                final urlsInList = <String>[];
+                                                for (final item
+                                                    in savedMetadata) {
+                                                  try {
+                                                    final m = jsonDecode(item)
+                                                        as Map<String, dynamic>;
+                                                    if (m['listName'] ==
+                                                        widget.listName) {
+                                                      final u = m['url']
+                                                          ?.toString();
+                                                      if (u != null &&
+                                                          u.isNotEmpty) {
+                                                        urlsInList.add(u);
+                                                      }
+                                                    }
+                                                  } catch (_) {}
+                                                }
+                                                // 先にオフライン動画ファイル + prefs を削除
+                                                await OfflineCleanup.forUrls(
+                                                    urlsInList);
                                                 final updatedMetadata =
                                                     savedMetadata.where((item) {
                                                       final map =

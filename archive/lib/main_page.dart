@@ -29,6 +29,14 @@ import 'list_reload_provider.dart';
 import 'my_flutter_app_icons.dart';
 import 'theme_provider.dart';
 import 'activity_service.dart';
+import 'download_queue_provider.dart';
+import 'download_ad_service.dart';
+import 'mini_player_provider.dart';
+import 'browser_session_provider.dart';
+import 'search_result_page.dart';
+import 'browser_home_page.dart';
+import 'browser_scroll_top_provider.dart';
+import 'main.dart' show rootScaffoldMessengerKey;
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -48,6 +56,9 @@ class _MainPageState extends ConsumerState<MainPage>
       GlobalKey<SearchPageState>();
   final GlobalKey<AnalyticsPageState> _AnalyticsPageKey =
       GlobalKey<AnalyticsPageState>();
+  // ブラウザタブ内のネスト Navigator (BrowserPage → SearchResultPage を browser 内で push)
+  final GlobalKey<NavigatorState> _browserNavKey =
+      GlobalKey<NavigatorState>(debugLabel: 'browserNav');
 
   RewardedAd? _rewardedAd;
   String? _lastCheckedClipboardUrl; // Android用
@@ -116,6 +127,86 @@ class _MainPageState extends ConsumerState<MainPage>
     _recordAppLaunch();
 
     _loadAd();
+
+    // ダウンロード完了時のインターステイシャルは廃止。
+    // 開始側 (detail_page._handleOfflineDownload) の maybeShowBeforeDownload
+    // に一本化し、ダウンロード中の詳細画面を開いた際に「後から」広告が
+    // 表示される事故を防ぐ。
+
+    // ダウンロード状態を監視:
+    //  - 新規に downloading になったタスク → 「実際に開始した」ときのみ広告カウント + 表示
+    //    (失敗して download にすら至らなかったものは広告に含めない)
+    //  - 新規に failed になったタスク → SnackBar 通知
+    ref.listenManual<List<DownloadTask>>(downloadQueueProvider, (prev, next) {
+      final prevList = prev ?? const <DownloadTask>[];
+      for (final t in next) {
+        final prevStatus =
+            prevList.firstWhere((p) => p.id == t.id, orElse: () => t).status;
+        // ── 開始検知 (queued → downloading への遷移) ──
+        if (t.status == DownloadStatus.downloading &&
+            prevStatus != DownloadStatus.downloading) {
+          if (mounted) {
+            DownloadAdService().maybeShowBeforeDownload(context);
+          }
+        }
+        // ── 失敗検知 ──
+        if (t.status == DownloadStatus.failed &&
+            prevStatus != DownloadStatus.failed) {
+          final l = L10n.of(context)!;
+          final title = t.title.isNotEmpty ? t.title : t.url;
+          final reason = t.error?.isNotEmpty == true ? '\n${t.error}' : '';
+          final bookmarkHint =
+              t.wasFromNewSave ? '\n${l.download_failed_but_saved}' : '';
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
+            SnackBar(
+              content: Text(
+                '${l.detail_page_offline_failed}: $title$bookmarkHint$reason',
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    });
+
+    // オフライン動画プレイヤー終了を監視 → 3 回に 1 回インターステイシャル
+    ref.listenManual<MiniPlayerState>(miniPlayerProvider, (prev, next) {
+      final wasActive = prev?.controller != null;
+      final isActive = next.controller != null;
+      if (wasActive && !isActive) {
+        if (!mounted) return;
+        DownloadAdService().maybeShowAfterOfflinePlayback(context);
+      }
+    });
+
+    // アプリ内ブラウザで URL を開くリクエスト (grid/detail からの動画再生等)
+    ref.listenManual<BrowserOpenRequest?>(browserSessionProvider,
+        (prev, next) {
+      if (next == null) return;
+      if (prev?.seq == next.seq) return;
+      _handleBrowserOpen(next);
+    });
+  }
+
+  /// browserSessionProvider に URL が積まれた時のハンドラ
+  void _handleBrowserOpen(BrowserOpenRequest req) {
+    if (!mounted) return;
+    // MainPage の上に別ルート (GridPage/DetailPage 等) が push されている場合、
+    // ボトムナビ (= MainPage) は下敷きなのでタブ切替しても画面が変わらない。
+    // まずルート Navigator を root まで pop してから切替。
+    final rootNav = Navigator.of(context, rootNavigator: true);
+    if (rootNav.canPop()) {
+      rootNav.popUntil((r) => r.isFirst);
+    }
+    // Browser タブに切替 (index 2)
+    if (_selectedIndex != 2) {
+      setState(() => _selectedIndex = 2);
+      ref.read(homeTabIndexProvider.notifier).state = 2;
+    }
+    // 常時ルートにある SearchResultPage 側の listener が
+    // ref.listen(browserSessionProvider) を購読しているので、
+    // タブ追加はそちらに委譲する。
   }
 
   /// アプリ起動時のユーザー行動記録 (ActivityService へ)
@@ -539,31 +630,13 @@ class _MainPageState extends ConsumerState<MainPage>
   }
 
   // BottomNavigationBarのタップイベント
-  void _onItemTapped(int index) async {
-    if (index == 2) {
-      //作品数上限チェック
-      if (!await SaveLimitHelper.canSave(context, _rewardedAd, ref)) {
-        _loadAd();
-        return;
-      }
-
-      //作品数 <= 100または、プレミアム会員の場合のは作品追加画面へ
-      // +アイコンをタップでDetailPageを開く
-      await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const DetailPage(listName: '選択なし')),
-      );
-      return; // ページ遷移したらBottomNavigationBarの選択は変更しない
+  void _onItemTapped(int index) {
+    // 「ブラウザ」タブを再タップした場合は、現在ページの一番上へスクロール
+    if (index == 2 && _selectedIndex == 2) {
+      ref.read(browserScrollToTopProvider.notifier).state++;
+      return;
     }
-    setState(() {
-      if (index >= 3) {
-        _selectedIndex = index - 1; // 3→2, 4→3
-      } else {
-        _selectedIndex = index; // 0→0, 1→1
-      }
-    });
-
-    // 👇 Providerにも反映
+    setState(() => _selectedIndex = index);
     ref.read(homeTabIndexProvider.notifier).state = _selectedIndex;
   }
 
@@ -582,54 +655,67 @@ class _MainPageState extends ConsumerState<MainPage>
     final showAdBadge = watchedAdToday < 3 && !_isPremium;
     final colorScheme = Theme.of(context).colorScheme;
 
+    // ダウンロード進捗: リストアイコンをインジケータに差し替え。
+    // 重要: downloadQueueProvider は進捗更新で毎チャンク発火するため、
+    // MainPage 全体で watch すると Scaffold/FAB が高頻度で再ビルドされ FAB が点滅する。
+    // 専用 ConsumerWidget に閉じ込めて再ビルドをアイコン内だけに絞る。
+    const Widget listNavIcon = _ListNavIcon();
+
+    // 検索タブ: アプリ内検索のみ
+    final Widget searchTab = SearchPage(
+      key: _SearchPageKey,
+      mode: SearchPageMode.appOnly,
+    );
+    // ブラウザタブ: 初期表示はホームタブ (URL 未入力の SearchResultPage)。
+    // ネスト Navigator は互換のため残置。
+    final Widget browserTab = Navigator(
+      key: _browserNavKey,
+      onGenerateRoute: (settings) => MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const SearchResultPage(initialUrl: '', title: ''),
+      ),
+    );
+
     final List<Widget> _pages = [
       ListPage(key: _listPageKey),
-      SearchPage(key: _SearchPageKey),
+      searchTab,
+      browserTab,
       AnalyticsPage(key: _AnalyticsPageKey),
       const SettingsPage(),
     ];
 
     return Scaffold(
       backgroundColor: Color(0xFF121212),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: IndexedStack(index: _selectedIndex, children: _pages),
-          ),
-          // 広告ウィジェット（画面最下部に固定）
-          /*
-          Positioned(
-            bottom: 56, // BottomNabigationBarの高さ分上にずらす
-            left: 0,
-            right: 0,
-            child: SafeArea(child: MyAdWidget()),
-          ),
-          */
-        ],
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _pages),
 
       bottomNavigationBar: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min, // 重要: 最小限の高さに抑える
           children: [
             BottomNavigationBar(
-              backgroundColor: colorScheme.secondary,
+              // ブラウザタブアクティブ時は URL バーと同じグレー系にして
+              // Web ページとの境目をはっきりさせる
+              backgroundColor: _selectedIndex == 2
+                  ? (colorScheme.brightness == Brightness.dark
+                      ? const Color(0xFF2C2C2C)
+                      : Colors.grey.shade200)
+                  : colorScheme.secondary,
               type: BottomNavigationBarType.fixed,
               items: [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.folder),
+                  icon: listNavIcon,
                   label: L10n.of(context)!.main_page_lists,
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   label: L10n.of(context)!.main_page_search,
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.add, size: 30),
-                  label: '',
+                  icon: const Icon(Icons.public),
+                  label: L10n.of(context)!.main_page_browser,
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(MyFlutterApp.graph),
+                  icon: const Icon(MyFlutterApp.graph),
                   label: L10n.of(context)!.main_page_analytics,
                 ),
                 BottomNavigationBarItem(
@@ -655,8 +741,7 @@ class _MainPageState extends ConsumerState<MainPage>
                   label: L10n.of(context)!.main_page_settings,
                 ),
               ],
-              currentIndex:
-                  _selectedIndex <= 1 ? _selectedIndex : _selectedIndex + 1,
+              currentIndex: _selectedIndex,
               //unselectedItemColor: colorScheme.onPrimary,
               unselectedItemColor:
                   colorScheme.brightness == Brightness.dark
@@ -682,7 +767,8 @@ class _MainPageState extends ConsumerState<MainPage>
       final isPro =
           customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
       setState(() {
-        _isPremium = isPremium;
+        // Premium または Pro のどちらでも「有料 = 広告非表示」扱い
+        _isPremium = isPremium || isPro;
       });
 
       // Premium 限定（gold）解除時、または Pro 限定（teal）解除時のみ既定に戻す
@@ -893,3 +979,43 @@ String _decodeHtmlEntities(String s) => s
     .replaceAll('&quot;', '"')
     .replaceAll('&#39;', "'")
     .replaceAll('&nbsp;', ' ');
+
+/// ボトムナビの「リスト」アイコン。
+/// タスクが 0 の間は通常のフォルダアイコン、DL 中はダウンロード矢印 + 円形プログレス。
+/// 独立した ConsumerWidget にすることで、DL 進捗の高頻度更新による
+/// MainPage 全体の再ビルドを防止 (FAB の点滅対策)。
+class _ListNavIcon extends ConsumerWidget {
+  const _ListNavIcon();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tasks = ref.watch(downloadQueueProvider);
+    final active = tasks
+        .where((t) =>
+            t.status == DownloadStatus.downloading ||
+            t.status == DownloadStatus.queued)
+        .toList();
+    if (active.isEmpty) return const Icon(Icons.folder);
+    final overall = active.fold<double>(0.0, (a, t) => a + t.progress) /
+        active.length;
+    final color = Theme.of(context).colorScheme.primary;
+    return SizedBox(
+      width: 26,
+      height: 26,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: CircularProgressIndicator(
+              value: overall > 0 ? overall : null,
+              strokeWidth: 2.4,
+              color: color,
+              backgroundColor: color.withValues(alpha: 0.18),
+            ),
+          ),
+          Icon(Icons.arrow_downward, size: 14, color: color),
+        ],
+      ),
+    );
+  }
+}

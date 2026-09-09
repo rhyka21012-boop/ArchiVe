@@ -27,6 +27,11 @@ import 'list_reload_provider.dart';
 import 'theme_provider.dart';
 import 'rating_label_provider.dart';
 import 'circle_app_bar_icon.dart';
+import 'local_video_player_page.dart';
+import 'mini_player_provider.dart';
+import 'offline_indicators.dart';
+import 'browser_session_provider.dart';
+import 'offline_cleanup.dart';
 
 class GridPage extends ConsumerStatefulWidget {
   final Map<String, List<String>> selectedItems;
@@ -55,7 +60,9 @@ class GridPageState extends ConsumerState<GridPage> {
   List<Map<String, dynamic>> _sortedItems = [];
 
   //ソートボタンの選択値
-  List<bool> _sortedMenuSelected = [false, false, false, false, false];
+  List<bool> _sortedMenuSelected = [false, true, false, false, false]; // 既定は new
+  // 現在のソートキー (AppBar チップに表示、拡張ソート対応)
+  String _sortKey = 'new';
 
   //スクロール管理
   final ScrollController _scrollController = ScrollController();
@@ -242,9 +249,55 @@ class GridPageState extends ConsumerState<GridPage> {
                         icon: Icons.share,
                         onPressed: () => _openShareDialog(itemsToShow),
                       ),
-                      CircleAppBarIcon(
-                        icon: Icons.sort,
-                        onPressed: _showSortModal,
+                      // 現在のソート順を表示するチップ + 並び替えメニュー呼び出し
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Material(
+                          color: (isDark ? Colors.white : Colors.black)
+                              .withValues(alpha: 0.08),
+                          shape: const StadiumBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: _showSortModal,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.sort,
+                                      size: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87),
+                                  const SizedBox(width: 4),
+                                  ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 120),
+                                    child: Text(
+                                      _sortLabel(),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(Icons.arrow_drop_down,
+                                      size: 16,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 4),
                     ],
@@ -408,276 +461,27 @@ class GridPageState extends ConsumerState<GridPage> {
                                 childCount: totalCount,
                               ),
                             ),
+                            // Android の 3 ボタンナビや FAB と被らないよう
+                            // 底部にセーフエリア + 追加スペースを確保
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height:
+                                    MediaQuery.of(context).padding.bottom + 96,
+                              ),
+                            ),
                           ],
                         );
                       },
                     )
                     : ListView.builder(
                       controller: _scrollController,
-                      // 一覧内ネイティブ広告は廃止
                       itemCount: itemsToShow.length,
                       itemBuilder: (context, index) {
-                        // const adInterval = 10;
-                        // if (!_isPremium &&
-                        //     index > 0 &&
-                        //     (index + 1) % (adInterval + 1) == 0) {
-                        //   return const ListTileNativeAd();
-                        // }
                         if (index >= itemsToShow.length) {
                           return const SizedBox.shrink();
                         }
                         final item = itemsToShow[index];
-                        String? rating = item['rating'];
-                        String? iconPath;
-                        switch (rating) {
-                          case 'critical':
-                            iconPath = 'assets/icons/critical.png';
-                            break;
-                          case 'normal':
-                            iconPath = 'assets/icons/normal.png';
-                            break;
-                          case 'maniac':
-                            iconPath = 'assets/icons/maniac.png';
-                            break;
-                        }
-
-                        return GestureDetector(
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              fadeScaleRoute(
-                                DetailPage(
-                                  listName: item['listName'],
-                                  url: item['url'],
-                                  title: item['title'],
-                                  image: item['image'],
-                                  cast: item['cast'] ?? '',
-                                  genre: item['genre'] ?? '',
-                                  series: item['series'] ?? '',
-                                  label: item['label'] ?? '',
-                                  maker: item['maker'] ?? '',
-                                  rating: item['rating'],
-                                  memo: item['memo'],
-                                  isReadOnly: true,
-                                ),
-                              ),
-                            );
-
-                            FocusScope.of(context).unfocus();
-                            if (result == true) (await _searchMetadata());
-                          },
-                          child: Card(
-                            elevation: isDark ? 0 : 4,
-                            shadowColor: Colors.black.withValues(alpha: 0.32),
-                            color: isDark
-                                ? const Color(0xFF2C2C2C)
-                                : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 6,
-                              horizontal: 12,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child:
-                                        item['image'] != null
-                                            ? CachedNetworkImage(
-                                              imageUrl: item['image'],
-                                              height: 80,
-                                              width: 90,
-                                              fit: BoxFit.cover,
-                                              errorWidget: (
-                                                context,
-                                                url,
-                                                error,
-                                              ) {
-                                                return Container(
-                                                  height: 80,
-                                                  width: 90,
-                                                  color: Colors.grey[300],
-                                                  alignment: Alignment.center,
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.broken_image,
-                                                        size: 30,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      SizedBox(height: 8),
-                                                      Text(
-                                                        L10n.of(
-                                                          context,
-                                                        )!.grid_page_cant_load_image,
-                                                        style: TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 10,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            )
-                                            : Container(
-                                              height: 80,
-                                              width: 90,
-                                              color: Colors.grey[300],
-                                              alignment: Alignment.center,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.broken_image,
-                                                    size: 30,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    L10n.of(
-                                                      context,
-                                                    )!.grid_page_cant_load_image,
-                                                    style: TextStyle(
-                                                      color: Colors.grey,
-                                                      fontSize: 10,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 80,
-
-                                      child: Stack(
-                                        children: [
-                                          // タイトル
-                                          Positioned(
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            child: Text(
-                                              item['title'] ??
-                                                  L10n.of(
-                                                    context,
-                                                  )!.grid_page_no_title,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          // 評価アイコン（右下）
-                                          if (iconPath != null)
-                                            Positioned(
-                                              bottom: 0,
-                                              right: 90,
-                                              child: Image.asset(
-                                                iconPath,
-                                                width: 24,
-                                                height: 24,
-                                              ),
-                                            ),
-                                          Positioned(
-                                            bottom: -12,
-                                            right: 0,
-                                            child: IconButton(
-                                              color: colorScheme.onPrimary,
-                                              icon: const Icon(
-                                                Icons.open_in_new,
-                                                size: 20,
-                                              ),
-                                              onPressed: () async {
-                                                final url =
-                                                    item['url']
-                                                        .toString()
-                                                        .trim();
-                                                if (url.isNotEmpty &&
-                                                    await canLaunchUrl(
-                                                      Uri.parse(url),
-                                                    )) {
-                                                  await launchUrl(
-                                                    Uri.parse(url),
-                                                    mode:
-                                                        LaunchMode
-                                                            .externalApplication,
-                                                  );
-                                                  return;
-                                                }
-                                                final encodedUrl =
-                                                    Uri.encodeFull(url);
-                                                final _canLaunchAgain =
-                                                    await canLaunch(encodedUrl);
-                                                if (!_canLaunchAgain) {
-                                                  await launchUrl(
-                                                    Uri.parse(url),
-                                                    mode:
-                                                        LaunchMode
-                                                            .externalApplication,
-                                                  );
-                                                  return;
-                                                }
-
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      L10n.of(
-                                                        context,
-                                                      )!.grid_page_url_unable,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-
-                                          /// 再生ボタン
-                                          Positioned(
-                                            right: 50,
-                                            bottom: 0,
-                                            child: GestureDetector(
-                                              onTap:
-                                                  () => openPlayer(item['url']),
-                                              child: Container(
-                                                padding: const EdgeInsets.all(
-                                                  6,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black54,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.play_arrow,
-                                                  size: 15,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
+                        return _buildListItem(context, item, index, isDark, colorScheme);
                       },
                     ),
             floatingActionButton: FloatingActionButton(
@@ -817,23 +621,39 @@ class GridPageState extends ConsumerState<GridPage> {
                                           )
                                         : placeholderWidget(context),
                                   ),
+                                  // 前回シークバーのみサムネ上端に重ねる
+                                  Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: OfflineProgressBar(item: item),
+                                  ),
                                   Positioned(
                                     right: 6,
                                     bottom: 6,
-                                    child: GestureDetector(
-                                      onTap: () => openPlayer(item['url']),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // 再生ボタンの左に「サイズ + DL 済み」を並べる
+                                        OfflineInlineChips(item: item),
+                                        if (_hasLocalVideo(item))
+                                          const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () => openPlayer(item['url']),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.black54,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.play_arrow,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                         ),
-                                        child: const Icon(
-                                          Icons.play_arrow,
-                                          size: 18,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -898,23 +718,39 @@ class GridPageState extends ConsumerState<GridPage> {
                               ),
                             ),
                           ),
+                          // 前回シークバーのみサムネ上端に重ねる
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: OfflineProgressBar(item: item),
+                          ),
+                          // 再生ボタンの左に「サイズ + DL 済み」を並べる
                           Positioned(
                             right: 6,
                             bottom: 24,
-                            child: GestureDetector(
-                              onTap: () => openPlayer(item['url']),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OfflineInlineChips(item: item),
+                                if (_hasLocalVideo(item))
+                                  const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () => openPlayer(item['url']),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.play_arrow,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.play_arrow,
-                                  size: 18,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              ],
                             ),
                           ),
                         ],
@@ -1009,17 +845,42 @@ class GridPageState extends ConsumerState<GridPage> {
 
     //if (!mounted) return;
 
+    // ローカル動画がある場合、前回中断位置と duration も prefs から hydrate する
+    Map<String, dynamic> hydrate(Map<String, dynamic> item) {
+      final url = item['url']?.toString();
+      if (url == null || url.isEmpty) return item;
+      if (item['localVideoPath'] == null) return item;
+      final pos = prefs.getInt('offline_pos_$url');
+      final dur = prefs.getInt('offline_dur_$url');
+      if (pos != null) item['offlinePosSec'] = pos;
+      if (dur != null) item['offlineDurSec'] = dur;
+      return item;
+    }
+
     setState(() {
       _searchedItems =
-          data.map((e) => jsonDecode(e) as Map<String, dynamic>).where((item) {
+          data.map((e) => hydrate(jsonDecode(e) as Map<String, dynamic>)).where((item) {
             //final String url = item['url']?.toString() ?? '';
             final String title = _normalize(item['title']?.toString() ?? '');
             final String rating = item['rating']?.toString() ?? '';
             final String listName = item['listName']?.toString() ?? '';
 
-            // 条件①：searchText で検索
+            // 条件①：searchText で検索 (title + タグ系 + memo を横断)
             if (text.isNotEmpty) {
-              return title.contains(text);
+              const fields = [
+                'cast',
+                'genre',
+                'series',
+                'maker',
+                'label',
+                'memo',
+              ];
+              if (title.contains(text)) return true;
+              for (final k in fields) {
+                final v = _normalize(item[k]?.toString() ?? '');
+                if (v.contains(text)) return true;
+              }
+              return false;
             }
 
             // 条件②：selectedItems で検索
@@ -1277,6 +1138,9 @@ class GridPageState extends ConsumerState<GridPage> {
     final selectedUrls =
         _selectedIndexes.map((i) => itemsToShow[i]['url']).toSet();
 
+    /// オフライン動画ファイル + 位置 prefs を先に削除 (metadata がまだあるうちに)
+    await OfflineCleanup.forUrls(selectedUrls.whereType<String>());
+
     /// metadata削除
     final updatedList =
         savedList.where((item) {
@@ -1314,22 +1178,452 @@ class GridPageState extends ConsumerState<GridPage> {
     });
   }
 
+  // ダウンロード済みかどうか (アイテムのマップから判定)
+  bool _hasLocalVideo(Map<String, dynamic> item) {
+    final p = item['localVideoPath'] as String?;
+    if (p == null || p.isEmpty) return false;
+    try {
+      return File(p).existsSync();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // オフライン動画のファイルサイズ (URL 単位で結果をキャッシュ)
+  final Map<String, int?> _offlineSizeCache = {};
+  Future<int?> _getOfflineFileSize(Map<String, dynamic> item) async {
+    final url = item['url']?.toString();
+    if (url == null || url.isEmpty) return null;
+    if (_offlineSizeCache.containsKey(url)) return _offlineSizeCache[url];
+    final p = item['localVideoPath'] as String?;
+    if (p == null || p.isEmpty) {
+      _offlineSizeCache[url] = null;
+      return null;
+    }
+    try {
+      final f = File(p);
+      if (!await f.exists()) {
+        _offlineSizeCache[url] = null;
+        return null;
+      }
+      final len = await f.length();
+      _offlineSizeCache[url] = len;
+      return len;
+    } catch (_) {
+      _offlineSizeCache[url] = null;
+      return null;
+    }
+  }
+
+  static String _formatBytes(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(1)}MB';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)}GB';
+  }
+
+  // "#a #b #c" 形式のテキストからタグを最大 max 個抽出
+  List<String> _firstTags(String? raw, {int max = 2}) {
+    if (raw == null || raw.trim().isEmpty) return const [];
+    final parts = raw
+        .split(RegExp(r'\s*#\s*'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length <= max) return parts;
+    return parts.sublist(0, max);
+  }
+
+  /// リスト表示の 1 アイテム
+  Widget _buildListItem(
+    BuildContext context,
+    Map<String, dynamic> item,
+    int index,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
+    String? rating = item['rating'];
+    String? iconPath;
+    switch (rating) {
+      case 'critical':
+        iconPath = 'assets/icons/critical.png';
+        break;
+      case 'normal':
+        iconPath = 'assets/icons/normal.png';
+        break;
+      case 'maniac':
+        iconPath = 'assets/icons/maniac.png';
+        break;
+    }
+
+    final title = (item['title']?.toString().isNotEmpty ?? false)
+        ? item['title'].toString()
+        : L10n.of(context)!.grid_page_no_title;
+    final tags = <String>[
+      ..._firstTags(item['cast']?.toString(), max: 2),
+      ..._firstTags(item['genre']?.toString(), max: 1),
+    ];
+    final hasLocal = _hasLocalVideo(item);
+    final selected = _selectedIndexes.contains(index);
+
+    final card = Card(
+      elevation: isDark ? 0 : 3,
+      color: selected
+          ? colorScheme.primary.withValues(alpha: 0.15)
+          : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: selected
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          if (_isSelectionMode) {
+            setState(() {
+              if (selected) {
+                _selectedIndexes.remove(index);
+                if (_selectedIndexes.isEmpty) _isSelectionMode = false;
+              } else {
+                _selectedIndexes.add(index);
+              }
+            });
+            return;
+          }
+          final result = await Navigator.push(
+            context,
+            fadeScaleRoute(
+              DetailPage(
+                listName: item['listName'],
+                url: item['url'],
+                title: item['title'],
+                image: item['image'],
+                cast: item['cast'] ?? '',
+                genre: item['genre'] ?? '',
+                series: item['series'] ?? '',
+                label: item['label'] ?? '',
+                maker: item['maker'] ?? '',
+                rating: item['rating'],
+                memo: item['memo'],
+                isReadOnly: true,
+              ),
+            ),
+          );
+          FocusScope.of(context).unfocus();
+          if (result == true) await _searchMetadata();
+        },
+        onLongPress: () {
+          setState(() {
+            _isSelectionMode = true;
+            _selectedIndexes.add(index);
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // サムネ 64x64 正方形
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: item['image'] != null
+                      ? CachedNetworkImage(
+                          imageUrl: item['image'],
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => Container(
+                            color: Colors.grey.shade300,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image,
+                                size: 24, color: Colors.grey),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey.shade300,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.broken_image,
+                              size: 24, color: Colors.grey),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 中央: タイトル + タグ + ファイルサイズ
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (tags.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 2,
+                        children: [
+                          for (final t in tags)
+                            Text(
+                              '#$t',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.65),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (hasLocal)
+                      FutureBuilder<int?>(
+                        future: _getOfflineFileSize(item),
+                        builder: (_, snap) {
+                          if (snap.data == null) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.download_done,
+                                  size: 11,
+                                  color: Colors.green.shade500,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _formatBytes(snap.data!),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.55),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // 右: 評価アイコン + 再生ボタン
+              if (iconPath != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Image.asset(iconPath, width: 22, height: 22),
+                ),
+              GestureDetector(
+                onTap: () => openPlayer(item['url']),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.play_arrow,
+                      size: 15, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // 選択モード中はスワイプ無効
+    if (_isSelectionMode) return card;
+
+    return Dismissible(
+      key: ValueKey('list-item-${item['url']}-$index'),
+      direction: DismissDirection.horizontal,
+      background: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+        padding: const EdgeInsets.only(left: 20),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.drive_file_move_outline, color: Colors.white),
+      ),
+      secondaryBackground: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+        padding: const EdgeInsets.only(right: 20),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: Colors.red.shade600,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
+      ),
+      confirmDismiss: (dir) async {
+        if (dir == DismissDirection.startToEnd) {
+          // 右スワイプ: 別リストへ移動
+          await _moveSingleToList(item);
+          return false; // Dismissible は削除しない (再ロード側で反映)
+        } else {
+          // 左スワイプ: 削除
+          return await _confirmDeleteSingle(item);
+        }
+      },
+      child: card,
+    );
+  }
+
+  Future<void> _moveSingleToList(Map<String, dynamic> item) async {
+    final url = item['url']?.toString();
+    if (url == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final allLists = prefs.getStringList('all_lists') ?? [];
+    final candidates = <String>['選択なし', ...allLists];
+    if (!mounted) return;
+    final target = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx)!.grid_page_move_to_list_title),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: candidates.length,
+              itemBuilder: (_, i) {
+                final name = candidates[i];
+                final isCurrent = name == widget.listName;
+                return ListTile(
+                  dense: true,
+                  leading: Icon(
+                    isCurrent ? Icons.check : Icons.folder_outlined,
+                    size: 20,
+                  ),
+                  title: Text(name, style: const TextStyle(fontSize: 14)),
+                  enabled: !isCurrent,
+                  onTap: () => Navigator.pop(ctx, name),
+                );
+              },
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(L10n.of(ctx)!.cancel)),
+        ],
+      ),
+    );
+    if (target == null || !mounted) return;
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    String? originalListName;
+    final updated = savedList.map((s) {
+      final m = jsonDecode(s) as Map<String, dynamic>;
+      if (m['url'] == url) {
+        originalListName = (m['listName'] as String?) ?? '選択なし';
+        m['listName'] = target;
+        SyncService.upsertItem(m);
+      }
+      return jsonEncode(m);
+    }).toList();
+    await prefs.setStringList('saved_metadata', updated);
+    if (!mounted) return;
+    await _searchMetadata();
+    ref.read(listReloadProvider.notifier).state++;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('1${L10n.of(context)!.grid_page_move_done}'),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          action: originalListName == null
+              ? null
+              : SnackBarAction(
+                  label: L10n.of(context)!.undo,
+                  onPressed: () =>
+                      _undoMove({url: originalListName!}),
+                ),
+        ),
+      );
+  }
+
+  Future<bool> _confirmDeleteSingle(Map<String, dynamic> item) async {
+    final url = item['url']?.toString();
+    if (url == null) return false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text(L10n.of(dctx)!.detail_page_delete_confirm01),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dctx, false),
+              child: Text(L10n.of(dctx)!.cancel)),
+          TextButton(
+              onPressed: () => Navigator.pop(dctx, true),
+              child: Text(L10n.of(dctx)!.delete)),
+        ],
+      ),
+    );
+    if (ok != true) return false;
+    // オフラインファイル削除 + メタデータ削除
+    await OfflineCleanup.forUrls([url]);
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    final filtered = list.where((s) {
+      try {
+        return (jsonDecode(s) as Map<String, dynamic>)['url'] != url;
+      } catch (_) {
+        return true;
+      }
+    }).toList();
+    await prefs.setStringList('saved_metadata', filtered);
+    if (mounted) await _searchMetadata();
+    ref.read(listReloadProvider.notifier).state++;
+    return true;
+  }
+
   //動画再生処理
   void openPlayer(String url) {
     final queue = _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
     final index = queue.indexWhere((item) => item['url'] == url);
     final safeIndex = index >= 0 ? index : 0;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SearchResultPage(
-          initialUrl: queue[safeIndex]['url']?.toString() ?? url,
+
+    // ローカル動画があれば内蔵プレイヤーで再生
+    final item = queue[safeIndex];
+    if (_hasLocalVideo(item)) {
+      final path = item['localVideoPath'] as String;
+      // GlobalPlayerLayer で再生開始 (Navigator.push 不使用)
+      ref.read(miniPlayerProvider.notifier).start(
+            filePath: path,
+            title: item['title']?.toString() ?? '',
+            itemUrl: item['url']?.toString(),
+          );
+      return;
+    }
+
+    // オンライン動画: 既存のアプリ内ブラウザに新規タブとして開く
+    ref.read(browserSessionProvider.notifier).requestOpen(
+          queue[safeIndex]['url']?.toString() ?? url,
           title: queue[safeIndex]['title']?.toString() ?? '',
           playlistItems: queue,
           playlistIndex: safeIndex,
-        ),
-      ),
-    );
+        );
   }
 
   // AppBar に表示するセクション名 (リスト名 / 評価名 / 全てのアイテム)
@@ -1652,6 +1946,22 @@ class GridPageState extends ConsumerState<GridPage> {
                   ),
                 ),
               ),
+              // 拡張ソート
+              const Divider(height: 12),
+              _sortModalButton(context,
+                  key: 'rating', label: L10n.of(context)!.grid_page_sort_rating),
+              _sortModalButton(context,
+                  key: 'offlineFirst',
+                  label: L10n.of(context)!.grid_page_sort_offline_first),
+              _sortModalButton(context,
+                  key: 'listName',
+                  label: L10n.of(context)!.grid_page_sort_list_name),
+              _sortModalButton(context,
+                  key: 'byCast',
+                  label: L10n.of(context)!.grid_page_sort_by_cast),
+              _sortModalButton(context,
+                  key: 'random',
+                  label: L10n.of(context)!.grid_page_sort_random),
               /*
               TextButton(
                 onPressed: () {
@@ -1730,34 +2040,141 @@ class GridPageState extends ConsumerState<GridPage> {
   }
 
   //ソートされたリストを返す
-  void _sortSearchedItems(String sortType) {
-    setState(() {
-      switch (sortType) {
-        case 'titleAsc': // ① タイトル順 (元リストを先にコピーしてから並び替え)
-          _sortedItems =
-              List<Map<String, dynamic>>.from(_searchedItems);
-          _sortedItems.sort((a, b) {
-            final titleA = (a['title'] ?? '').toString();
-            final titleB = (b['title'] ?? '').toString();
-            return titleA.compareTo(titleB);
-          });
-          break;
-
-        case 'new': // ② 元の逆の順番
-          _sortedItems = _searchedItems.reversed.toList();
-          break;
-
-        case 'old': // ③ 元の順番に戻す
-          _sortedItems = List<Map<String, dynamic>>.from(_searchedItems);
-          break;
-        case 'countDesc': // ④ 視聴数の降順
-          _sortedItems = _searchedItems;
-          break;
-        case 'countAsc': // ⑤ 視聴数の昇順
-          _sortedItems = _searchedItems;
-          break;
+  Future<void> _sortSearchedItems(String sortType) async {
+    _sortKey = sortType;
+    final source = List<Map<String, dynamic>>.from(_searchedItems);
+    switch (sortType) {
+      case 'titleAsc':
+        source.sort((a, b) => (a['title'] ?? '')
+            .toString()
+            .compareTo((b['title'] ?? '').toString()));
+        break;
+      case 'new':
+        // 既存の「_searchedItems の逆順」= 新しい順
+        source
+          ..clear()
+          ..addAll(_searchedItems.reversed);
+        break;
+      case 'old':
+        // _searchedItems のまま = 古い順
+        break;
+      case 'countDesc':
+      case 'countAsc': {
+        final prefs = await SharedPreferences.getInstance();
+        source.sort((a, b) {
+          final ca = prefs.getInt((a['url'] ?? '').toString()) ?? 0;
+          final cb = prefs.getInt((b['url'] ?? '').toString()) ?? 0;
+          return sortType == 'countDesc' ? cb.compareTo(ca) : ca.compareTo(cb);
+        });
+        break;
       }
+      case 'rating': {
+        const order = {'critical': 0, 'normal': 1, 'maniac': 2};
+        source.sort((a, b) {
+          final ra = order[a['rating']] ?? 99;
+          final rb = order[b['rating']] ?? 99;
+          return ra.compareTo(rb);
+        });
+        break;
+      }
+      case 'offlineFirst':
+        source.sort((a, b) {
+          final oa = _hasLocalVideo(a) ? 0 : 1;
+          final ob = _hasLocalVideo(b) ? 0 : 1;
+          return oa.compareTo(ob);
+        });
+        break;
+      case 'listName':
+        source.sort((a, b) => (a['listName'] ?? '')
+            .toString()
+            .compareTo((b['listName'] ?? '').toString()));
+        break;
+      case 'random':
+        source.shuffle();
+        break;
+      case 'byCast':
+        source.sort((a, b) {
+          final firstA = _firstTags(a['cast']?.toString(), max: 1);
+          final firstB = _firstTags(b['cast']?.toString(), max: 1);
+          final ka = firstA.isEmpty ? '￿' : firstA.first;
+          final kb = firstB.isEmpty ? '￿' : firstB.first;
+          return ka.compareTo(kb);
+        });
+        break;
+      case 'byDate':
+        // 既定 = 新しい順 (追加日は _searchedItems の順序で保存されている想定)
+        source
+          ..clear()
+          ..addAll(_searchedItems.reversed);
+        break;
+    }
+    if (!mounted) return;
+    setState(() {
+      _sortedItems = source;
     });
+  }
+
+  /// 拡張ソート用の共通ボタン
+  Widget _sortModalButton(BuildContext context,
+      {required String key, required String label}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final active = _sortKey == key;
+    return TextButton(
+      onPressed: () {
+        // 既存の _sortedMenuSelected は 5 要素固定なのでクリア (全 false)
+        _sortedMenuSelected = [false, false, false, false, false];
+        _sortSearchedItems(key);
+        Navigator.pop(context);
+      },
+      style: ButtonStyle(
+        elevation: WidgetStateProperty.all(0),
+        backgroundColor: WidgetStateProperty.all(
+          active ? colorScheme.primary : Colors.transparent,
+        ),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          color: colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  /// 現在のソートキーの表示ラベル
+  String _sortLabel() {
+    final l = L10n.of(context)!;
+    switch (_sortKey) {
+      case 'titleAsc':
+        return l.grid_page_sort_title;
+      case 'new':
+        return l.grid_page_sort_new;
+      case 'old':
+        return l.grid_page_sort_old;
+      case 'countDesc':
+        return l.grid_page_sort_count_desc;
+      case 'countAsc':
+        return l.grid_page_sort_count_asc;
+      case 'rating':
+        return l.grid_page_sort_rating;
+      case 'offlineFirst':
+        return l.grid_page_sort_offline_first;
+      case 'listName':
+        return l.grid_page_sort_list_name;
+      case 'random':
+        return l.grid_page_sort_random;
+      case 'byCast':
+        return l.grid_page_sort_by_cast;
+      case 'byDate':
+        return l.grid_page_sort_by_date;
+      default:
+        return l.grid_page_sort_new;
+    }
   }
 
   /*
@@ -1794,7 +2211,12 @@ class GridPageState extends ConsumerState<GridPage> {
   static Future<bool> _checkPremium() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      // Premium または Pro のどちらでも「有料 = 広告非表示」扱い
+      final isPremium =
+          customerInfo.entitlements.all['Premium Plan']?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all['Pro Plan']?.isActive ?? false;
+      return isPremium || isPro;
     } catch (e) {
       debugPrint('Subscription check error: $e');
       return false;

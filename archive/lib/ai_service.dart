@@ -46,13 +46,20 @@ class AiService {
     }
   }
 
-  /// 今月のアーカイブ活動をまとめた AI レポートを取得
+  /// 前月のアーカイブ活動をまとめた AI レポートを取得
   /// [force] が true なら 24h キャッシュを無視して再生成
+  ///
+  /// クライアント側 (端末ローカル時刻) で対象月を計算して渡す。
+  /// サーバー (UTC) 側での月ズレを避けるため。
   static Future<MonthlyReport> getMonthlyReport({bool force = false}) async {
     try {
+      final now = DateTime.now();
+      final prev = DateTime(now.year, now.month - 1, 1);
       final callable = _functions.httpsCallable('generateMonthlyReport');
       final result = await callable.call<Map<dynamic, dynamic>>({
         'force': force,
+        'year': prev.year,
+        'month': prev.month,
       });
       return MonthlyReport.fromMap(Map<String, dynamic>.from(result.data));
     } on FirebaseFunctionsException catch (e) {

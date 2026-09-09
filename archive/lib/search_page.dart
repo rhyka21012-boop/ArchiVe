@@ -22,8 +22,15 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'circle_app_bar_icon.dart';
 import 'theme_provider.dart';
 
+/// SearchPage の表示モード。
+/// - both: 従来の「アプリ内 / Web」切替 (SegmentedButton 表示)
+/// - appOnly: アプリ内検索のみ (セグメントバー非表示、常に app モード)
+/// - webOnly: Web/ブラウザのみ (セグメントバー非表示、常に web モード)
+enum SearchPageMode { both, appOnly, webOnly }
+
 class SearchPage extends ConsumerStatefulWidget {
-  const SearchPage({super.key});
+  final SearchPageMode mode;
+  const SearchPage({super.key, this.mode = SearchPageMode.both});
 
   @override
   ConsumerState<SearchPage> createState() => SearchPageState();
@@ -60,6 +67,12 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   Map<String, List<String>> _optionsByKey = {};
   Map<String, List<bool>> _selectedListByKey = {};
+
+  // タグ使用回数 (アプリ内検索で「検索」ボタンが押された際に選択されていたタグを +1)
+  // キー形式: "<category>:<tagValue>" (例: "cast:田中")
+  // 検索頻度が高いタグをチップ表示で上位に持ってくるために使用。
+  Map<String, int> _tagUsageCounts = {};
+  static const String _tagUsagePrefsKey = 'search_tag_usage_v1';
 
   final GlobalKey _searchBarKey = GlobalKey();
 
@@ -102,7 +115,16 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
   bool _isMetadataLoaded = false;
 
-  bool get isWeb => ref.read(searchTabIndexProvider) == 0;
+  bool get isWeb {
+    switch (widget.mode) {
+      case SearchPageMode.appOnly:
+        return false;
+      case SearchPageMode.webOnly:
+        return true;
+      case SearchPageMode.both:
+        return ref.read(searchTabIndexProvider) == 0;
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -196,67 +218,79 @@ class SearchPageState extends ConsumerState<SearchPage> {
           title: Row(
             children: [
               Expanded(
-                child: SegmentedButton<bool>(
-                  emptySelectionAllowed: false,
-                  showSelectedIcon: false,
-                  style: ButtonStyle(
-                    elevation: WidgetStateProperty.all(0),
-                    visualDensity: VisualDensity.standard,
-                    padding: WidgetStateProperty.all(
-                      const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 10,
+                child: widget.mode == SearchPageMode.both
+                    ? SegmentedButton<bool>(
+                        emptySelectionAllowed: false,
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          elevation: WidgetStateProperty.all(0),
+                          visualDensity: VisualDensity.standard,
+                          padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
+                            ),
+                          ),
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          side: WidgetStateProperty.resolveWith(
+                            (_) => BorderSide.none,
+                          ),
+                          backgroundColor:
+                              WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return colorScheme.primary;
+                            }
+                            return isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200;
+                          }),
+                          foregroundColor:
+                              WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Colors.white;
+                            }
+                            return isDark ? Colors.white : Colors.black87;
+                          }),
+                          textStyle: WidgetStateProperty.all(
+                            const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        segments: [
+                          ButtonSegment(
+                            value: false,
+                            label: Text(
+                              L10n.of(context)!.search_page_segment_button_app,
+                            ),
+                          ),
+                          ButtonSegment(
+                            value: true,
+                            label: Text(
+                              L10n.of(context)!.search_page_segment_button_web,
+                            ),
+                          ),
+                        ],
+                        selected: {isWeb},
+                        onSelectionChanged: (value) {
+                          ref.read(searchTabIndexProvider.notifier).state =
+                              value.first ? 0 : 1;
+                        },
+                      )
+                    : Text(
+                        widget.mode == SearchPageMode.webOnly
+                            ? L10n.of(context)!.search_page_segment_button_web
+                            : L10n.of(context)!.search_page_segment_button_app,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    side: WidgetStateProperty.resolveWith(
-                      (_) => BorderSide.none,
-                    ),
-                    backgroundColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return colorScheme.primary;
-                      }
-                      return isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.grey.shade200;
-                    }),
-                    foregroundColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return Colors.white;
-                      }
-                      return isDark ? Colors.white : Colors.black87;
-                    }),
-                    textStyle: WidgetStateProperty.all(
-                      const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  segments: [
-                    ButtonSegment(
-                      value: false,
-                      label: Text(
-                        L10n.of(context)!.search_page_segment_button_app,
-                      ),
-                    ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text(
-                        L10n.of(context)!.search_page_segment_button_web,
-                      ),
-                    ),
-                  ],
-                  selected: {isWeb},
-                  onSelectionChanged: (value) {
-                    ref.read(searchTabIndexProvider.notifier).state =
-                        value.first ? 0 : 1;
-                  },
-                ),
               ),
               const SizedBox(width: 4),
               CircleAppBarIcon(
@@ -410,11 +444,14 @@ class SearchPageState extends ConsumerState<SearchPage> {
         ),
       );
     } else {
+      final selected = getSelectedItemsByKey();
+      // 検索実行時に選択されていたタグの使用回数を +1 (次回以降のチップ並び順に反映)
+      unawaited(_logSelectedTagUsage(selected));
       await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => GridPage(
-            selectedItems: getSelectedItemsByKey(),
+            selectedItems: selected,
             searchText: text,
             rating: '',
             listName: '',
@@ -433,10 +470,22 @@ class SearchPageState extends ConsumerState<SearchPage> {
     final text = _searchController.text.trim().toLowerCase();
     final filters = getSelectedItemsByKey();
     return _savedItems.where((item) {
-      // 条件①: searchText で絞り込み (title に含まれる)
+      // 条件①: searchText で絞り込み (title + tag 系 + memo を横断)
       if (text.isNotEmpty) {
-        final title = (item['title'] ?? '').toString().toLowerCase();
-        if (!title.contains(text)) return false;
+        const fields = [
+          'title',
+          'cast',
+          'genre',
+          'series',
+          'maker',
+          'label',
+          'memo',
+        ];
+        final match = fields.any((k) {
+          final v = (item[k] ?? '').toString().toLowerCase();
+          return v.contains(text);
+        });
+        if (!match) return false;
       }
       // 条件②: カテゴリ絞り込み (キー AND、キー内は OR)
       for (final entry in filters.entries) {
@@ -704,7 +753,13 @@ class SearchPageState extends ConsumerState<SearchPage> {
     }
 
     final list = uniqueTags.toList();
-    list.sort();
+    // 使用回数が多いタグを上位に。同数はアルファベット順。
+    list.sort((a, b) {
+      final ca = _tagUsageCounts['$key:$a'] ?? 0;
+      final cb = _tagUsageCounts['$key:$b'] ?? 0;
+      if (ca != cb) return cb.compareTo(ca);
+      return a.compareTo(b);
+    });
     return list;
     /*
     return _savedItems
@@ -720,6 +775,10 @@ class SearchPageState extends ConsumerState<SearchPage> {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getStringList('saved_metadata') ?? [];
 
+    // タグ使用回数を先にロード (extractUniqueValues がソートに使用)
+    await _loadTagUsageCounts(prefs);
+
+    if (!mounted) return;
     setState(() {
       _savedItems =
           data.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
@@ -733,6 +792,37 @@ class SearchPageState extends ConsumerState<SearchPage> {
           entry.key: List.generate(entry.value.length, (_) => false),
       };
     });
+  }
+
+  Future<void> _loadTagUsageCounts(SharedPreferences prefs) async {
+    final raw = prefs.getString(_tagUsagePrefsKey);
+    if (raw == null || raw.isEmpty) {
+      _tagUsageCounts = {};
+      return;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        _tagUsageCounts = decoded.map(
+          (k, v) => MapEntry(k.toString(), (v is num) ? v.toInt() : 0),
+        );
+      }
+    } catch (_) {
+      _tagUsageCounts = {};
+    }
+  }
+
+  Future<void> _logSelectedTagUsage(
+      Map<String, List<String>> selected) async {
+    if (selected.isEmpty) return;
+    for (final e in selected.entries) {
+      for (final v in e.value) {
+        final k = '${e.key}:$v';
+        _tagUsageCounts[k] = (_tagUsageCounts[k] ?? 0) + 1;
+      }
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tagUsagePrefsKey, jsonEncode(_tagUsageCounts));
   }
 
   //_selectedListByKeyから選択されたアイテムのマップを返す
@@ -1030,6 +1120,8 @@ class SearchPageState extends ConsumerState<SearchPage> {
   //Web検索のUI
   Widget _buildWebSearchSection() {
     final favorites = ref.watch(favoriteSitesProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1040,49 +1132,73 @@ class SearchPageState extends ConsumerState<SearchPage> {
           children: [
             _buildAiRecommendCard(),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  L10n.of(context)!.search_page_select_site,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 28,
-                  ),
-                  icon: Icon(
-                    Icons.help_outline,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onSurface
-                        .withValues(alpha: 0.55),
-                  ),
-                  onPressed: _showSelectSiteHelp,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossCount,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 20,
-                childAspectRatio: 0.82,
+            // お気に入りサイトを白背景コンテンツで囲う
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1F1F1F)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
-              itemCount: favorites.length + 1,
-              itemBuilder: (context, index) {
-                if (index == favorites.length) {
-                  return _buildAddFavoriteGridItem();
-                }
-                return _buildFavoriteSiteCard(favorites[index], index);
-              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        L10n.of(context)!.search_page_select_site,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        icon: Icon(
+                          Icons.help_outline,
+                          size: 18,
+                          color: colorScheme.onSurface
+                              .withValues(alpha: 0.55),
+                        ),
+                        onPressed: _showSelectSiteHelp,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossCount,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 6, // 縦行間を詰める (20 → 6)
+                      childAspectRatio: 0.82,
+                    ),
+                    itemCount: favorites.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == favorites.length) {
+                        return _buildAddFavoriteGridItem();
+                      }
+                      return _buildFavoriteSiteCard(favorites[index], index);
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         );
@@ -1605,19 +1721,14 @@ class SearchPageState extends ConsumerState<SearchPage> {
     );
   }
 
-  //お気に入りサイトUI（Edge モバイル風）
+  //お気に入りサイトUI（ブラウザのブックマーク風: タップでサイトに直接遷移）
   Widget _buildFavoriteSiteCard(Map<String, String> site, int index) {
-    final isSelected = _selectedFavoriteIndex == index;
     final faviconUrl = _faviconUrl(site['url'] ?? '');
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFavoriteIndex = isSelected ? null : index;
-        });
-      },
+      onTap: () => _openSite(site['url']),
       onLongPress: () {
         _showFavoriteActionSheet(site, index);
       },
@@ -1625,78 +1736,37 @@ class SearchPageState extends ConsumerState<SearchPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // ─── アイコンコンテナ ───────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
+          Container(
             width: 56,
             height: 56,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF2E2E2E) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border:
-                  isSelected
-                      ? Border.all(color: colorScheme.primary, width: 2.5)
-                      : Border.all(
-                        color: Colors.grey.withValues(alpha: 0.15),
-                        width: 1,
-                      ),
+              border: Border.all(
+                color: Colors.grey.withValues(alpha: 0.15),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(
-                    alpha: isSelected ? 0.15 : (isDark ? 0.25 : 0.07),
+                    alpha: isDark ? 0.25 : 0.07,
                   ),
-                  blurRadius: isSelected ? 10 : 6,
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // ファビコン
-                Center(
-                  child: Image.network(
-                    faviconUrl,
-                    width: 36,
-                    height: 36,
-                    errorBuilder:
-                        (_, __, ___) => Icon(
-                          Icons.public,
-                          size: 34,
-                          color:
-                              isDark
-                                  ? Colors.white54
-                                  : Colors.grey.shade500,
-                        ),
-                  ),
+            child: Center(
+              child: Image.network(
+                faviconUrl,
+                width: 36,
+                height: 36,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.public,
+                  size: 34,
+                  color: isDark ? Colors.white54 : Colors.grey.shade500,
                 ),
-                // 選択チェックバッジ
-                if (isSelected)
-                  Positioned(
-                    top: -5,
-                    right: -5,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color:
-                              isDark
-                                  ? const Color(0xFF1E1E1E)
-                                  : Colors.white,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 11,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
 
@@ -1710,11 +1780,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              color:
-                  isSelected
-                      ? colorScheme.primary
-                      : (isDark ? Colors.white70 : Colors.black87),
+              color: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
         ],
@@ -2001,21 +2067,19 @@ class SearchPageState extends ConsumerState<SearchPage> {
   }
 
   //お気に入りサイト - 検索URL組み立て
+  //動画タブ (tbm=vid) は使わず、通常の Google 検索に飛ばす
   String _buildWebSearchUrl(String keyword, String? favoriteUrl) {
     final query = Uri.encodeComponent(keyword);
 
     if (favoriteUrl == null) {
-      // 通常の動画検索
-      return 'https://www.google.com/search?q=$query&tbm=vid&safe=off';
+      return 'https://www.google.com/search?q=$query&safe=off';
     }
 
     final uri = Uri.parse(favoriteUrl);
     final domain = uri.host;
-
-    // site:example.com を付与
     final siteQuery = Uri.encodeComponent('site:$domain $keyword');
 
-    return 'https://www.google.com/search?q=$siteQuery&tbm=vid&safe=off';
+    return 'https://www.google.com/search?q=$siteQuery&safe=off';
   }
 
   //ルーレット機能 - モーダル表示
@@ -2319,15 +2383,22 @@ class _RouletteModalState extends State<_RouletteModal>
                             itemBuilder: (context, index) {
                               final item = widget
                                   .items[index % widget.items.length];
+                              final isWinner = _showResult &&
+                                  _resultItem != null &&
+                                  item['url'] == _resultItem!['url'];
                               return Container(
                                 width: _cardWidth,
                                 height: _cardWidth * (9 / 16),
                                 margin: EdgeInsets.symmetric(
                                   horizontal: spacing,
                                 ),
-                                child: _RouletteCard(
-                                  item: item,
-                                  colorScheme: colorScheme,
+                                // 決定後は当選アイテムのカードタップで詳細画面へ
+                                child: GestureDetector(
+                                  onTap: isWinner ? _openDetail : null,
+                                  child: _RouletteCard(
+                                    item: item,
+                                    colorScheme: colorScheme,
+                                  ),
                                 ),
                               );
                             },

@@ -96,7 +96,28 @@ class L10nZh extends L10n {
   String get main_page_lists => '列表';
 
   @override
-  String get main_page_search => '搜索与收集';
+  String get main_page_search => '搜索';
+
+  @override
+  String get main_page_browser => '浏览器';
+
+  @override
+  String get browser_home_url_hint => '输入网址或搜索';
+
+  @override
+  String get browser_home_history => '历史记录';
+
+  @override
+  String get browser_home_history_empty => '还没有历史记录';
+
+  @override
+  String get browser_home_history_clear => '清除';
+
+  @override
+  String get browser_home_history_clear_confirm => '清除所有浏览历史？';
+
+  @override
+  String get browser_home_favorites => '常用网站';
 
   @override
   String get main_page_analytics => '统计';
@@ -225,6 +246,29 @@ class L10nZh extends L10n {
   String get grid_page_sort_count_desc => '浏览量从低到高';
 
   @override
+  String get grid_page_sort_rating => '按评价';
+
+  @override
+  String get grid_page_sort_offline_first => '离线优先';
+
+  @override
+  String get grid_page_sort_list_name => '按列表名';
+
+  @override
+  String get grid_page_sort_random => '随机';
+
+  @override
+  String get grid_page_sort_by_cast => '按演员';
+
+  @override
+  String get grid_page_sort_by_date => '按添加日期';
+
+  @override
+  String grid_page_sort_current(String label) {
+    return '排序: $label';
+  }
+
+  @override
   String grid_page_items_selected_delete(Object count) {
     return '删除选中的 $count 个项目？';
   }
@@ -277,7 +321,147 @@ class L10nZh extends L10n {
   String get detail_page_thumbnail_placeholder => '保存后将显示缩略图';
 
   @override
-  String get detail_page_add_image => '添加图片 ★';
+  String get detail_page_add_image => '添加缩略图 ★';
+
+  @override
+  String get detail_page_offline => '离线';
+
+  @override
+  String get detail_page_offline_downloaded => '已离线保存';
+
+  @override
+  String get detail_page_offline_confirm_title => '将该作品保存到本地？';
+
+  @override
+  String get detail_page_offline_confirm_body =>
+      '视频将被下载到此设备。\n※仅可保存您拥有版权或已获得授权的视频。';
+
+  @override
+  String get detail_page_offline_no_url => 'URL 未输入';
+
+  @override
+  String get detail_page_offline_started => '开始下载';
+
+  @override
+  String get detail_page_offline_probing => '正在检查可用分辨率…';
+
+  @override
+  String get detail_page_delete_offline_confirm => '要删除该作品的离线数据吗？\n（不影响在线播放）';
+
+  @override
+  String get detail_page_offline_deleted => '已删除离线数据';
+
+  @override
+  String get consent_page_title => '使用前须知';
+
+  @override
+  String get consent_page_subtitle => '使用本应用前，请阅读并同意以下内容。';
+
+  @override
+  String get consent_page_privacy_title => '隐私政策';
+
+  @override
+  String get consent_page_privacy_body => '本应用致力于妥善处理个人信息，请查阅完整政策。';
+
+  @override
+  String get consent_page_terms_title => '使用条款';
+
+  @override
+  String get consent_page_terms_body => '请务必阅读本应用的使用条款。';
+
+  @override
+  String get consent_page_ip_summary =>
+      '本应用是一款通用工具，对用户输入的URL提供下载和离线播放。您需自行遵守著作权及来源网站的使用条款。';
+
+  @override
+  String get consent_page_agree_checkbox => '我已阅读并同意上述所有内容';
+
+  @override
+  String get consent_page_agree => '同意并开始';
+
+  @override
+  String get consent_page_read_more => '阅读全文';
+
+  @override
+  String get settings_page_ip_disclaimer => '知识产权免责声明';
+
+  @override
+  String get settings_page_ip_disclaimer_body =>
+      '本应用是一款通用工具，提供用户自行输入的视频URL的下载与离线播放功能，并非以获取特定网站内容为目的。\n\n用户应自行负责以下事项：\n・遵守所保存视频内容的著作权及来源网站的使用条款\n・不得将所保存内容超出私人使用范围进行复制、发布、公开或商业利用\n・不得侵犯第三方著作权、肖像权、公开权等其他权利\n・不得规避来源网站的技术保护措施\n\n本应用提供方对因用户使用本应用而产生的著作权侵犯、条款违反等任何法律责任概不承担。\n\n如有疑虑，请勿使用并咨询著作权人或内容提供方。本应用仅根据用户输入运行，不代表对特定服务的推荐或合作。';
+
+  @override
+  String get detail_page_offline_not_direct_video =>
+      '此网址不是视频文件的直链，无法离线保存。\n（不支持 YouTube 等页面网址，请使用 mp4/m4v/mov/webm/mkv 格式的直链）';
+
+  @override
+  String get detail_page_offline_failed => '下载失败';
+
+  @override
+  String get download_failed_but_saved => '已保存网址书签（视频文件未下载）';
+
+  @override
+  String get download_cancel_confirm_title => '取消此下载吗？';
+
+  @override
+  String get download_cancel_confirm_body => '将中断进行中的下载并删除此任务。确定继续？';
+
+  @override
+  String get detail_page_offline_hls_not_supported =>
+      '该视频为 HLS 格式 (.m3u8)，不支持离线保存。';
+
+  @override
+  String get browser_video_detected_chip => '检测到视频';
+
+  @override
+  String get browser_video_detected_sheet_title => '检测到的视频';
+
+  @override
+  String get browser_video_detected_sheet_desc => '请选择要下载的视频。';
+
+  @override
+  String get browser_video_download => '下载此视频';
+
+  @override
+  String get browser_video_download_started => '已开始下载';
+
+  @override
+  String get browser_video_download_saved_first => '先保存为作品，然后开始下载';
+
+  @override
+  String get search_result_page_offline => '离线保存';
+
+  @override
+  String get search_result_page_offline_desc => '将该作品下载到本地，可在无网络时播放。';
+
+  @override
+  String get download_queue_title => '下载';
+
+  @override
+  String get download_clear_finished => '清除已完成';
+
+  @override
+  String get download_empty => '当前没有下载任务';
+
+  @override
+  String get download_status_queued => '等待中';
+
+  @override
+  String get download_status_completed => '已完成';
+
+  @override
+  String get download_status_failed => '失败';
+
+  @override
+  String get download_cancel_all_confirm => '取消所有下载吗？';
+
+  @override
+  String get download_status_canceled => '已取消';
+
+  @override
+  String get download_premium_required_title => 'Premium 专属功能';
+
+  @override
+  String get download_premium_required_body => '离线下载功能仅在 Premium 及以上方案中提供。';
 
   @override
   String get detail_page_rate => '评分';
@@ -454,7 +638,7 @@ class L10nZh extends L10n {
   String get search_page_hint_web_6 => '例：简单菜谱';
 
   @override
-  String get search_page_select_site => '按网站筛选';
+  String get search_page_select_site => '收藏站点';
 
   @override
   String get search_page_select_site_help_title => '按网站筛选';
@@ -498,6 +682,67 @@ class L10nZh extends L10n {
 
   @override
   String get search_result_page_url_already_saved => '该URL已保存';
+
+  @override
+  String get search_result_page_url_already_saved_offline_prompt =>
+      '要将该作品下载到本地以便离线观看吗？';
+
+  @override
+  String get search_result_page_url_already_saved_and_downloaded =>
+      '该作品已保存并已下载';
+
+  @override
+  String get download_retry => '重试';
+
+  @override
+  String get player_minimize => '切换到迷你播放器';
+
+  @override
+  String get player_close => '关闭';
+
+  @override
+  String get player_speed => '播放速度';
+
+  @override
+  String player_speed_x(String v) {
+    return '${v}x';
+  }
+
+  @override
+  String get player_speed_custom => '自定义';
+
+  @override
+  String get player_bookmarks => '书签';
+
+  @override
+  String get player_bookmarks_empty => '还没有书签';
+
+  @override
+  String get browser_video_size => '大小';
+
+  @override
+  String get browser_video_size_unknown => '大小未知';
+
+  @override
+  String get browser_video_quality => '画质';
+
+  @override
+  String get browser_tab_max_reached => '已达到标签页上限，请先关闭标签页再新建。';
+
+  @override
+  String get browser_tabs_title => '标签页';
+
+  @override
+  String get browser_new_tab => '新标签页';
+
+  @override
+  String get offline_quality_title => '离线画质';
+
+  @override
+  String get offline_quality_desc => '请选择要下载的视频画质';
+
+  @override
+  String get offline_quality_none => '不下载离线';
 
   @override
   String get search_result_page_has_saved => '作品已保存';
@@ -672,6 +917,9 @@ class L10nZh extends L10n {
   String get settings_page_theme_color_orange => '橙色';
 
   @override
+  String get settings_page_theme_color_random => '随机';
+
+  @override
   String get settings_page_theme_color_green => '绿色';
 
   @override
@@ -690,21 +938,27 @@ class L10nZh extends L10n {
   String get settings_page_thumbnail_visibility => '显示列表缩略图';
 
   @override
-  String get settings_page_save_status => '保存状态';
+  String get settings_page_save_status => '项目数';
 
   @override
-  String get settings_page_save_count => '已保存项目数';
+  String get settings_page_offline_videos => '离线视频';
+
+  @override
+  String get settings_page_offline_total_size => '离线视频总大小';
+
+  @override
+  String get settings_page_save_count => '书签';
 
   @override
   String get settings_page_watch_count => '今日浏览数';
 
   @override
   String settings_page_watch_ad_today(Object watchedAdsToday) {
-    return '$watchedAdsToday / 3';
+    return '$watchedAdsToday / 5';
   }
 
   @override
-  String get settings_page_watch_ad => '观看广告（+5个名额）';
+  String get settings_page_watch_ad => '观看广告（+1个名额）';
 
   @override
   String get settings_page_ad_limit_reached => '今日广告次数已达上限';
@@ -728,7 +982,7 @@ class L10nZh extends L10n {
   String get settings_page_terms => '服务条款（Apple 标准 EULA）';
 
   @override
-  String get settings_page_save_count_increased => '保存上限增加 +5';
+  String get settings_page_save_count_increased => '保存上限增加 +1';
 
   @override
   String get setting_page_unlimited => '无限制';
@@ -1061,6 +1315,9 @@ class L10nZh extends L10n {
 
   @override
   String get detail_page_ai_no_suggestions => '没有可推荐的标签';
+
+  @override
+  String get detail_page_ai_from_library => '来自已有标签';
 
   @override
   String get detail_page_ai_daily_limit_title => '已达到今日 AI 使用上限';
@@ -1327,7 +1584,28 @@ class L10nZhHans extends L10nZh {
   String get main_page_lists => '列表';
 
   @override
-  String get main_page_search => '搜索与收集';
+  String get main_page_search => '搜索';
+
+  @override
+  String get main_page_browser => '浏览器';
+
+  @override
+  String get browser_home_url_hint => '输入网址或搜索';
+
+  @override
+  String get browser_home_history => '历史记录';
+
+  @override
+  String get browser_home_history_empty => '还没有历史记录';
+
+  @override
+  String get browser_home_history_clear => '清除';
+
+  @override
+  String get browser_home_history_clear_confirm => '清除所有浏览历史？';
+
+  @override
+  String get browser_home_favorites => '常用网站';
 
   @override
   String get main_page_analytics => '统计';
@@ -1456,6 +1734,29 @@ class L10nZhHans extends L10nZh {
   String get grid_page_sort_count_desc => '浏览量从低到高';
 
   @override
+  String get grid_page_sort_rating => '按评价';
+
+  @override
+  String get grid_page_sort_offline_first => '离线优先';
+
+  @override
+  String get grid_page_sort_list_name => '按列表名';
+
+  @override
+  String get grid_page_sort_random => '随机';
+
+  @override
+  String get grid_page_sort_by_cast => '按演员';
+
+  @override
+  String get grid_page_sort_by_date => '按添加日期';
+
+  @override
+  String grid_page_sort_current(String label) {
+    return '排序: $label';
+  }
+
+  @override
   String grid_page_items_selected_delete(Object count) {
     return '删除选中的 $count 个项目？';
   }
@@ -1508,7 +1809,147 @@ class L10nZhHans extends L10nZh {
   String get detail_page_thumbnail_placeholder => '保存后将显示缩略图';
 
   @override
-  String get detail_page_add_image => '添加图片 ★';
+  String get detail_page_add_image => '添加缩略图 ★';
+
+  @override
+  String get detail_page_offline => '离线';
+
+  @override
+  String get detail_page_offline_downloaded => '已离线保存';
+
+  @override
+  String get detail_page_offline_confirm_title => '将该作品保存到本地？';
+
+  @override
+  String get detail_page_offline_confirm_body =>
+      '视频将被下载到此设备。\n※仅可保存您拥有版权或已获得授权的视频。';
+
+  @override
+  String get detail_page_offline_no_url => 'URL 未输入';
+
+  @override
+  String get detail_page_offline_started => '开始下载';
+
+  @override
+  String get detail_page_offline_probing => '正在检查可用分辨率…';
+
+  @override
+  String get detail_page_delete_offline_confirm => '要删除该作品的离线数据吗？\n（不影响在线播放）';
+
+  @override
+  String get detail_page_offline_deleted => '已删除离线数据';
+
+  @override
+  String get consent_page_title => '使用前须知';
+
+  @override
+  String get consent_page_subtitle => '使用本应用前，请阅读并同意以下内容。';
+
+  @override
+  String get consent_page_privacy_title => '隐私政策';
+
+  @override
+  String get consent_page_privacy_body => '本应用致力于妥善处理个人信息，请查阅完整政策。';
+
+  @override
+  String get consent_page_terms_title => '使用条款';
+
+  @override
+  String get consent_page_terms_body => '请务必阅读本应用的使用条款。';
+
+  @override
+  String get consent_page_ip_summary =>
+      '本应用是一款通用工具，对用户输入的URL提供下载和离线播放。您需自行遵守著作权及来源网站的使用条款。';
+
+  @override
+  String get consent_page_agree_checkbox => '我已阅读并同意上述所有内容';
+
+  @override
+  String get consent_page_agree => '同意并开始';
+
+  @override
+  String get consent_page_read_more => '阅读全文';
+
+  @override
+  String get settings_page_ip_disclaimer => '知识产权免责声明';
+
+  @override
+  String get settings_page_ip_disclaimer_body =>
+      '本应用是一款通用工具，提供用户自行输入的视频URL的下载与离线播放功能，并非以获取特定网站内容为目的。\n\n用户应自行负责以下事项：\n・遵守所保存视频内容的著作权及来源网站的使用条款\n・不得将所保存内容超出私人使用范围进行复制、发布、公开或商业利用\n・不得侵犯第三方著作权、肖像权、公开权等其他权利\n・不得规避来源网站的技术保护措施\n\n本应用提供方对因用户使用本应用而产生的著作权侵犯、条款违反等任何法律责任概不承担。\n\n如有疑虑，请勿使用并咨询著作权人或内容提供方。本应用仅根据用户输入运行，不代表对特定服务的推荐或合作。';
+
+  @override
+  String get detail_page_offline_not_direct_video =>
+      '此网址不是视频文件的直链，无法离线保存。\n（不支持 YouTube 等页面网址，请使用 mp4/m4v/mov/webm/mkv 格式的直链）';
+
+  @override
+  String get detail_page_offline_failed => '下载失败';
+
+  @override
+  String get download_failed_but_saved => '已保存网址书签（视频文件未下载）';
+
+  @override
+  String get download_cancel_confirm_title => '取消此下载吗？';
+
+  @override
+  String get download_cancel_confirm_body => '将中断进行中的下载并删除此任务。确定继续？';
+
+  @override
+  String get detail_page_offline_hls_not_supported =>
+      '该视频为 HLS 格式 (.m3u8)，不支持离线保存。';
+
+  @override
+  String get browser_video_detected_chip => '检测到视频';
+
+  @override
+  String get browser_video_detected_sheet_title => '检测到的视频';
+
+  @override
+  String get browser_video_detected_sheet_desc => '请选择要下载的视频。';
+
+  @override
+  String get browser_video_download => '下载此视频';
+
+  @override
+  String get browser_video_download_started => '已开始下载';
+
+  @override
+  String get browser_video_download_saved_first => '先保存为作品，然后开始下载';
+
+  @override
+  String get search_result_page_offline => '离线保存';
+
+  @override
+  String get search_result_page_offline_desc => '将该作品下载到本地，可在无网络时播放。';
+
+  @override
+  String get download_queue_title => '下载';
+
+  @override
+  String get download_clear_finished => '清除已完成';
+
+  @override
+  String get download_empty => '当前没有下载任务';
+
+  @override
+  String get download_status_queued => '等待中';
+
+  @override
+  String get download_status_completed => '已完成';
+
+  @override
+  String get download_status_failed => '失败';
+
+  @override
+  String get download_cancel_all_confirm => '取消所有下载吗？';
+
+  @override
+  String get download_status_canceled => '已取消';
+
+  @override
+  String get download_premium_required_title => 'Premium 专属功能';
+
+  @override
+  String get download_premium_required_body => '离线下载功能仅在 Premium 及以上方案中提供。';
 
   @override
   String get detail_page_rate => '评分';
@@ -1685,7 +2126,7 @@ class L10nZhHans extends L10nZh {
   String get search_page_hint_web_6 => '例：简单菜谱';
 
   @override
-  String get search_page_select_site => '按网站筛选';
+  String get search_page_select_site => '收藏站点';
 
   @override
   String get search_page_select_site_help_title => '按网站筛选';
@@ -1729,6 +2170,67 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get search_result_page_url_already_saved => '该URL已保存';
+
+  @override
+  String get search_result_page_url_already_saved_offline_prompt =>
+      '要将该作品下载到本地以便离线观看吗？';
+
+  @override
+  String get search_result_page_url_already_saved_and_downloaded =>
+      '该作品已保存并已下载';
+
+  @override
+  String get download_retry => '重试';
+
+  @override
+  String get player_minimize => '切换到迷你播放器';
+
+  @override
+  String get player_close => '关闭';
+
+  @override
+  String get player_speed => '播放速度';
+
+  @override
+  String player_speed_x(String v) {
+    return '${v}x';
+  }
+
+  @override
+  String get player_speed_custom => '自定义';
+
+  @override
+  String get player_bookmarks => '书签';
+
+  @override
+  String get player_bookmarks_empty => '还没有书签';
+
+  @override
+  String get browser_video_size => '大小';
+
+  @override
+  String get browser_video_size_unknown => '大小未知';
+
+  @override
+  String get browser_video_quality => '画质';
+
+  @override
+  String get browser_tab_max_reached => '已达到标签页上限，请先关闭标签页再新建。';
+
+  @override
+  String get browser_tabs_title => '标签页';
+
+  @override
+  String get browser_new_tab => '新标签页';
+
+  @override
+  String get offline_quality_title => '离线画质';
+
+  @override
+  String get offline_quality_desc => '请选择要下载的视频画质';
+
+  @override
+  String get offline_quality_none => '不下载离线';
 
   @override
   String get search_result_page_has_saved => '作品已保存';
@@ -1903,6 +2405,9 @@ class L10nZhHans extends L10nZh {
   String get settings_page_theme_color_orange => '橙色';
 
   @override
+  String get settings_page_theme_color_random => '随机';
+
+  @override
   String get settings_page_theme_color_green => '绿色';
 
   @override
@@ -1921,21 +2426,27 @@ class L10nZhHans extends L10nZh {
   String get settings_page_thumbnail_visibility => '显示列表缩略图';
 
   @override
-  String get settings_page_save_status => '保存状态';
+  String get settings_page_save_status => '项目数';
 
   @override
-  String get settings_page_save_count => '已保存项目数';
+  String get settings_page_offline_videos => '离线视频';
+
+  @override
+  String get settings_page_offline_total_size => '离线视频总大小';
+
+  @override
+  String get settings_page_save_count => '书签';
 
   @override
   String get settings_page_watch_count => '今日浏览数';
 
   @override
   String settings_page_watch_ad_today(Object watchedAdsToday) {
-    return '$watchedAdsToday / 3';
+    return '$watchedAdsToday / 5';
   }
 
   @override
-  String get settings_page_watch_ad => '观看广告（+5个名额）';
+  String get settings_page_watch_ad => '观看广告（+1个名额）';
 
   @override
   String get settings_page_ad_limit_reached => '今日广告次数已达上限';
@@ -1959,7 +2470,7 @@ class L10nZhHans extends L10nZh {
   String get settings_page_terms => '服务条款（Apple 标准 EULA）';
 
   @override
-  String get settings_page_save_count_increased => '保存上限增加 +5';
+  String get settings_page_save_count_increased => '保存上限增加 +1';
 
   @override
   String get setting_page_unlimited => '无限制';
@@ -2292,6 +2803,9 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get detail_page_ai_no_suggestions => '没有可推荐的标签';
+
+  @override
+  String get detail_page_ai_from_library => '来自已有标签';
 
   @override
   String get detail_page_ai_daily_limit_title => '已达到今日 AI 使用上限';

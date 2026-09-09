@@ -287,8 +287,50 @@ abstract class L10n {
   /// No description provided for @main_page_search.
   ///
   /// In ja, this message translates to:
-  /// **'検索・収集'**
+  /// **'検索'**
   String get main_page_search;
+
+  /// No description provided for @main_page_browser.
+  ///
+  /// In ja, this message translates to:
+  /// **'ブラウザ'**
+  String get main_page_browser;
+
+  /// No description provided for @browser_home_url_hint.
+  ///
+  /// In ja, this message translates to:
+  /// **'URL を入力または検索'**
+  String get browser_home_url_hint;
+
+  /// No description provided for @browser_home_history.
+  ///
+  /// In ja, this message translates to:
+  /// **'履歴'**
+  String get browser_home_history;
+
+  /// No description provided for @browser_home_history_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'履歴はまだありません'**
+  String get browser_home_history_empty;
+
+  /// No description provided for @browser_home_history_clear.
+  ///
+  /// In ja, this message translates to:
+  /// **'履歴をクリア'**
+  String get browser_home_history_clear;
+
+  /// No description provided for @browser_home_history_clear_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'履歴を全て削除しますか？'**
+  String get browser_home_history_clear_confirm;
+
+  /// No description provided for @browser_home_favorites.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入りサイト'**
+  String get browser_home_favorites;
 
   /// No description provided for @main_page_analytics.
   ///
@@ -530,6 +572,48 @@ abstract class L10n {
   /// **'視聴回数が少ない順'**
   String get grid_page_sort_count_desc;
 
+  /// No description provided for @grid_page_sort_rating.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価順'**
+  String get grid_page_sort_rating;
+
+  /// No description provided for @grid_page_sort_offline_first.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン優先'**
+  String get grid_page_sort_offline_first;
+
+  /// No description provided for @grid_page_sort_list_name.
+  ///
+  /// In ja, this message translates to:
+  /// **'リスト名順'**
+  String get grid_page_sort_list_name;
+
+  /// No description provided for @grid_page_sort_random.
+  ///
+  /// In ja, this message translates to:
+  /// **'ランダム'**
+  String get grid_page_sort_random;
+
+  /// No description provided for @grid_page_sort_by_cast.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャスト別'**
+  String get grid_page_sort_by_cast;
+
+  /// No description provided for @grid_page_sort_by_date.
+  ///
+  /// In ja, this message translates to:
+  /// **'追加日順'**
+  String get grid_page_sort_by_date;
+
+  /// No description provided for @grid_page_sort_current.
+  ///
+  /// In ja, this message translates to:
+  /// **'並び: {label}'**
+  String grid_page_sort_current(String label);
+
   /// No description provided for @grid_page_items_selected_delete.
   ///
   /// In ja, this message translates to:
@@ -629,8 +713,278 @@ abstract class L10n {
   /// No description provided for @detail_page_add_image.
   ///
   /// In ja, this message translates to:
-  /// **'画像を追加★'**
+  /// **'サムネイル画像を追加★'**
   String get detail_page_add_image;
+
+  /// No description provided for @detail_page_offline.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン'**
+  String get detail_page_offline;
+
+  /// No description provided for @detail_page_offline_downloaded.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン保存済み'**
+  String get detail_page_offline_downloaded;
+
+  /// No description provided for @detail_page_offline_confirm_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品をオフラインに保存しますか？'**
+  String get detail_page_offline_confirm_title;
+
+  /// No description provided for @detail_page_offline_confirm_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'動画データをこの端末にダウンロードします。\n※あなたが権利を保有するか、権利者から許諾を得た動画のみ保存してください。'**
+  String get detail_page_offline_confirm_body;
+
+  /// No description provided for @detail_page_offline_no_url.
+  ///
+  /// In ja, this message translates to:
+  /// **'URL が入力されていません'**
+  String get detail_page_offline_no_url;
+
+  /// No description provided for @detail_page_offline_started.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードを開始しました'**
+  String get detail_page_offline_started;
+
+  /// No description provided for @detail_page_offline_probing.
+  ///
+  /// In ja, this message translates to:
+  /// **'利用可能な解像度を確認中…'**
+  String get detail_page_offline_probing;
+
+  /// No description provided for @detail_page_delete_offline_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品のオフラインデータを削除しますか？\n（オンライン再生には影響しません）'**
+  String get detail_page_delete_offline_confirm;
+
+  /// No description provided for @detail_page_offline_deleted.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフラインデータを削除しました'**
+  String get detail_page_offline_deleted;
+
+  /// No description provided for @consent_page_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ご利用にあたって'**
+  String get consent_page_title;
+
+  /// No description provided for @consent_page_subtitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'本アプリのご利用前に、以下をご確認の上ご同意ください。'**
+  String get consent_page_subtitle;
+
+  /// No description provided for @consent_page_privacy_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'プライバシーポリシー'**
+  String get consent_page_privacy_title;
+
+  /// No description provided for @consent_page_privacy_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'本アプリは個人情報の適切な取り扱いに努めます。詳細は下記のポリシーをご確認ください。'**
+  String get consent_page_privacy_body;
+
+  /// No description provided for @consent_page_terms_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'利用規約'**
+  String get consent_page_terms_title;
+
+  /// No description provided for @consent_page_terms_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'本アプリの利用に関する規約を必ずお読みください。'**
+  String get consent_page_terms_body;
+
+  /// No description provided for @consent_page_ip_summary.
+  ///
+  /// In ja, this message translates to:
+  /// **'本アプリはユーザーが入力したURLからのダウンロード・オフライン再生を提供する汎用ツールです。著作権および配信元の利用規約はユーザーの責任で遵守してください。'**
+  String get consent_page_ip_summary;
+
+  /// No description provided for @consent_page_agree_checkbox.
+  ///
+  /// In ja, this message translates to:
+  /// **'上記の内容をすべて理解し、同意します'**
+  String get consent_page_agree_checkbox;
+
+  /// No description provided for @consent_page_agree.
+  ///
+  /// In ja, this message translates to:
+  /// **'同意して開始'**
+  String get consent_page_agree;
+
+  /// No description provided for @consent_page_read_more.
+  ///
+  /// In ja, this message translates to:
+  /// **'全文を読む'**
+  String get consent_page_read_more;
+
+  /// No description provided for @settings_page_ip_disclaimer.
+  ///
+  /// In ja, this message translates to:
+  /// **'知的財産権に関する免責事項'**
+  String get settings_page_ip_disclaimer;
+
+  /// No description provided for @settings_page_ip_disclaimer_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'本アプリは、ユーザーが自身の判断で入力した動画URLからのダウンロードとオフライン再生機能を提供する汎用ツールです。特定のウェブサイトのコンテンツを取得することを目的としたものではありません。\n\nユーザーは、以下について自身の責任を負うものとします:\n・保存する動画コンテンツの著作権および配信元サイトの利用規約を遵守すること\n・保存したコンテンツを、私的使用の範囲 (著作権法第30条) を超えて複製・配布・公開・商用利用しないこと\n・第三者の著作権、肖像権、パブリシティ権、その他の権利を侵害しないこと\n・ダウンロード対象サイトの技術的保護手段を回避しないこと (著作権法第30条の2)\n\n本アプリの提供者は、ユーザーによる本アプリの利用に起因または関連して生じた著作権侵害、利用規約違反、その他一切の法的責任を負いません。\n\n疑義がある場合は、動画の著作権者または配信元にご確認の上、ご利用をお控えください。なお、本アプリはユーザーの入力に基づき動作するものであり、特定のサービスの推奨・提携を意味するものではありません。'**
+  String get settings_page_ip_disclaimer_body;
+
+  /// No description provided for @detail_page_offline_not_direct_video.
+  ///
+  /// In ja, this message translates to:
+  /// **'このURLは動画ファイルの直リンクではないため、オフライン保存できません。\n（YouTube等のページURLは対応していません。mp4/m4v/mov/webm/mkv 形式の直リンクをお使いください）'**
+  String get detail_page_offline_not_direct_video;
+
+  /// No description provided for @detail_page_offline_failed.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードに失敗しました'**
+  String get detail_page_offline_failed;
+
+  /// No description provided for @download_failed_but_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'URLはブックマークに保存されました（動画本体は未ダウンロード）'**
+  String get download_failed_but_saved;
+
+  /// No description provided for @download_cancel_confirm_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードを中断しますか？'**
+  String get download_cancel_confirm_title;
+
+  /// No description provided for @download_cancel_confirm_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'進行中のダウンロードを中断してこのタスクを削除します。よろしいですか？'**
+  String get download_cancel_confirm_body;
+
+  /// No description provided for @detail_page_offline_hls_not_supported.
+  ///
+  /// In ja, this message translates to:
+  /// **'この動画はHLS形式(.m3u8)のためオフライン保存に対応していません。'**
+  String get detail_page_offline_hls_not_supported;
+
+  /// No description provided for @browser_video_detected_chip.
+  ///
+  /// In ja, this message translates to:
+  /// **'動画を検出'**
+  String get browser_video_detected_chip;
+
+  /// No description provided for @browser_video_detected_sheet_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'検出された動画'**
+  String get browser_video_detected_sheet_title;
+
+  /// No description provided for @browser_video_detected_sheet_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードしたい動画を選択してください。'**
+  String get browser_video_detected_sheet_desc;
+
+  /// No description provided for @browser_video_download.
+  ///
+  /// In ja, this message translates to:
+  /// **'この動画をダウンロード'**
+  String get browser_video_download;
+
+  /// No description provided for @browser_video_download_started.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードを開始しました'**
+  String get browser_video_download_started;
+
+  /// No description provided for @browser_video_download_saved_first.
+  ///
+  /// In ja, this message translates to:
+  /// **'先に作品として保存してからダウンロードします'**
+  String get browser_video_download_saved_first;
+
+  /// No description provided for @search_result_page_offline.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン保存'**
+  String get search_result_page_offline;
+
+  /// No description provided for @search_result_page_offline_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品を端末にダウンロードして、通信なしで再生できるようにします。'**
+  String get search_result_page_offline_desc;
+
+  /// No description provided for @download_queue_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロード'**
+  String get download_queue_title;
+
+  /// No description provided for @download_clear_finished.
+  ///
+  /// In ja, this message translates to:
+  /// **'完了分を消去'**
+  String get download_clear_finished;
+
+  /// No description provided for @download_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'現在ダウンロードはありません'**
+  String get download_empty;
+
+  /// No description provided for @download_status_queued.
+  ///
+  /// In ja, this message translates to:
+  /// **'待機中'**
+  String get download_status_queued;
+
+  /// No description provided for @download_status_completed.
+  ///
+  /// In ja, this message translates to:
+  /// **'完了'**
+  String get download_status_completed;
+
+  /// No description provided for @download_status_failed.
+  ///
+  /// In ja, this message translates to:
+  /// **'失敗'**
+  String get download_status_failed;
+
+  /// No description provided for @download_cancel_all_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'全てのダウンロードをキャンセルしますか？'**
+  String get download_cancel_all_confirm;
+
+  /// No description provided for @download_status_canceled.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get download_status_canceled;
+
+  /// No description provided for @download_premium_required_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'Premium 限定機能'**
+  String get download_premium_required_title;
+
+  /// No description provided for @download_premium_required_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフラインダウンロードは Premium 以上のプランでご利用いただけます。'**
+  String get download_premium_required_body;
 
   /// No description provided for @detail_page_rate.
   ///
@@ -983,7 +1337,7 @@ abstract class L10n {
   /// No description provided for @search_page_select_site.
   ///
   /// In ja, this message translates to:
-  /// **'サイトで絞る'**
+  /// **'お気に入りサイト'**
   String get search_page_select_site;
 
   /// No description provided for @search_page_select_site_help_title.
@@ -1069,6 +1423,120 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'このURLはすでに保存されています'**
   String get search_result_page_url_already_saved;
+
+  /// No description provided for @search_result_page_url_already_saved_offline_prompt.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品をオフライン用にダウンロードしますか？'**
+  String get search_result_page_url_already_saved_offline_prompt;
+
+  /// No description provided for @search_result_page_url_already_saved_and_downloaded.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品はすでに保存＆ダウンロード済みです'**
+  String get search_result_page_url_already_saved_and_downloaded;
+
+  /// No description provided for @download_retry.
+  ///
+  /// In ja, this message translates to:
+  /// **'リトライ'**
+  String get download_retry;
+
+  /// No description provided for @player_minimize.
+  ///
+  /// In ja, this message translates to:
+  /// **'ミニプレイヤーに切り替え'**
+  String get player_minimize;
+
+  /// No description provided for @player_close.
+  ///
+  /// In ja, this message translates to:
+  /// **'閉じる'**
+  String get player_close;
+
+  /// No description provided for @player_speed.
+  ///
+  /// In ja, this message translates to:
+  /// **'再生速度'**
+  String get player_speed;
+
+  /// No description provided for @player_speed_x.
+  ///
+  /// In ja, this message translates to:
+  /// **'{v}倍速'**
+  String player_speed_x(String v);
+
+  /// No description provided for @player_speed_custom.
+  ///
+  /// In ja, this message translates to:
+  /// **'カスタム'**
+  String get player_speed_custom;
+
+  /// No description provided for @player_bookmarks.
+  ///
+  /// In ja, this message translates to:
+  /// **'ブックマーク'**
+  String get player_bookmarks;
+
+  /// No description provided for @player_bookmarks_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'ブックマークはまだありません'**
+  String get player_bookmarks_empty;
+
+  /// No description provided for @browser_video_size.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイズ'**
+  String get browser_video_size;
+
+  /// No description provided for @browser_video_size_unknown.
+  ///
+  /// In ja, this message translates to:
+  /// **'サイズ不明'**
+  String get browser_video_size_unknown;
+
+  /// No description provided for @browser_video_quality.
+  ///
+  /// In ja, this message translates to:
+  /// **'画質'**
+  String get browser_video_quality;
+
+  /// No description provided for @browser_tab_max_reached.
+  ///
+  /// In ja, this message translates to:
+  /// **'タブの上限に達しました。既存のタブを閉じてから新規タブを開いてください。'**
+  String get browser_tab_max_reached;
+
+  /// No description provided for @browser_tabs_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'タブ'**
+  String get browser_tabs_title;
+
+  /// No description provided for @browser_new_tab.
+  ///
+  /// In ja, this message translates to:
+  /// **'新しいタブ'**
+  String get browser_new_tab;
+
+  /// No description provided for @offline_quality_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン画質'**
+  String get offline_quality_title;
+
+  /// No description provided for @offline_quality_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードする動画の画質を選択してください'**
+  String get offline_quality_desc;
+
+  /// No description provided for @offline_quality_none.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフラインダウンロードなし'**
+  String get offline_quality_none;
 
   /// No description provided for @search_result_page_has_saved.
   ///
@@ -1364,6 +1832,12 @@ abstract class L10n {
   /// **'オレンジ'**
   String get settings_page_theme_color_orange;
 
+  /// No description provided for @settings_page_theme_color_random.
+  ///
+  /// In ja, this message translates to:
+  /// **'ランダム'**
+  String get settings_page_theme_color_random;
+
   /// No description provided for @settings_page_theme_color_green.
   ///
   /// In ja, this message translates to:
@@ -1403,13 +1877,25 @@ abstract class L10n {
   /// No description provided for @settings_page_save_status.
   ///
   /// In ja, this message translates to:
-  /// **'作品保存数の状態'**
+  /// **'アイテム数'**
   String get settings_page_save_status;
+
+  /// No description provided for @settings_page_offline_videos.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン動画'**
+  String get settings_page_offline_videos;
+
+  /// No description provided for @settings_page_offline_total_size.
+  ///
+  /// In ja, this message translates to:
+  /// **'オフライン動画の総容量'**
+  String get settings_page_offline_total_size;
 
   /// No description provided for @settings_page_save_count.
   ///
   /// In ja, this message translates to:
-  /// **'保存数'**
+  /// **'ブックマーク'**
   String get settings_page_save_count;
 
   /// No description provided for @settings_page_watch_count.
@@ -1421,13 +1907,13 @@ abstract class L10n {
   /// No description provided for @settings_page_watch_ad_today.
   ///
   /// In ja, this message translates to:
-  /// **'{watchedAdsToday} / 3 回'**
+  /// **'{watchedAdsToday} / 5 回'**
   String settings_page_watch_ad_today(Object watchedAdsToday);
 
   /// No description provided for @settings_page_watch_ad.
   ///
   /// In ja, this message translates to:
-  /// **'広告を見て +5 枠'**
+  /// **'広告を見て +1 枠'**
   String get settings_page_watch_ad;
 
   /// No description provided for @settings_page_ad_limit_reached.
@@ -1475,7 +1961,7 @@ abstract class L10n {
   /// No description provided for @settings_page_save_count_increased.
   ///
   /// In ja, this message translates to:
-  /// **'保存枠が +5 されました'**
+  /// **'保存枠が +1 されました'**
   String get settings_page_save_count_increased;
 
   /// No description provided for @setting_page_unlimited.
@@ -2125,6 +2611,12 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'提案タグはありませんでした'**
   String get detail_page_ai_no_suggestions;
+
+  /// No description provided for @detail_page_ai_from_library.
+  ///
+  /// In ja, this message translates to:
+  /// **'既存のタグから'**
+  String get detail_page_ai_from_library;
 
   /// No description provided for @detail_page_ai_daily_limit_title.
   ///

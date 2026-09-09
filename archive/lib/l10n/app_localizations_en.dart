@@ -96,7 +96,29 @@ class L10nEn extends L10n {
   String get main_page_lists => 'Lists';
 
   @override
-  String get main_page_search => 'Search & Collect';
+  String get main_page_search => 'Search';
+
+  @override
+  String get main_page_browser => 'Browser';
+
+  @override
+  String get browser_home_url_hint => 'Enter URL or search';
+
+  @override
+  String get browser_home_history => 'History';
+
+  @override
+  String get browser_home_history_empty => 'No history yet';
+
+  @override
+  String get browser_home_history_clear => 'Clear';
+
+  @override
+  String get browser_home_history_clear_confirm =>
+      'Clear all browsing history?';
+
+  @override
+  String get browser_home_favorites => 'Favorite sites';
 
   @override
   String get main_page_analytics => 'Analytics';
@@ -226,6 +248,29 @@ class L10nEn extends L10n {
   String get grid_page_sort_count_desc => 'Least viewed';
 
   @override
+  String get grid_page_sort_rating => 'By rating';
+
+  @override
+  String get grid_page_sort_offline_first => 'Offline first';
+
+  @override
+  String get grid_page_sort_list_name => 'By list name';
+
+  @override
+  String get grid_page_sort_random => 'Random';
+
+  @override
+  String get grid_page_sort_by_cast => 'By cast';
+
+  @override
+  String get grid_page_sort_by_date => 'By date added';
+
+  @override
+  String grid_page_sort_current(String label) {
+    return 'Sort: $label';
+  }
+
+  @override
   String grid_page_items_selected_delete(Object count) {
     return 'Delete $count selected items?';
   }
@@ -280,7 +325,157 @@ class L10nEn extends L10n {
       'Thumbnail will appear after saving';
 
   @override
-  String get detail_page_add_image => 'Add image ★';
+  String get detail_page_add_image => 'Add thumbnail image ★';
+
+  @override
+  String get detail_page_offline => 'Offline';
+
+  @override
+  String get detail_page_offline_downloaded => 'Saved offline';
+
+  @override
+  String get detail_page_offline_confirm_title => 'Save this item for offline?';
+
+  @override
+  String get detail_page_offline_confirm_body =>
+      'The video will be downloaded to this device.\n※Only download videos you own or have permission to save.';
+
+  @override
+  String get detail_page_offline_no_url => 'URL is empty';
+
+  @override
+  String get detail_page_offline_started => 'Download started';
+
+  @override
+  String get detail_page_offline_probing => 'Checking available resolutions…';
+
+  @override
+  String get detail_page_delete_offline_confirm =>
+      'Delete the offline copy of this item?\n(Online playback is not affected)';
+
+  @override
+  String get detail_page_offline_deleted => 'Offline data deleted';
+
+  @override
+  String get consent_page_title => 'Before you begin';
+
+  @override
+  String get consent_page_subtitle =>
+      'Please review and agree to the following before using this app.';
+
+  @override
+  String get consent_page_privacy_title => 'Privacy Policy';
+
+  @override
+  String get consent_page_privacy_body =>
+      'This app handles personal data responsibly. Please review the full policy below.';
+
+  @override
+  String get consent_page_terms_title => 'Terms of Use';
+
+  @override
+  String get consent_page_terms_body =>
+      'Please read the terms that govern your use of this app.';
+
+  @override
+  String get consent_page_ip_summary =>
+      'This app is a general-purpose tool for downloading and offline playback of URLs you enter. You are responsible for complying with copyright and the terms of the source site.';
+
+  @override
+  String get consent_page_agree_checkbox =>
+      'I have read and agree to all of the above';
+
+  @override
+  String get consent_page_agree => 'Agree and start';
+
+  @override
+  String get consent_page_read_more => 'Read full text';
+
+  @override
+  String get settings_page_ip_disclaimer => 'Intellectual property disclaimer';
+
+  @override
+  String get settings_page_ip_disclaimer_body =>
+      'This app is a general-purpose tool that provides download and offline playback for video URLs the user chooses to enter. It is not designed to obtain content from any specific website.\n\nThe user is solely responsible for:\n・Complying with the copyright of the video content and the terms of service of its source\n・Not copying, distributing, publishing, or using the saved content commercially beyond personal use permitted by copyright law\n・Not infringing on third-party copyright, portrait rights, publicity rights, or any other rights\n・Not circumventing technical protection measures on the source site\n\nThe app provider assumes no legal responsibility for any copyright infringement, terms-of-service violation, or other legal issues arising from the user\'s use of this app.\n\nIf in doubt, please refrain from use and check with the copyright holder or content provider. This app operates purely based on user input and does not imply endorsement or affiliation with any particular service.';
+
+  @override
+  String get detail_page_offline_not_direct_video =>
+      'This URL is not a direct link to a video file, so it cannot be saved offline.\n(Page URLs like YouTube are not supported. Please use direct links to mp4/m4v/mov/webm/mkv files.)';
+
+  @override
+  String get detail_page_offline_failed => 'Download failed';
+
+  @override
+  String get download_failed_but_saved =>
+      'URL bookmarked (video file not downloaded)';
+
+  @override
+  String get download_cancel_confirm_title => 'Cancel this download?';
+
+  @override
+  String get download_cancel_confirm_body =>
+      'The in-progress download will be canceled and this task removed. Continue?';
+
+  @override
+  String get detail_page_offline_hls_not_supported =>
+      'This video uses HLS format (.m3u8), which is not supported for offline saving.';
+
+  @override
+  String get browser_video_detected_chip => 'Video detected';
+
+  @override
+  String get browser_video_detected_sheet_title => 'Detected videos';
+
+  @override
+  String get browser_video_detected_sheet_desc => 'Select a video to download.';
+
+  @override
+  String get browser_video_download => 'Download this video';
+
+  @override
+  String get browser_video_download_started => 'Download started';
+
+  @override
+  String get browser_video_download_saved_first =>
+      'Saving the page first, then starting the download';
+
+  @override
+  String get search_result_page_offline => 'Save offline';
+
+  @override
+  String get search_result_page_offline_desc =>
+      'Download this item so you can play it without a network connection.';
+
+  @override
+  String get download_queue_title => 'Downloads';
+
+  @override
+  String get download_clear_finished => 'Clear finished';
+
+  @override
+  String get download_empty => 'No active downloads';
+
+  @override
+  String get download_status_queued => 'Queued';
+
+  @override
+  String get download_status_completed => 'Completed';
+
+  @override
+  String get download_status_failed => 'Failed';
+
+  @override
+  String get download_cancel_all_confirm => 'Cancel all downloads?';
+
+  @override
+  String get download_status_canceled => 'Canceled';
+
+  @override
+  String get download_premium_required_title => 'Premium feature';
+
+  @override
+  String get download_premium_required_body =>
+      'Offline download is available on Premium and Pro plans.';
 
   @override
   String get detail_page_rate => 'Rating';
@@ -459,7 +654,7 @@ class L10nEn extends L10n {
   String get search_page_hint_web_6 => 'e.g., easy dinner recipes';
 
   @override
-  String get search_page_select_site => 'Filter by Site';
+  String get search_page_select_site => 'Favorite Sites';
 
   @override
   String get search_page_select_site_help_title => 'Filter by Site';
@@ -504,6 +699,68 @@ class L10nEn extends L10n {
   @override
   String get search_result_page_url_already_saved =>
       'This URL has already been saved';
+
+  @override
+  String get search_result_page_url_already_saved_offline_prompt =>
+      'Do you want to download this item for offline use?';
+
+  @override
+  String get search_result_page_url_already_saved_and_downloaded =>
+      'This item is already saved and downloaded';
+
+  @override
+  String get download_retry => 'Retry';
+
+  @override
+  String get player_minimize => 'Switch to mini player';
+
+  @override
+  String get player_close => 'Close';
+
+  @override
+  String get player_speed => 'Playback speed';
+
+  @override
+  String player_speed_x(String v) {
+    return '${v}x';
+  }
+
+  @override
+  String get player_speed_custom => 'Custom';
+
+  @override
+  String get player_bookmarks => 'Bookmarks';
+
+  @override
+  String get player_bookmarks_empty => 'No bookmarks yet';
+
+  @override
+  String get browser_video_size => 'Size';
+
+  @override
+  String get browser_video_size_unknown => 'Size unknown';
+
+  @override
+  String get browser_video_quality => 'Quality';
+
+  @override
+  String get browser_tab_max_reached =>
+      'Tab limit reached. Close a tab to open a new one.';
+
+  @override
+  String get browser_tabs_title => 'Tabs';
+
+  @override
+  String get browser_new_tab => 'New tab';
+
+  @override
+  String get offline_quality_title => 'Offline quality';
+
+  @override
+  String get offline_quality_desc => 'Choose the video quality to download';
+
+  @override
+  String get offline_quality_none => 'No offline download';
 
   @override
   String get search_result_page_has_saved => 'Item has been saved';
@@ -681,6 +938,9 @@ class L10nEn extends L10n {
   String get settings_page_theme_color_orange => 'Orange';
 
   @override
+  String get settings_page_theme_color_random => 'Random';
+
+  @override
   String get settings_page_theme_color_green => 'Green';
 
   @override
@@ -699,21 +959,27 @@ class L10nEn extends L10n {
   String get settings_page_thumbnail_visibility => 'Show list thumbnails';
 
   @override
-  String get settings_page_save_status => 'Save status';
+  String get settings_page_save_status => 'Items';
 
   @override
-  String get settings_page_save_count => 'Saved items';
+  String get settings_page_offline_videos => 'Offline videos';
+
+  @override
+  String get settings_page_offline_total_size => 'Offline total size';
+
+  @override
+  String get settings_page_save_count => 'Bookmarks';
 
   @override
   String get settings_page_watch_count => 'Today\'s views';
 
   @override
   String settings_page_watch_ad_today(Object watchedAdsToday) {
-    return '$watchedAdsToday / 3';
+    return '$watchedAdsToday / 5';
   }
 
   @override
-  String get settings_page_watch_ad => 'Watch ad (+5 slots)';
+  String get settings_page_watch_ad => 'Watch ad (+1 slot)';
 
   @override
   String get settings_page_ad_limit_reached => 'Daily ad limit reached';
@@ -737,7 +1003,7 @@ class L10nEn extends L10n {
   String get settings_page_terms => 'Terms of Service (Apple Standard EULA)';
 
   @override
-  String get settings_page_save_count_increased => 'Save limit increased by +5';
+  String get settings_page_save_count_increased => 'Save limit increased by +1';
 
   @override
   String get setting_page_unlimited => 'Unlimited';
@@ -1084,6 +1350,9 @@ class L10nEn extends L10n {
 
   @override
   String get detail_page_ai_no_suggestions => 'No tag suggestions';
+
+  @override
+  String get detail_page_ai_from_library => 'From existing tags';
 
   @override
   String get detail_page_ai_daily_limit_title => 'Daily AI limit reached';

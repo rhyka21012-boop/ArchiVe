@@ -276,7 +276,7 @@ interface MonthlyReportResponse {
  * 今月のアーカイブ活動の AI レポートを生成
  * キャッシュ：同月のレポートは 24 時間再利用
  */
-export const generateMonthlyReport = onCall<{force?: boolean}>(
+export const generateMonthlyReport = onCall<{force?: boolean; year?: number; month?: number}>(
   {
     secrets: [geminiKey],
     maxInstances: 5,
@@ -289,11 +289,26 @@ export const generateMonthlyReport = onCall<{force?: boolean}>(
     const uid = request.auth.uid;
     const force = request.data?.force === true;
 
-    const now = new Date();
-    // 前月を対象にする（月初に前月分のサマリーを表示するため）
-    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const year = prevMonthDate.getFullYear();
-    const month = prevMonthDate.getMonth() + 1;
+    // クライアントから明示的に年月が渡ってきたらそれを使う (端末ローカル時刻ベース)
+    // フォールバック: サーバー時刻 (UTC) の前月
+    let year: number;
+    let month: number; // 1-12
+    const paramYear = request.data?.year;
+    const paramMonth = request.data?.month;
+    if (
+      typeof paramYear === "number" &&
+      typeof paramMonth === "number" &&
+      paramMonth >= 1 &&
+      paramMonth <= 12
+    ) {
+      year = paramYear;
+      month = paramMonth;
+    } else {
+      const now = new Date();
+      const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      year = prevMonthDate.getFullYear();
+      month = prevMonthDate.getMonth() + 1;
+    }
     const reportId = `${year}-${String(month).padStart(2, "0")}`;
 
     const cacheRef = db.doc(`users/${uid}/monthly_reports/${reportId}`);
@@ -323,12 +338,12 @@ export const generateMonthlyReport = onCall<{force?: boolean}>(
       }
     }
 
-    // 前月のアイテムを集計（updatedAt 基準、前月1日〜当月1日未満）
+    // 対象月のアイテムを集計（updatedAt 基準、対象月1日〜翌月1日未満）
     const startOfMonth = admin.firestore.Timestamp.fromDate(
       new Date(year, month - 1, 1),
     );
     const startOfNextMonth = admin.firestore.Timestamp.fromDate(
-      new Date(now.getFullYear(), now.getMonth(), 1),
+      new Date(year, month, 1),
     );
     const itemsCol = db.collection(`users/${uid}/items`);
     const snapshot = await itemsCol

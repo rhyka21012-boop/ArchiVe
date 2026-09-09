@@ -20,6 +20,14 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'activity_service.dart';
+import 'download_queue_provider.dart';
+import 'download_progress_fab.dart';
+import 'offline_quality_picker.dart';
+import 'local_video_player_page.dart';
+import 'mini_player_provider.dart';
+import 'browser_session_provider.dart';
+import 'offline_cleanup.dart';
+import 'video_url_resolver.dart';
 
 import 'view_counter.dart';
 import 'premium_detail.dart';
@@ -295,6 +303,31 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         _startBackgroundThumbnailFetch(widget.url!);
       });
     }
+
+    // ローカル動画パス (オフライン再生用) のキャッシュを初期化
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshLocalVideoCache();
+    });
+    // ダウンロードキューの変化を監視: 完了時はキャッシュ更新、失敗時は通知
+    ref.listenManual<List<DownloadTask>>(downloadQueueProvider, (prev, next) {
+      final url = _urlController.text.trim();
+      if (url.isEmpty) return;
+      final prevList = prev ?? const <DownloadTask>[];
+      // このアイテム宛で「今回 completed / failed に変わった」タスクを検出
+      for (final t in next) {
+        if (t.itemUrl != url) continue;
+        final wasFinished = prevList.any((p) =>
+            p.id == t.id &&
+            (p.status == DownloadStatus.completed ||
+                p.status == DownloadStatus.failed));
+        if (wasFinished) continue;
+        if (t.status == DownloadStatus.completed) {
+          _refreshLocalVideoCache();
+        } else if (t.status == DownloadStatus.failed) {
+          _showDownloadFailedMessage(t.error);
+        }
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final step = ref.read(tutorialStepProvider);
@@ -826,12 +859,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         ),
       ),
       actions: [
-        CircleAppBarIcon(
-          icon: Icons.ios_share,
-          tooltip: L10n.of(context)!.detail_page_share,
-          onPressed: _shareItem,
-          backgroundColor: chipBg,
-        ),
+        _buildDownloadAppBarIcon(chipBg),
         CircleAppBarIcon(
           icon: Icons.open_in_new,
           tooltip: L10n.of(context)!.detail_page_access,
@@ -968,26 +996,36 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         _InfoRowSpec(
           L10n.of(context)!.detail_page_cast_short,
           _castController.text.trim(),
+          tags: _parseHashtags(_castController.text),
         ),
       if (_genreController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_genre_short,
           _genreController.text.trim(),
+          tags: _parseHashtags(_genreController.text),
         ),
       if (_seriesController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_series_short,
           _seriesController.text.trim(),
+          tags: _parseHashtags(_seriesController.text),
         ),
       if (_makerController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_maker_short,
           _makerController.text.trim(),
+          tags: _parseHashtags(_makerController.text),
         ),
       if (_labelController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_label_short,
           _labelController.text.trim(),
+          tags: _parseHashtags(_labelController.text),
+        ),
+      if (_memoController.text.trim().isNotEmpty)
+        _InfoRowSpec(
+          L10n.of(context)!.detail_page_memo,
+          _memoController.text.trim(),
         ),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -1022,15 +1060,24 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       ),
                     ),
                     Expanded(
-                      child: Text(
-                        rows[i].value,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: valueColor,
-                          fontWeight: FontWeight.w600,
-                          height: 1.35,
-                        ),
-                      ),
+                      child: rows[i].tags != null
+                          ? Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (final t in rows[i].tags!)
+                                  _InfoTagChip(label: t, isDark: isDark),
+                              ],
+                            )
+                          : Text(
+                              rows[i].value,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: valueColor,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                              ),
+                            ),
                     ),
                     if (rows[i].trailing != null) ...[
                       const SizedBox(width: 8),
@@ -1129,17 +1176,28 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ? _buildAiTagFab(colorScheme)
                 : null,
             body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [_dominantColor, colorScheme.secondary],
-                ),
-              ),
-              child: SingleChildScrollView(
-                controller: _detailScrollController,
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+              // フォールバック: グラデーション末端色を Scaffold 全体の背景にも敷いて、
+              // スクロール前後やコンテンツ短時にも境目が生まれないようにする
+              color: colorScheme.secondary,
+              child: LayoutBuilder(
+                builder: (context, viewportConstraints) {
+                  return SingleChildScrollView(
+                    controller: _detailScrollController,
+                    child: ConstrainedBox(
+                      // viewport の実測高を必ず確保 → 下部の黒抜け (Scaffold 背景の露出) を防止
+                      constraints: BoxConstraints(
+                        minHeight: viewportConstraints.maxHeight,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [_dominantColor, colorScheme.secondary],
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(16.0),
+                  child: Column(
                   children: [
                     /*
               if ((widget.image ?? _thumbnailUrl) != null) ...[
@@ -1237,33 +1295,42 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                           fit: BoxFit.cover,
                                         ),
 
-                                        /// ⭐ ファビコン（左下）
+                                        /// ⭐ 上端: 前回シークバー (オフライン時のみ)
+                                        _buildOfflineTopBar(),
+
+                                        /// ⭐ ファビコン + オフライン時サイズ (左下)
                                         Positioned(
                                           left: 8,
                                           bottom: 8,
-                                          child: Container(
-                                            padding: const EdgeInsets.all(3),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black26,
-                                                  blurRadius: 4,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(3),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black26,
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
-                                            child: Image.network(
-                                              _getFaviconUrl(
-                                                _urlController.text,
+                                                child: Image.network(
+                                                  _getFaviconUrl(
+                                                    _urlController.text,
+                                                  ),
+                                                  width: 20,
+                                                  height: 20,
+                                                  errorBuilder:
+                                                      (_, __, ___) =>
+                                                          const SizedBox(),
+                                                ),
                                               ),
-                                              width: 20,
-                                              height: 20,
-                                              errorBuilder:
-                                                  (_, __, ___) =>
-                                                      const SizedBox(),
-                                            ),
+                                              _buildOfflineSizeBadge(),
+                                            ],
                                           ),
                                         ),
 
@@ -1423,39 +1490,23 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
                     //],
                     SizedBox(height: 4),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          //ローカル画像追加
-                          if (isEditing) ...[
-                            TextButton.icon(
-                              onPressed: () async {
-                                //プレミアム判定
-                                if (!await PremiumGate.ensurePremium(context))
-                                  return;
-
-                                setState(() {
-                                  _isPremium = true;
-                                });
-                                _isPremium ? _addLocalImage() : null;
-
-                                //_addLocalImage(); //デバッグ用切り替え箇所
-                              },
-                              icon: const Icon(
-                                Icons.add_photo_alternate,
-                                color: Color(0xFFB8860B),
-                              ),
-                              label: Text(
-                                L10n.of(context)!.detail_page_add_image, //画像を追加
-                                style: TextStyle(
-                                  color: Color(0xFFB8860B),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        //ローカル画像追加 (Premium+)
+                        if (isEditing) ...[
+                          _buildPremiumTextButton(
+                            icon: Icons.add_photo_alternate,
+                            label: L10n.of(context)!.detail_page_add_image,
+                            colorScheme: colorScheme,
+                            onPressed: () async {
+                              if (!await PremiumGate.ensurePremium(context))
+                                return;
+                              setState(() => _isPremium = true);
+                              _addLocalImage();
+                            },
+                          ),
+                        ],
                           SizedBox(width: 8),
 
                           //ローカル画像の枚数
@@ -1488,7 +1539,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                               : SizedBox(),
                         ],
                       ),
-                    ),
 
                     SizedBox(height: isEditing ? 10 : 4),
                     if (isEditing) ...[
@@ -1560,6 +1610,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     const SizedBox(height: 70),
                   ],
                 ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -2114,6 +2168,423 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
 
   /// AI タグ提案 FAB（Twitter風：下スクロールで隠す、上で表示）
+  // AppBar 右側のダウンロードアイコン
+  // - 未 DL: download_rounded (押下でダウンロード開始)
+  // - DL 中: downloading + 進捗％ 表示 (押下でキャンセル)
+  // - DL 済: download_done (押下でファイル削除確認)
+  Widget _buildDownloadAppBarIcon(Color chipBg) {
+    final url = _urlController.text.trim();
+    final tasks = ref.watch(downloadQueueProvider);
+    final activeTask = tasks
+        .where((t) =>
+            t.itemUrl == url &&
+            (t.status == DownloadStatus.downloading ||
+                t.status == DownloadStatus.queued))
+        .toList();
+    final isDownloading = activeTask.isNotEmpty;
+    // 完了済みタスクが state に残っていればキャッシュ更新前でも「DL 済」表示
+    final hasCompletedTask = tasks.any((t) =>
+        t.itemUrl == url && t.status == DownloadStatus.completed);
+    final isDownloaded = _hasLocalVideo() || hasCompletedTask;
+
+    if (isDownloading) {
+      final pct = (activeTask.first.progress * 100).round();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Material(
+          color: chipBg,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            // タップでダウンロード状況ボトムシートを表示 (キャンセルは行わない)
+            onTap: () => showDownloadQueueSheet(context),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      value: activeTask.first.progress > 0
+                          ? activeTask.first.progress
+                          : null,
+                      strokeWidth: 2.5,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.black87,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$pct',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return CircleAppBarIcon(
+      icon: isDownloaded ? Icons.download_done : Icons.download_rounded,
+      tooltip: isDownloaded
+          ? L10n.of(context)!.detail_page_offline_downloaded
+          : L10n.of(context)!.detail_page_offline,
+      backgroundColor: chipBg,
+      iconColor: isDownloaded ? Colors.green.shade700 : Colors.black87,
+      onPressed: () async {
+        if (isDownloaded) {
+          await _confirmDeleteLocalVideo();
+        } else {
+          await _handleOfflineDownload();
+        }
+      },
+    );
+  }
+
+  // 現在の URL に対応するローカル動画パス (saved_metadata から取得)
+  String? _lookupLocalVideoPath() {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return null;
+    // 非同期的な prefs 参照は build 中に呼べないので、下記の
+    // ローカルキャッシュを更新する仕組みを持つ
+    return _cachedLocalVideoPath;
+  }
+
+  String? _cachedLocalVideoPath;
+
+  Future<void> _refreshLocalVideoCache() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) {
+      if (_cachedLocalVideoPath != null && mounted) {
+        setState(() => _cachedLocalVideoPath = null);
+      }
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    String? found;
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          found = map['localVideoPath'] as String?;
+          break;
+        }
+      } catch (_) {}
+    }
+    if (mounted && found != _cachedLocalVideoPath) {
+      setState(() => _cachedLocalVideoPath = found);
+    }
+  }
+
+  bool _hasLocalVideo() {
+    final p = _lookupLocalVideoPath();
+    return p != null && p.isNotEmpty && File(p).existsSync();
+  }
+
+  Future<void> _confirmDeleteLocalVideo() async {
+    final l = L10n.of(context)!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text(l.detail_page_offline_downloaded),
+        content: Text(l.detail_page_delete_offline_confirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            child: Text(l.delete),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final url = _urlController.text.trim();
+    // ファイル削除 + offline_pos_/offline_dur_ prefs も一括で除去
+    if (url.isNotEmpty) {
+      await OfflineCleanup.forUrls([url]);
+    }
+    // prefs から localVideoPath 等のメタも除去 (アイテム自体は残す)
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    final updated = list.map((s) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          map.remove('localVideoPath');
+          map.remove('localVideoSize');
+          map.remove('localVideoDownloadedAt');
+        }
+        return jsonEncode(map);
+      } catch (_) {
+        return s;
+      }
+    }).toList();
+    await prefs.setStringList('saved_metadata', updated);
+    // キュー内の completed タスクも除去 (アイコンが「DL 済」判定に残らないように)
+    ref.read(downloadQueueProvider.notifier).clearCompletedForItem(url);
+    if (mounted) {
+      setState(() => _cachedLocalVideoPath = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.detail_page_offline_deleted),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showDownloadFailedMessage(String? error) {
+    if (!mounted) return;
+    final l = L10n.of(context)!;
+    final String msg;
+    switch (error) {
+      case 'NOT_DIRECT_VIDEO_URL':
+        msg = l.detail_page_offline_not_direct_video;
+        break;
+      case 'HLS_NOT_SUPPORTED':
+        msg = l.detail_page_offline_hls_not_supported;
+        break;
+      default:
+        msg = l.detail_page_offline_failed;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  /// オフライン動画のとき、サムネイル上端に前回シークバーを表示。
+  /// キャッシュされた `_cachedLocalVideoPath` (存在) + prefs の位置/duration を参照。
+  Widget _buildOfflineTopBar() {
+    if (!_hasLocalVideo()) return const SizedBox.shrink();
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return const SizedBox.shrink();
+    return FutureBuilder<Map<String, int?>>(
+      future: _loadOfflineProgress(url),
+      builder: (_, snap) {
+        final pos = snap.data?['pos'];
+        final dur = snap.data?['dur'];
+        if (pos == null || dur == null || dur <= 0) {
+          return const SizedBox.shrink();
+        }
+        final ratio = (pos / dur).clamp(0.0, 1.0);
+        return Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SizedBox(
+            height: 3,
+            child: Stack(
+              children: [
+                Container(color: Colors.black.withValues(alpha: 0.35)),
+                FractionallySizedBox(
+                  widthFactor: ratio,
+                  child: Container(color: Colors.redAccent),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOfflineSizeBadge() {
+    if (!_hasLocalVideo()) return const SizedBox.shrink();
+    final url = _urlController.text.trim();
+    return FutureBuilder<int?>(
+      future: _loadOfflineSize(url),
+      builder: (_, snap) {
+        final s = snap.data;
+        if (s == null || s <= 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _formatSize(s),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Map<String, int?>> _loadOfflineProgress(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'pos': prefs.getInt('offline_pos_$url'),
+      'dur': prefs.getInt('offline_dur_$url'),
+    };
+  }
+
+  Future<int?> _loadOfflineSize(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          return map['localVideoSize'] as int?;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)}KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(1)}MB';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)}GB';
+  }
+
+  Future<void> _handleOfflineDownload() async {
+    final l = L10n.of(context)!;
+    final url = _urlController.text.trim();
+    if (url.isEmpty) {
+      _showMessage(l.detail_page_offline_no_url);
+      return;
+    }
+    // 動画ダウンロードは無料化 (Premium ゲート撤去)。広告表示は継続。
+
+    // 権利/EULA 確認 (「詳細を読む」で IP 免責事項の全文を表示)
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text(l.detail_page_offline_confirm_title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.detail_page_offline_confirm_body),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () async {
+                  await showDialog<void>(
+                    context: dctx,
+                    builder: (dctx2) => AlertDialog(
+                      title: Text(l.settings_page_ip_disclaimer,
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold)),
+                      content: SingleChildScrollView(
+                        child: Text(
+                          l.settings_page_ip_disclaimer_body,
+                          style: const TextStyle(fontSize: 12, height: 1.6),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dctx2),
+                          child: Text(l.close),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: Text(l.consent_page_read_more),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            child: Text(l.ok),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    // 実際にダウンロード可能な解像度を先に検出 (最大 15 秒でタイムアウト)
+    // 検出中はローディングダイアログを表示 (キャンセル可)
+    final probeFuture = VideoUrlResolver.probeAvailableHeights(url);
+    final probingDialog = showDialog<Set<int>?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dctx) {
+        // Future 完了で自動で閉じる
+        probeFuture.whenComplete(() {
+          if (Navigator.of(dctx).canPop()) Navigator.pop(dctx);
+        });
+        return AlertDialog(
+          content: Row(
+            children: [
+              const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: 16),
+              Expanded(child: Text(l.detail_page_offline_probing)),
+            ],
+          ),
+        );
+      },
+    );
+    await probingDialog;
+    if (!mounted) return;
+    final availableHeights = await probeFuture;
+
+    // 解像度選択 (初期選択なし)
+    final height = await showOfflineQualitySheet(
+      context,
+      initial: null,
+      showNoneOption: false,
+      availableHeights: availableHeights,
+    );
+    if (!mounted) return;
+    // ボトムシートを閉じただけ (キャンセル) の場合は何もしない
+    // 明示的に「なし」を選択した場合も何もしない (Sheet 実装上区別不可のため
+    // 「開始しない」= どちらでも中止で問題ない)
+    if (height == null) return;
+
+    // キュー投入
+    await ref.read(downloadQueueProvider.notifier).start(
+          url: url,
+          title: _titleController.text.trim().isNotEmpty
+              ? _titleController.text.trim()
+              : url,
+          itemUrl: url,
+          preferredHeight: height,
+        );
+    if (mounted) _showMessage(l.detail_page_offline_started);
+    // 広告はダウンロードが実際に downloading 状態に遷移したタイミングで
+    // main_page 側の listener が発火する (失敗した DL は広告カウントに含めない)
+  }
+
   Widget _buildAiTagFab(ColorScheme colorScheme) {
     const tealDeep = Color(0xFF00695C);
     const tealLight = Color(0xFF26A69A);
@@ -2285,11 +2756,89 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     // ignore: unawaited_futures
     ActivityService.incrementAiSuggestCount();
 
-    if (tags.isEmpty) {
+    // AI 提案が空でも、既存タグからの候補を出せる場合はダイアログを開く
+    final existing = await _loadExistingTagsByCategory();
+    if (!mounted) return;
+    final hasAny = !tags.isEmpty ||
+        existing.values.any((set) => set.isNotEmpty);
+    if (!hasAny) {
       _showMessage(L10n.of(context)!.detail_page_ai_no_suggestions);
       return;
     }
-    await _showAiTagSuggestionDialog(tags);
+    await _showAiTagSuggestionDialog(tags, existing);
+  }
+
+  /// saved_metadata から全アイテムのカテゴリ別タグ集合を収集
+  Future<Map<String, Set<String>>> _loadExistingTagsByCategory() async {
+    final items = await _loadItemsTagsByCategory();
+    final result = <String, Set<String>>{
+      'cast': <String>{},
+      'genre': <String>{},
+      'series': <String>{},
+      'maker': <String>{},
+      'label': <String>{},
+    };
+    for (final item in items) {
+      for (final k in result.keys) {
+        result[k]!.addAll(item[k] ?? const <String>{});
+      }
+    }
+    return result;
+  }
+
+  /// saved_metadata を「アイテム毎のカテゴリ別タグ集合」として返す
+  /// (共起計算のため 1 アイテム単位で保持)
+  Future<List<Map<String, Set<String>>>> _loadItemsTagsByCategory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    const keys = ['cast', 'genre', 'series', 'maker', 'label'];
+    final result = <Map<String, Set<String>>>[];
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        final byCat = <String, Set<String>>{
+          for (final k in keys)
+            k: _parseHashtags(map[k]?.toString() ?? '').toSet(),
+        };
+        result.add(byCat);
+      } catch (_) {}
+    }
+    return result;
+  }
+
+  /// 「共起」ランキングを算出:
+  /// 現在の作品のタグ + AI 提案タグを「アンカータグ」として、
+  /// アンカーと同じアイテムに登場した既存タグの回数をカウントする。
+  /// カテゴリを跨いで共起を数える (キャスト A とジャンル B が一緒に使われている等)。
+  /// 戻り値: {cat: {tag: count}} — 0 のタグは含めない。
+  Future<Map<String, Map<String, int>>> _computeCooccurrence({
+    required Map<String, Set<String>> currentTagsByCat,
+    required SuggestedTags aiTags,
+  }) async {
+    final anchors = <String>{
+      ...currentTagsByCat.values.expand((s) => s),
+      ...aiTags.cast,
+      ...aiTags.genre,
+      ...aiTags.series,
+      ...aiTags.maker,
+      ...aiTags.label,
+    };
+    const keys = ['cast', 'genre', 'series', 'maker', 'label'];
+    final counts = <String, Map<String, int>>{for (final k in keys) k: {}};
+    if (anchors.isEmpty) return counts;
+    final items = await _loadItemsTagsByCategory();
+    for (final item in items) {
+      // アイテムが持つ全タグ (カテゴリ横断) にアンカーが含まれるか
+      final allItemTags = item.values.expand((s) => s).toSet();
+      if (!allItemTags.any(anchors.contains)) continue;
+      // 該当したアイテムのカテゴリ別タグを +1
+      for (final k in keys) {
+        for (final t in (item[k] ?? const <String>{})) {
+          counts[k]![t] = (counts[k]![t] ?? 0) + 1;
+        }
+      }
+    }
+    return counts;
   }
 
   /// 1日 1回の上限に達した時の Pro 誘導ダイアログ
@@ -2329,20 +2878,54 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     }
   }
 
-  Future<void> _showAiTagSuggestionDialog(SuggestedTags tags) async {
+  Future<void> _showAiTagSuggestionDialog(
+    SuggestedTags tags,
+    Map<String, Set<String>> existingByCategory,
+  ) async {
     final l = L10n.of(context)!;
-    // カテゴリごとの提案タグとキー・コントローラのマップ
-    final sections = <_AiTagSection>[
-      _AiTagSection(l.detail_page_cast_short, tags.cast, _castController),
-      _AiTagSection(l.detail_page_genre_short, tags.genre, _genreController),
-      _AiTagSection(l.detail_page_series_short, tags.series, _seriesController),
-      _AiTagSection(l.detail_page_maker_short, tags.maker, _makerController),
-      _AiTagSection(l.detail_page_label_short, tags.label, _labelController),
-    ].where((s) => s.suggestions.isNotEmpty).toList();
+    // 現在の作品のタグ (これは既存候補から除外する) と、
+    // AI 提案タグを結合してユニークセットで扱う
+    final currentTagsByCat = <String, Set<String>>{
+      'cast': _parseHashtags(_castController.text).toSet(),
+      'genre': _parseHashtags(_genreController.text).toSet(),
+      'series': _parseHashtags(_seriesController.text).toSet(),
+      'maker': _parseHashtags(_makerController.text).toSet(),
+      'label': _parseHashtags(_labelController.text).toSet(),
+    };
 
-    // 初期は全て採用 (true) にしておき、ユーザーは外したいものだけタップ
+    // 「既存ライブラリからの候補」を共起でランキング (関連性の高い順)
+    final coOccur = await _computeCooccurrence(
+      currentTagsByCat: currentTagsByCat,
+      aiTags: tags,
+    );
+    if (!mounted) return;
+
+    // カテゴリごとの提案タグとキー・コントローラのマップ
+    // (AI 提案 + 既存ライブラリのタグ、重複除去)
+    final sections = <_AiTagSection>[
+      _AiTagSection(l.detail_page_cast_short, tags.cast,
+          existingByCategory['cast'] ?? {}, currentTagsByCat['cast']!,
+          coOccur['cast'] ?? const {}, _castController),
+      _AiTagSection(l.detail_page_genre_short, tags.genre,
+          existingByCategory['genre'] ?? {}, currentTagsByCat['genre']!,
+          coOccur['genre'] ?? const {}, _genreController),
+      _AiTagSection(l.detail_page_series_short, tags.series,
+          existingByCategory['series'] ?? {}, currentTagsByCat['series']!,
+          coOccur['series'] ?? const {}, _seriesController),
+      _AiTagSection(l.detail_page_maker_short, tags.maker,
+          existingByCategory['maker'] ?? {}, currentTagsByCat['maker']!,
+          coOccur['maker'] ?? const {}, _makerController),
+      _AiTagSection(l.detail_page_label_short, tags.label,
+          existingByCategory['label'] ?? {}, currentTagsByCat['label']!,
+          coOccur['label'] ?? const {}, _labelController),
+    ]
+        .where((s) =>
+            s.aiSuggestions.isNotEmpty || s.librarySuggestions.isNotEmpty)
+        .toList();
+
+    // 初期選択: AI 提案は全部選択、既存ライブラリタグは選択しない
     final selected = <String, Set<String>>{
-      for (final s in sections) s.label: {...s.suggestions},
+      for (final s in sections) s.label: {...s.aiSuggestions},
     };
 
     final applied = await showDialog<bool>(
@@ -2382,48 +2965,128 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           ),
                         ),
                       ),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: section.suggestions.map((tag) {
-                          final isOn =
-                              selected[section.label]!.contains(tag);
-                          return FilterChip(
-                            label: Text('#$tag'),
-                            selected: isOn,
-                            showCheckmark: false,
-                            visualDensity: const VisualDensity(
-                              horizontal: -1,
-                              vertical: -1,
-                            ),
-                            labelStyle: TextStyle(
-                              color: isOn
-                                  ? Colors.white
-                                  : colorScheme.onSurface
-                                      .withValues(alpha: 0.75),
-                              fontWeight: isOn
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                            selectedColor: colorScheme.primary,
-                            backgroundColor: colorScheme.onSurface
-                                .withValues(alpha: 0.08),
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            onSelected: (v) {
-                              setDlg(() {
-                                if (v) {
-                                  selected[section.label]!.add(tag);
-                                } else {
-                                  selected[section.label]!.remove(tag);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
+                      // AI 提案タグ (紫系: プライマリ色で選択済み)
+                      if (section.aiSuggestions.isNotEmpty)
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: section.aiSuggestions.map((tag) {
+                            final isOn =
+                                selected[section.label]!.contains(tag);
+                            return FilterChip(
+                              avatar: Icon(
+                                Icons.auto_awesome,
+                                size: 14,
+                                color: isOn
+                                    ? Colors.white
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.55),
+                              ),
+                              label: Text('#$tag'),
+                              selected: isOn,
+                              showCheckmark: false,
+                              visualDensity: const VisualDensity(
+                                horizontal: -1,
+                                vertical: -1,
+                              ),
+                              labelStyle: TextStyle(
+                                color: isOn
+                                    ? Colors.white
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.75),
+                                fontWeight: isOn
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                              ),
+                              selectedColor: colorScheme.primary,
+                              backgroundColor: colorScheme.onSurface
+                                  .withValues(alpha: 0.08),
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              onSelected: (v) {
+                                setDlg(() {
+                                  if (v) {
+                                    selected[section.label]!.add(tag);
+                                  } else {
+                                    selected[section.label]!.remove(tag);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      // 既存ライブラリからの候補 (緑系: 未選択が既定)
+                      if (section.librarySuggestions.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.library_books_outlined,
+                                size: 12,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                L10n.of(context)!
+                                    .detail_page_ai_from_library,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: section.librarySuggestions.map((tag) {
+                            final isOn =
+                                selected[section.label]!.contains(tag);
+                            return FilterChip(
+                              label: Text('#$tag'),
+                              selected: isOn,
+                              showCheckmark: false,
+                              visualDensity: const VisualDensity(
+                                horizontal: -1,
+                                vertical: -1,
+                              ),
+                              labelStyle: TextStyle(
+                                color: isOn
+                                    ? Colors.white
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                fontWeight: isOn
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                              selectedColor: Colors.green.shade600,
+                              backgroundColor: colorScheme.onSurface
+                                  .withValues(alpha: 0.05),
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              onSelected: (v) {
+                                setDlg(() {
+                                  if (v) {
+                                    selected[section.label]!.add(tag);
+                                  } else {
+                                    selected[section.label]!.remove(tag);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                     ],
                   ],
@@ -2581,6 +3244,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       final savedList = prefs.getStringList('saved_metadata') ?? [];
       final rankingList = prefs.getStringList('saved_ranking') ?? [];
 
+      // オフライン動画ファイル + 位置 prefs を先に削除
+      if (widget.url != null && widget.url!.isNotEmpty) {
+        await OfflineCleanup.forUrls([widget.url!]);
+      }
+
       final updatedList =
           savedList.where((item) {
             final map = jsonDecode(item) as Map<String, dynamic>;
@@ -2678,23 +3346,49 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     await Share.share(text);
   }
 
+  /// Premium+ 機能のトリガーボタン。
+  /// - 無料ユーザー: 金色 (`0xFFB8860B`) + 鍵アイコンを追記
+  /// - Premium+: colorScheme.primary の通常表示
+  Widget _buildPremiumTextButton({
+    required IconData icon,
+    required String label,
+    required ColorScheme colorScheme,
+    required VoidCallback onPressed,
+  }) {
+    final locked = !_isPremium;
+    final color = locked ? const Color(0xFFB8860B) : colorScheme.primary;
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: color, size: 18),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 12),
+          ),
+          if (locked) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.lock, color: color, size: 12),
+          ],
+        ],
+      ),
+    );
+  }
+
   Future<void> _launchUrl() async {
     final url = _urlController.text.trim();
-
-    if (url.isNotEmpty && await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.detail_page_url_unable)),
+      );
       return;
     }
-
-    final encodedUrl = Uri.encodeFull(url);
-    if (await canLaunch(encodedUrl)) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(L10n.of(context)!.detail_page_url_unable)),
-    );
+    // 外部ブラウザではなくアプリ内ブラウザで開く
+    ref.read(browserSessionProvider.notifier).requestOpen(
+          url,
+          title: _titleController.text.trim(),
+        );
   }
 
   //============
@@ -3114,6 +3808,25 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         .whereType<Map<String, dynamic>>()
         .toList();
 
+    // 該当アイテムにローカル動画パスがあればオフライン再生を優先
+    final currentItem = allItems.firstWhere(
+      (item) => item['url'] == url,
+      orElse: () => <String, dynamic>{},
+    );
+    final localPath = currentItem['localVideoPath'] as String?;
+    if (localPath != null &&
+        localPath.isNotEmpty &&
+        File(localPath).existsSync()) {
+      if (!mounted) return;
+      // GlobalPlayerLayer で再生開始 (Navigator.push 不使用)
+      await ref.read(miniPlayerProvider.notifier).start(
+            filePath: localPath,
+            title: currentItem['title']?.toString() ?? '',
+            itemUrl: url,
+          );
+      return;
+    }
+
     final List<Map<String, dynamic>> queue;
     if (widget.listName != null && widget.listName!.isNotEmpty) {
       final filtered = allItems
@@ -3127,17 +3840,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     final index = queue.indexWhere((item) => item['url'] == url);
     final safeIndex = index >= 0 ? index : 0;
     if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SearchResultPage(
-          initialUrl: queue[safeIndex]['url']?.toString() ?? url,
+    // オンライン動画: 既存のアプリ内ブラウザに新規タブとして開く
+    ref.read(browserSessionProvider.notifier).requestOpen(
+          queue[safeIndex]['url']?.toString() ?? url,
           title: queue[safeIndex]['title']?.toString() ?? '',
           playlistItems: queue,
           playlistIndex: safeIndex,
-        ),
-      ),
-    );
+        );
   }
 }
 
@@ -3182,14 +3891,105 @@ class _InfoRowSpec {
   final String label;
   final String value;
   final Widget? trailing;
-  const _InfoRowSpec(this.label, this.value, {this.trailing});
+  /// タグ表示にする場合に指定。null の場合は [value] を Text として表示。
+  final List<String>? tags;
+  const _InfoRowSpec(
+    this.label,
+    this.value, {
+    this.trailing,
+    this.tags,
+  });
+}
+
+/// 閲覧モードの情報カードで、出演/ジャンル/シリーズ/メーカー/レーベル値を
+/// チップ表示するための小さなチップ。カードの枠デザインは変えず、
+/// テキスト部分のみを置き換える用途。
+class _InfoTagChip extends StatelessWidget {
+  final String label;
+  final bool isDark;
+  const _InfoTagChip({required this.label, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.grey.shade200;
+    final fg = isDark ? Colors.white : Colors.black87;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        '#$label',
+        style: TextStyle(
+          color: fg,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
 }
 
 class _AiTagSection {
   final String label;
-  final List<String> suggestions;
+  /// AI が提案したタグ (現在の作品に無いもの)
+  final List<String> aiSuggestions;
+  /// ユーザーのライブラリ内に存在する既存タグ
+  /// - 現在の作品/AI 提案タグと重複するものを除外
+  /// - 現在タグ + AI 提案タグを「アンカー」とし、同じ作品に共起した回数の多い順にソート
+  /// - 共起 0 のタグは非表示 (アンカーが無い場合はアルファベット順で全件)
+  /// - 最大 [_maxLibrarySuggestions] 件まで
+  final List<String> librarySuggestions;
   final TextEditingController controller;
-  const _AiTagSection(this.label, this.suggestions, this.controller);
+
+  static const int _maxLibrarySuggestions = 15;
+
+  _AiTagSection(
+    this.label,
+    List<String> ai,
+    Set<String> librarySet,
+    Set<String> currentTags,
+    Map<String, int> coOccurCounts,
+    this.controller,
+  )   : aiSuggestions = ai.where((t) => !currentTags.contains(t)).toList(),
+        librarySuggestions = _buildLibrarySuggestions(
+          librarySet: librarySet,
+          currentTags: currentTags,
+          aiTags: ai,
+          coOccurCounts: coOccurCounts,
+        );
+
+  static List<String> _buildLibrarySuggestions({
+    required Set<String> librarySet,
+    required Set<String> currentTags,
+    required List<String> aiTags,
+    required Map<String, int> coOccurCounts,
+  }) {
+    final candidates = librarySet
+        .where((t) => !currentTags.contains(t) && !aiTags.contains(t))
+        .toList();
+    final hasAnchor = coOccurCounts.isNotEmpty;
+    if (hasAnchor) {
+      // アンカーと共起したことのあるタグだけを残し、共起回数の多い順にソート
+      final ranked = candidates
+          .where((t) => (coOccurCounts[t] ?? 0) > 0)
+          .toList()
+        ..sort((a, b) {
+          final ca = coOccurCounts[a] ?? 0;
+          final cb = coOccurCounts[b] ?? 0;
+          if (ca != cb) return cb.compareTo(ca);
+          return a.compareTo(b);
+        });
+      return ranked.take(_maxLibrarySuggestions).toList();
+    }
+    // アンカーが 1 個も無い場合 (新規作品 + AI 提案空) はアルファベット順で最大件数まで
+    candidates.sort();
+    return candidates.take(_maxLibrarySuggestions).toList();
+  }
 }
 
 class _CopyIconButton extends StatelessWidget {

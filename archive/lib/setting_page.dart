@@ -1,6 +1,7 @@
 import 'home_tab_index_provider.dart';
 import 'list_tab_index_provider.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -367,13 +368,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final watchedAdsToday = ref.watch(adBadgeProvider);
     // Premium/Pro 加入者には赤バッジ非表示
-    final showAdBadge = watchedAdsToday < 3 && !_isPremium && !_isPro;
+    final showAdBadge =
+        watchedAdsToday < kDailyAdWatchLimit && !_isPremium && !_isPro;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
     final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
-    final selectedColor = ref.watch(themeColorProvider);
+    // 設定 UI では「ユーザーが選んだ値」= saved を表示 (random 選択時は "random" のまま)
+    final selectedColor = ref.watch(themeColorSavedProvider);
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -464,7 +467,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    // 保存数 + プログレスバー
+                    // 保存数 + プログレスバー (オフライン分を色分けした 2 セグメント)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -487,20 +490,68 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: maxSaveLimit == 999999
-                            ? 1.0
-                            : (maxSaveLimit == 0
-                                ? 0
-                                : (currentCount / maxSaveLimit).clamp(0, 1)),
-                        minHeight: 6,
-                        backgroundColor:
-                            colorScheme.onSurface.withValues(alpha: 0.08),
-                        valueColor:
-                            AlwaysStoppedAnimation(colorScheme.primary),
-                      ),
+                    _buildSegmentedSaveBar(colorScheme),
+                    const SizedBox(height: 6),
+                    // バー凡例: オフライン vs 全体
+                    Row(
+                      children: [
+                        _legendDot(Colors.green.shade600),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${L10n.of(context)!.settings_page_offline_videos} ($_offlineCount)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _legendDot(colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${L10n.of(context)!.settings_page_save_count} (${(currentCount - _offlineCount).clamp(0, currentCount)})',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // オフライン動画: 総容量のみ (件数はバー凡例に移動)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.download_done,
+                              size: 14,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.55),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              L10n.of(context)!
+                                  .settings_page_offline_total_size,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.55),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          _formatBytes(_offlineTotalBytes),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -537,7 +588,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              onTap: watchedAdsToday >= 3
+                              onTap: watchedAdsToday >= kDailyAdWatchLimit
                                   ? null
                                   : () async {
                                       await _showRewardedAd();
@@ -550,7 +601,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                   child: Text(
                                     L10n.of(context)!.settings_page_watch_ad,
                                     style: TextStyle(
-                                      color: watchedAdsToday >= 3
+                                      color: watchedAdsToday >= kDailyAdWatchLimit
                                           ? colorScheme.onSurface
                                               .withValues(alpha: 0.4)
                                           : (isDark
@@ -569,7 +620,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         ],
                       ),
                     ),
-                    if (watchedAdsToday >= 3) ...[
+                    if (watchedAdsToday >= kDailyAdWatchLimit) ...[
                       const SizedBox(height: 8),
                       Text(
                         L10n.of(context)!.settings_page_ad_limit_reached,
@@ -837,6 +888,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     }
                   },
                 ),
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_ip_disclaimer,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () => _showIpDisclaimerDialog(context, colorScheme),
+                ),
               ],
             ),
           ),
@@ -872,6 +931,33 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ],
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  /// 知的財産権免責事項ダイアログ
+  Future<void> _showIpDisclaimerDialog(
+      BuildContext context, ColorScheme colorScheme) {
+    return showDialog(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Text(
+          L10n.of(context)!.settings_page_ip_disclaimer,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            L10n.of(context)!.settings_page_ip_disclaimer_body,
+            style: const TextStyle(fontSize: 12, height: 1.6),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx),
+            child: Text(L10n.of(context)!.ok),
+          ),
         ],
       ),
     );
@@ -1215,7 +1301,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         final prefs = await SharedPreferences.getInstance();
 
         setState(() {
-          extraSaveLimit += 5;
+          extraSaveLimit += 1;
         });
 
         await prefs.setInt('extra_save_limit', extraSaveLimit);
@@ -1248,14 +1334,87 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     return 100 + extraSaveLimit;
   }
 
-  //保存作品数カウント
+  //保存作品数カウント + オフライン動画の数/総容量
   Future<void> _countSavedItems() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList('saved_metadata') ?? [];
 
+    int offlineCount = 0;
+    int offlineTotalBytes = 0;
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        final path = map['localVideoPath'] as String?;
+        if (path == null || path.isEmpty) continue;
+        if (!File(path).existsSync()) continue;
+        offlineCount++;
+        final size = map['localVideoSize'];
+        if (size is int) offlineTotalBytes += size;
+      } catch (_) {}
+    }
+
     setState(() {
       currentCount = list.length;
+      _offlineCount = offlineCount;
+      _offlineTotalBytes = offlineTotalBytes;
     });
+  }
+
+  int _offlineCount = 0;
+  int _offlineTotalBytes = 0;
+
+  /// オフライン + 通常保存を色分けした 2 セグメント保存数バー
+  Widget _buildSegmentedSaveBar(ColorScheme cs) {
+    final unlimited = maxSaveLimit == 999999;
+    // 分母 (unlimited は current 全部を 100% として扱う)
+    final denom = unlimited
+        ? (currentCount == 0 ? 1 : currentCount)
+        : (maxSaveLimit == 0 ? 1 : maxSaveLimit);
+    final offlineRatio = (_offlineCount / denom).clamp(0.0, 1.0);
+    final totalRatio = (currentCount / denom).clamp(0.0, 1.0);
+    // オンライン (=通常保存) 分 = 全体 - オフライン
+    final onlineRatio = (totalRatio - offlineRatio).clamp(0.0, 1.0);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        height: 6,
+        color: cs.onSurface.withValues(alpha: 0.08),
+        child: Row(
+          children: [
+            Expanded(
+              flex: (offlineRatio * 1000).round(),
+              child: Container(color: Colors.green.shade600),
+            ),
+            Expanded(
+              flex: (onlineRatio * 1000).round(),
+              child: Container(color: cs.primary),
+            ),
+            // 残りの空きスペース (flex を残す)
+            Expanded(
+              flex: ((1.0 - totalRatio) * 1000).round(),
+              child: const SizedBox(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _legendDot(Color color) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)}KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(1)}MB';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)}GB';
   }
 
   //保存枠を再読み込み

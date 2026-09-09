@@ -5,6 +5,7 @@ import 'auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'login_page.dart';
 import 'main.dart';
+import 'purchase_success_confetti.dart';
 
 enum PurchaseTier { free, premium, pro }
 
@@ -148,6 +149,8 @@ class _PurchasePageState extends State<PurchasePage>
       final info = await Purchases.getCustomerInfo();
       if (info.entitlements.all[entitlementId]?.isActive ?? false) {
         if (!mounted) return;
+        showPurchaseSuccessConfetti(context,
+            isPro: tier == PurchaseTier.pro);
         await _completeDialog(colorScheme);
         if (mounted) AppRestart.restart(context);
       }
@@ -200,6 +203,9 @@ class _PurchasePageState extends State<PurchasePage>
               (info.entitlements.all['Pro Plan']?.isActive ?? false);
       if (!mounted) return;
       if (hasAny) {
+        final restoredPro =
+            info.entitlements.all['Pro Plan']?.isActive ?? false;
+        showPurchaseSuccessConfetti(context, isPro: restoredPro);
         await _completeDialog(colorScheme);
         if (mounted) AppRestart.restart(context);
       } else {
