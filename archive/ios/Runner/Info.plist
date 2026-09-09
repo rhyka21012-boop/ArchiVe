@@ -52,6 +52,14 @@
 	</dict>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>アプリの品質向上や最適な広告表示のために使用します。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>アプリ内ブラウザで音声を利用するウェブページを表示する際に必要になる場合があります。マイクを直接使用することはありません。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>アプリ内ブラウザでカメラを利用するウェブページを表示する際、および作品のサムネイル画像を撮影する際に使用します。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>作品のサムネイル画像をフォトライブラリから選択する際に使用します。</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ダウンロードした画像などをフォトライブラリに保存する際に使用します。</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIDeviceFamily</key>
