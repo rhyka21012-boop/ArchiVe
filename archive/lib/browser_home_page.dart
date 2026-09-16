@@ -766,8 +766,100 @@ class _BrowserHomeBodyState extends ConsumerState<BrowserHomeBody> {
             ],
             faviconOf: _faviconUrl,
             onTap: (e) => widget.onOpenUrl(e.url),
+            onLongPress: (e, i) =>
+                _showFavoriteActionSheet(favorites[i], i),
           ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  void _showFavoriteActionSheet(Map<String, String> site, int index) {
+    final l = L10n.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cs.secondary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.open_in_browser),
+              title: Text(l.search_page_open_site),
+              onTap: () {
+                Navigator.pop(bctx);
+                widget.onOpenUrl(site['url'] ?? '');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(l.modify),
+              onTap: () async {
+                Navigator.pop(bctx);
+                await _showEditFavoriteDialog(site, index);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: Text(
+                l.delete,
+                style: const TextStyle(color: Colors.red),
+              ),
+              onTap: () {
+                ref.read(favoriteSitesProvider.notifier).remove(index);
+                Navigator.pop(bctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditFavoriteDialog(
+      Map<String, String> site, int index) async {
+    final l = L10n.of(context)!;
+    final titleCtrl = TextEditingController(text: site['title'] ?? '');
+    final urlCtrl = TextEditingController(text: site['url'] ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text(l.modify),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(labelText: l.title),
+            ),
+            TextField(
+              controller: urlCtrl,
+              decoration: const InputDecoration(labelText: 'URL'),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(favoriteSitesProvider.notifier).update(
+                    index,
+                    titleCtrl.text.trim(),
+                    urlCtrl.text.trim(),
+                  );
+              Navigator.pop(dctx);
+            },
+            child: Text(l.ok),
+          ),
         ],
       ),
     );

@@ -773,8 +773,9 @@ class _MainPageState extends ConsumerState<MainPage>
 
       // Premium 限定（gold）解除時、または Pro 限定（teal）解除時のみ既定に戻す
       // その他のカラーは無料でも変更可能なので保持
+      // Pro プランは Premium の全機能を含むので Premium 限定カラーはリセットしない
       final currentColor = ref.read(themeColorProvider);
-      if (isPremiumOnlyThemeColor(currentColor) && !isPremium) {
+      if (isPremiumOnlyThemeColor(currentColor) && !isPremium && !isPro) {
         await ref
             .read(themeColorProvider.notifier)
             .setColor(ThemeColorType.orange);

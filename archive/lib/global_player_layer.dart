@@ -704,6 +704,42 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
     );
   }
 
+  /// 再生速度ピルボタン (現在の速度を表示、タップで既存の速度ピッカー呼出)
+  /// 高さは _circleBtn (40) と同じにして ⋮ と同一ラインに揃える。
+  Widget _speedPillBtn({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.black45,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.speed, size: 18, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFullScreen(VideoPlayerController c, MiniPlayerState state) {
     final l = L10n.of(context)!;
     final aspect =
@@ -942,6 +978,18 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
                   } else {
                     _scheduleHideFull();
                   }
+                },
+              ),
+            ),
+            // ⋮ と同じ高さの左端に「再生速度」ピル (第1階層に露出)
+            Positioned(
+              top: 52,
+              left: 12,
+              child: _speedPillBtn(
+                label: l.player_speed_x(_fmtSpeed(_speed)),
+                onTap: () async {
+                  setState(() => _showPlayerMenu = false);
+                  await _pickSpeed(c);
                 },
               ),
             ),

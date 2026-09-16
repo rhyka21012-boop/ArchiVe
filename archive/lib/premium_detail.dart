@@ -33,7 +33,12 @@ class PremiumGate {
   static Future<bool> _checkSubscriptionStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all[entitlementId]?.isActive ?? false;
+      // Pro プランは Premium の全機能を含むので、どちらの entitlement でも通す
+      final isPremium =
+          customerInfo.entitlements.all[entitlementId]?.isActive ?? false;
+      final isPro =
+          customerInfo.entitlements.all['Pro Plan']?.isActive ?? false;
+      return isPremium || isPro;
     } catch (e) {
       debugPrint('Subscription check error: $e');
       return false;

@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 2.2.2+57
+version: 2.2.3+58
 
 environment:
   sdk: ^3.7.2
@@ -95,6 +95,7 @@ flutter:
     - assets/tutorial/english04.png
     - assets/tutorial/english05.png
     - assets/tutorial/english06.png
+    - assets/subscription/
 
   fonts:
     - family: NotoSerifJP

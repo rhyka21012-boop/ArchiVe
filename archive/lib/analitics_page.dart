@@ -8,6 +8,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'premium_detail.dart';
+import 'subscription_prompt_dialog.dart';
 import 'pro_detail.dart';
 import 'ai_service.dart';
 import 'l10n/app_localizations.dart';
@@ -145,7 +146,8 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       final isPro =
           customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
       setState(() {
-        _isPremium = isPremium;
+        // Pro は Premium の全機能を含む
+        _isPremium = isPremium || isPro;
         _isPro = isPro;
       });
     } catch (e) {
@@ -413,9 +415,17 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
 
   Future<void> _generateMonthlyReport({bool force = false}) async {
     if (_isLoadingReport) return;
-    // Pro 未加入なら購入画面を先に表示、加入後にサインイン
+    // Pro 未加入なら「プラン紹介 → 購入」の 2 段導線
     if (!_isPro) {
-      if (!await ProGate.ensureProPurchaseFirst(context)) return;
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.pro,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_ai_monthly_report,
+        imageAsset: 'assets/subscription/ai_monthly_report.png',
+        icon: Icons.insights,
+      );
+      if (!bought) return;
       if (!mounted) return;
       setState(() => _isPro = true);
     }
@@ -1652,7 +1662,14 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 ),
               ),
               onPressed: () async {
-                if (!await PremiumGate.ensurePremium(context)) return;
+                final bought = await promptAndOpenPurchase(
+                  context: context,
+                  tier: SubscriptionTier.premium,
+                  featureLabel:
+                      L10n.of(context)!.purchase_feature_analytics,
+                  icon: Icons.bar_chart,
+                );
+                if (!bought) return;
                 setState(() => _isPremium = true);
               },
             ),

@@ -144,7 +144,8 @@ class ListPageState extends ConsumerState<ListPage>
       if (!mounted) return;
 
       setState(() {
-        _isPremium = isPremium;
+        // Pro は Premium の全機能を含む扱い
+        _isPremium = isPremium || isPro;
         _isPro = isPro;
       });
     } catch (e) {

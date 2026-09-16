@@ -37,8 +37,27 @@ class _ShareDialogState extends State<ShareDialog> {
       final existing = await ShareService.findShareByListName(widget.listName);
       if (!mounted) return;
       if (existing != null) {
+        // 既存共有があっても、共有ボタンを押した「今」の内容で必ず上書きする
+        // (以前の共有時点のスナップショットで固定されないように)
+        try {
+          await ShareService.updateShare(
+            shareId: existing.shareId,
+            listName: widget.listName,
+            items: widget.items,
+          );
+        } catch (_) {
+          // 更新失敗時は既存内容のまま表示 (URL は使えるので致命的でない)
+        }
+        if (!mounted) return;
         setState(() {
-          _existing = existing;
+          _existing = SharedListInfo(
+            shareId: existing.shareId,
+            listName: existing.listName,
+            itemCount: widget.items.length > ShareService.maxItems
+                ? ShareService.maxItems
+                : widget.items.length,
+            createdAt: existing.createdAt,
+          );
           _loading = false;
         });
       } else {
