@@ -43,13 +43,20 @@ async function fetchPageMeta(url: string): Promise<{
 }> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    // 汎用ボット UA を嫌うサイトが多いため、モバイル Safari 相当を装う
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; ArchiVeBot/1.0; +https://archive-e4efc.web.app)",
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) " +
+          "AppleWebKit/605.1.15 (KHTML, like Gecko) " +
+          "Version/17.0 Mobile/15E148 Safari/604.1",
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ja,en;q=0.9",
       },
+      redirect: "follow",
     });
     clearTimeout(timeout);
     if (!response.ok) return {};
@@ -208,20 +215,30 @@ YouTube → genre:["ゲーム実況","FPS"], cast:["チャンネル名"], maker:
       });
 
       const text = response.text?.trim() ?? "{}";
-      const cleaned = text
+      let cleaned = text
         .replace(/^```json\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/\s*```$/, "")
         .trim();
 
+      // Gemini がコードフェンスなしで前置きの散文を返すケースに対応:
+      // 最初の '{' から最後の '}' までを JSON 候補として抽出
+      const firstBrace = cleaned.indexOf("{");
+      const lastBrace = cleaned.lastIndexOf("}");
+      if (firstBrace >= 0 && lastBrace > firstBrace) {
+        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+      }
+
       let parsed: Partial<SuggestTagsResponse>;
       try {
         parsed = JSON.parse(cleaned);
       } catch (e) {
-        throw new HttpsError(
-          "internal",
-          `AI response parse error: ${cleaned.substring(0, 100)}`,
+        // パース不能なら「候補なし」として空を返す (エラーにしない)
+        console.warn(
+          "AI response parse fallback (empty):",
+          cleaned.substring(0, 200),
         );
+        parsed = {};
       }
 
       const sanitizeArray = (v: unknown): string[] => {

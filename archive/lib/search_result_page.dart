@@ -46,11 +46,17 @@ class SearchResultPage extends ConsumerStatefulWidget {
   ConsumerState<SearchResultPage> createState() => _SearchResultPageState();
 }
 
-class _SearchResultPageState extends ConsumerState<SearchResultPage> {
+class _SearchResultPageState extends ConsumerState<SearchResultPage>
+    with WidgetsBindingObserver {
   // ===== タブ管理 (方式A: IndexedStack、上限 6) =====
   final List<_BrowserTab> _tabs = [];
   int _activeTabIndex = 0;
   static const int _maxTabs = 6;
+
+  // アプリを強制終了 (タスクキル) しても開いていたタブを復元するための prefs キー。
+  // 空文字列 = ホームタブ、それ以外 = 開いていた URL
+  static const _kPrefBrowserTabUrls = 'browser_tab_urls_v1';
+  static const _kPrefBrowserActiveIndex = 'browser_active_tab_v1';
 
   _BrowserTab get _activeTab => _tabs[_activeTabIndex];
 
@@ -155,6 +161,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadInterstitialAd();
     _checkSubscriptionStatus();
     _loadAd();
@@ -166,10 +173,14 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         widget.playlistItems!.length - 1,
       );
     }
+    // widget.initialUrl が空文字列の時はホームタブ扱い。
+    // (_resolveInitialUrl は空文字を Google 検索 URL に変換してしまうため直接呼ばない)
     final initialUrl = _hasPlaylist
         ? (widget.playlistItems![_playlistIndex]['url']?.toString() ??
             widget.initialUrl)
-        : _resolveInitialUrl(widget.initialUrl);
+        : (widget.initialUrl.isEmpty
+            ? ''
+            : _resolveInitialUrl(widget.initialUrl));
 
     late final PlatformWebViewControllerCreationParams params;
 
@@ -182,8 +193,15 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    // 最初のタブを作成
-    _tabs.add(_createTab(initialUrl));
+    // 最初のタブを作成 (プレイリスト起動 or 明示的 URL 指定でない場合は
+    // 前回セッションの復元を試みる。復元できなければデフォルト 1 タブ)
+    final explicitOpen = _hasPlaylist || initialUrl.isNotEmpty;
+    if (explicitOpen) {
+      _tabs.add(_createTab(initialUrl));
+    } else {
+      _tabs.add(_createTab('')); // ホームタブ (プレースホルダ)
+      unawaited(_restoreTabsFromPrefs());
+    }
 
     // アプリ内ブラウザ外 (grid/detail 等) からの新規タブ追加リクエストを受信
     ref.listenManual<BrowserOpenRequest?>(browserSessionProvider,
@@ -294,6 +312,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                 _urlBarController.text = url;
               }
             });
+            // タスクキル後の復元に備えて開いている URL を永続化
+            unawaited(_saveTabsState());
           },
         ),
       );
@@ -328,6 +348,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       _activeTabIndex = _tabs.length - 1;
       _urlBarController.text = start;
     });
+    unawaited(_saveTabsState());
   }
 
   /// タブを閉じる
@@ -342,6 +363,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
         _tabs[0].canGoBack = false;
         _urlBarController.text = '';
       });
+      unawaited(_saveTabsState());
       return;
     }
     setState(() {
@@ -353,6 +375,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       }
       _urlBarController.text = _activeTab.currentUrl ?? '';
     });
+    unawaited(_saveTabsState());
   }
 
   /// タブ切替
@@ -362,6 +385,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       _activeTabIndex = index;
       _urlBarController.text = _activeTab.currentUrl ?? '';
     });
+    unawaited(_saveTabsState());
   }
 
   /// IndexedStack で全タブの WebView を保持しつつアクティブだけ表示
@@ -533,11 +557,18 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                             },
                             onClose: () {
                               final wasLast = _tabs.length == 1;
-                              setSheet(() {
+                              if (wasLast) {
+                                // 最後の 1 タブを閉じたら:
+                                // ・シートを先に閉じてから
+                                // ・現在のタブを完全にホーム化 (URL クリア + isHome:true)
+                                // → 見た目上「ホーム画面に遷移」
+                                Navigator.pop(bctx);
                                 _closeTab(i);
-                              });
-                              // 最後の 1 タブを閉じたら (home 化された) sheet も閉じてホームへ戻る
-                              if (wasLast) Navigator.pop(bctx);
+                              } else {
+                                setSheet(() {
+                                  _closeTab(i);
+                                });
+                              }
                             },
                           );
                         },
@@ -555,9 +586,22 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _urlBarController.dispose();
     _urlBarFocus.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // バックグラウンド化・切り替え時に必ずタブ状態を保存 (タスクキル対策)
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      unawaited(_saveTabsState());
+    }
   }
 
   @override
@@ -1366,6 +1410,43 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
 
   /// ブラウザホーム画面の「履歴」用に閲覧履歴を保存する。
   /// 最新順、重複 URL は詰めて先頭に、最大 20 件。
+  /// 開いているタブ一覧 (URL + active index) を prefs に保存。
+  /// タスクキル後の再起動で復元される。
+  Future<void> _saveTabsState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final urls = _tabs
+          .map((t) => t.isHome ? '' : (t.currentUrl ?? ''))
+          .toList(growable: false);
+      await prefs.setStringList(_kPrefBrowserTabUrls, urls);
+      await prefs.setInt(_kPrefBrowserActiveIndex, _activeTabIndex);
+    } catch (_) {}
+  }
+
+  /// 前回セッションのタブ一覧を復元。
+  /// 保存が無い or 空なら現状 (ホームタブ 1 つ) のまま。
+  Future<void> _restoreTabsFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final urls = prefs.getStringList(_kPrefBrowserTabUrls);
+      if (urls == null || urls.isEmpty) return;
+      final activeIdx = prefs.getInt(_kPrefBrowserActiveIndex) ?? 0;
+      if (!mounted) return;
+      setState(() {
+        // 既存のプレースホルダのホームタブを破棄
+        _tabs.clear();
+        for (final u in urls.take(_maxTabs)) {
+          _tabs.add(_createTab(u));
+        }
+        if (_tabs.isEmpty) {
+          _tabs.add(_createTab(''));
+        }
+        _activeTabIndex = activeIdx.clamp(0, _tabs.length - 1);
+        _urlBarController.text = _activeTab.currentUrl ?? '';
+      });
+    } catch (_) {}
+  }
+
   Future<void> _saveVisitHistory(String url, String title) async {
     if (url.isEmpty || !url.startsWith('http')) return;
     // Google 検索結果ページや about:blank などは履歴から除外
@@ -1871,8 +1952,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
                   onPressed: () async {
                     selectedRating = dialogSelectedRating;
 
-                    //サムネ取得
-                    thumbnailUrl = await _getThumbnailFromPage();
+                    // サムネは事前取得済み (pendingThumb / thumbnailUrl) を優先使用
+                    // 取得済みが無い場合のみ短いタイムアウトで再取得
+                    thumbnailUrl ??= pendingThumb;
+                    thumbnailUrl ??= await _getThumbnailFromPage(
+                      timeout: const Duration(seconds: 2),
+                    );
 
                     // 選択した解像度を次回用に保存
                     // (null = ダウンロードなしも記憶したいので 0 で表現)
@@ -1958,7 +2043,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     );
   }
 
-  Future<String?> _getThumbnailFromPage() async {
+  Future<String?> _getThumbnailFromPage({
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
     final url = await _controller.currentUrl();
     if (url == null) return null;
 
@@ -1966,11 +2053,16 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
     final ytThumb = _extractYoutubeThumbnail(url);
     if (ytThumb != null) return ytThumb;
 
-    // ⭐ DOM完全読み込み待ち
-    await Future.delayed(const Duration(milliseconds: 800));
+    // X (twitter.com / x.com) 専用: 動画ツイートは og:image が
+    // 遅延ロードされるので、まずツイート ID から media pbs.twimg.com 直リンクを試す
+    final xThumb = _extractTwitterMediaThumb(url);
+
+    // ⭐ DOM完全読み込み待ち (短めに)
+    await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      final result = await _controller.runJavaScriptReturningResult("""
+      final Object result = await _controller
+          .runJavaScriptReturningResult("""
     (function() {
 
       function abs(u){
@@ -1998,27 +2090,54 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage> {
       let link = document.querySelector('link[rel="image_src"]');
       if(link?.href) return abs(link.href);
 
-      // ⑥ 大きい画像優先取得
+      // ⑥ X (Twitter) の video poster (data-image / poster 属性)
+      let vids = [...document.querySelectorAll('video')];
+      for (let v of vids) {
+        if (v.poster) return abs(v.poster);
+      }
+      // ⑥-b X 画像ツイート: pbs.twimg.com の <img>
+      let twimg = document.querySelector('img[src*="pbs.twimg.com/media"], img[src*="pbs.twimg.com/amplify_video_thumb"], img[src*="pbs.twimg.com/ext_tw_video_thumb"]');
+      if (twimg?.src) return abs(twimg.src);
+
+      // ⑦ 大きい画像優先取得
       let imgs = [...document.images]
         .filter(i => i.width > 200 && i.height > 200)
         .sort((a,b)=> (b.width*b.height)-(a.width*a.height));
 
       if(imgs.length) return abs(imgs[0].src);
 
-      // ⑦ 最終fallback
+      // ⑧ 最終fallback
       let img = document.querySelector('img');
       if(img?.src) return abs(img.src);
 
       return null;
     })();
-    """);
+    """)
+          .timeout(timeout);
 
-      if (result == null || result == 'null') return null;
-
-      return result.toString().replaceAll('"', '');
+      final s = result.toString().replaceAll('"', '');
+      if (s.isEmpty || s == 'null') return xThumb;
+      return s;
     } catch (_) {
+      return xThumb;
+    }
+  }
+
+  /// X/Twitter 動画ツイートで og:image を待たずに使える暫定サムネ
+  /// (ステータス URL に対して pbs.twimg.com のサムネ URL は取得できない場合が多いので
+  ///  ここでは null を返し、JS 側の pbs.twimg.com <img> 検出に任せる)
+  String? _extractTwitterMediaThumb(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    final h = uri.host.toLowerCase();
+    if (!(h == 'twitter.com' ||
+        h == 'x.com' ||
+        h.endsWith('.twitter.com') ||
+        h.endsWith('.x.com'))) {
       return null;
     }
+    // 現状ここでは推測しない (誤ったサムネを保存するリスクを避ける)
+    return null;
   }
 
   String? _extractYoutubeThumbnail(String url) {

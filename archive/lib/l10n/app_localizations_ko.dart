@@ -264,6 +264,11 @@ class L10nKo extends L10n {
   String get grid_page_sort_by_date => '추가일순';
 
   @override
+  String grid_page_search_result_title(String query) {
+    return '\"$query\" 검색 결과';
+  }
+
+  @override
   String grid_page_sort_current(String label) {
     return '정렬: $label';
   }
@@ -323,6 +328,27 @@ class L10nKo extends L10n {
 
   @override
   String get detail_page_add_image => '썸네일 이미지 추가 ★';
+
+  @override
+  String get detail_page_use_as_thumbnail => '썸네일로';
+
+  @override
+  String get detail_page_thumbnail_active => '현재 썸네일';
+
+  @override
+  String get detail_page_revert_thumbnail => '되돌리기';
+
+  @override
+  String get detail_page_revert_thumbnail_done => '썸네일을 되돌렸습니다';
+
+  @override
+  String get detail_page_set_as_thumbnail_title => '이 이미지를 썸네일로 설정할까요?';
+
+  @override
+  String get detail_page_set_as_thumbnail_body => '목록 및 그리드 화면의 썸네일로 표시됩니다.';
+
+  @override
+  String get detail_page_set_as_thumbnail_done => '썸네일을 업데이트했습니다';
 
   @override
   String get detail_page_offline => '오프라인';
@@ -968,6 +994,11 @@ class L10nKo extends L10n {
   String get settings_page_watch_ad => '광고 보기 (+1 슬롯)';
 
   @override
+  String settings_page_watch_ad_with_count(int watched, int limit) {
+    return '광고 보기 +1 슬롯 (오늘: $watched/$limit)';
+  }
+
+  @override
   String get settings_page_ad_limit_reached => '오늘 광고 한도에 도달했습니다';
 
   @override
@@ -1034,19 +1065,42 @@ class L10nKo extends L10n {
   String get premium_detail_premium_item01 => '무제한 저장';
 
   @override
-  String get premium_detail_premium_item02 => '테마 색상 골드 추가';
+  String get premium_detail_premium_item01_desc =>
+      '무료 플랜의 상한을 해제. 수천 개의 컬렉션도 쾌적하게 관리 가능';
 
   @override
-  String get premium_detail_premium_item03 => '이미지 자유 추가';
+  String get premium_detail_premium_item02 => '골드 테마';
 
   @override
-  String get premium_detail_premium_item04 => '여러 태그로 빠른 검색';
+  String get premium_detail_premium_item02_desc =>
+      'Premium 전용 골드 컬러 스킴을 앱 전체에 적용';
 
   @override
-  String get premium_detail_premium_item05 => '장르 및 평점별 데이터 시각화 통계';
+  String get premium_detail_premium_item03 => '이미지 추가 & 썸네일 변경';
 
   @override
-  String get premium_detail_premium_item06 => '광고 제거';
+  String get premium_detail_premium_item03_desc =>
+      '작품마다 참고 이미지를 추가하고 원하는 이미지를 그리드 썸네일로 설정 가능';
+
+  @override
+  String get premium_detail_premium_item04 => '다중 태그 빠른 검색';
+
+  @override
+  String get premium_detail_premium_item04_desc => '출연자·장르·시리즈 등을 조합하여 필터링';
+
+  @override
+  String get premium_detail_premium_item05 => '통계 & 분석 기능';
+
+  @override
+  String get premium_detail_premium_item05_desc =>
+      '평점 분포, 조회수 TOP5, 출연자/태그별 랭킹을 그래프로 시각화';
+
+  @override
+  String get premium_detail_premium_item06 => '광고 완전 제거';
+
+  @override
+  String get premium_detail_premium_item06_desc =>
+      '저장이나 시청 중에 표시되는 모든 광고를 숨겨 집중할 수 있는 UX 제공';
 
   @override
   String get premium_detail_note => '3일 무료 체험 후 자동으로 결제됩니다.\n언제든 취소할 수 있습니다.';
@@ -1283,22 +1337,52 @@ class L10nKo extends L10n {
   String get pro_detail_subtitle => '모든 프리미엄 기능 외에 다음 기능 제공';
 
   @override
-  String get pro_detail_feature_cloud_sync => '클라우드 동기화 (여러 기기)';
+  String get pro_detail_feature_all_premium => '프리미엄 플랜의 모든 기능';
+
+  @override
+  String get pro_detail_feature_all_premium_desc =>
+      '프리미엄의 기능 (무제한 저장, 통계, 다중 태그 검색, 광고 제거, 골드 테마 등)을 모두 포함합니다';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '클라우드 동기화';
+
+  @override
+  String get pro_detail_feature_cloud_sync_desc =>
+      '클라우드로 여러 기기 간 컬렉션을 자동 동기화. 기기 변경 시에도 그대로 유지';
 
   @override
   String get pro_detail_feature_ai_tagging => 'AI 자동 태그';
 
   @override
+  String get pro_detail_feature_ai_tagging_desc =>
+      'URL과 제목을 기반으로 Gemini AI가 장르·출연자·시리즈 등을 제안 (무제한)';
+
+  @override
   String get pro_detail_feature_ai_recommend => 'AI 추천 키워드';
+
+  @override
+  String get pro_detail_feature_ai_recommend_desc =>
+      '라이브러리 경향을 바탕으로 다음에 검색할 키워드를 AI가 추천';
 
   @override
   String get pro_detail_feature_monthly_report => 'AI 월간 보고서';
 
   @override
+  String get pro_detail_feature_monthly_report_desc =>
+      '지난달의 시청 및 즐겨찾기 경향을 AI가 요약한 리포트를 매월 생성';
+
+  @override
   String get pro_detail_feature_public_sharing => '공개 목록 공유';
 
   @override
-  String get pro_detail_feature_theme_teal => '테마 색상 청록 추가';
+  String get pro_detail_feature_public_sharing_desc =>
+      '즐겨찾기 목록을 URL로 다른 사용자와 공유 가능';
+
+  @override
+  String get pro_detail_feature_theme_teal => '청록 테마';
+
+  @override
+  String get pro_detail_feature_theme_teal_desc => 'Pro 전용 청록 컬러 스킴을 앱 전체에 적용';
 
   @override
   String get plans_page_title => '플랜';
@@ -1431,6 +1515,60 @@ class L10nKo extends L10n {
   String get plans_page_pro_short => 'Pro';
 
   @override
+  String subscription_prompt_body(String planName, String feature) {
+    return '$planName 플랜에서는 $feature 이용할 수 있습니다.';
+  }
+
+  @override
+  String subscription_prompt_question(String planName) {
+    return '$planName 플랜 상세를 확인할까요?';
+  }
+
+  @override
+  String subscription_prompt_confirm(String planName) {
+    return '$planName 상세 보기';
+  }
+
+  @override
+  String get purchase_feature_custom_thumbnail => '썸네일 추가와 변경을';
+
+  @override
+  String get purchase_feature_analytics => '통계 및 분석 기능을';
+
+  @override
+  String get purchase_feature_player_extras => '플레이어의 볼륨 조절과 슬립 타이머를';
+
+  @override
+  String get purchase_feature_save_limit => '저장 수 제한 해제를';
+
+  @override
+  String get purchase_feature_theme_gold => '골드 테마 색상 적용을';
+
+  @override
+  String get purchase_feature_theme_teal => '청록 테마 색상 적용을';
+
+  @override
+  String get purchase_feature_cloud_backup => '클라우드 백업을';
+
+  @override
+  String get purchase_feature_cloud_restore => '백업 복원을';
+
+  @override
+  String get purchase_feature_public_sharing => '목록 공유와 공개를';
+
+  @override
+  String get purchase_feature_ai_monthly_report => 'AI 월간 보고서 생성을';
+
+  @override
+  String get purchase_feature_ai_recommend => 'AI 추천 키워드 생성을';
+
+  @override
+  String get purchase_feature_ai_tagging_unlimited => 'AI 태그 제안 무제한 이용을';
+
+  @override
+  String get purchase_feature_multi_tag_search => '여러 태그를 조합한 필터 검색을';
+
+  @override
   String get plans_page_free_short => '무료';
 
   @override
@@ -1440,7 +1578,7 @@ class L10nKo extends L10n {
   String get plans_page_free_item01 => '100개까지 저장 가능';
 
   @override
-  String get plans_page_free_item02 => '광고 시청으로 15개/일 확장';
+  String get plans_page_free_item02 => '광고 시청으로 5개/일 확장';
 
   @override
   String get plans_page_free_item03 => '단일 태그 검색';

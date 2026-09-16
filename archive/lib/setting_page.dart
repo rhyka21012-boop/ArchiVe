@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_provider.dart';
+import 'subscription_prompt_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -84,8 +85,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _confirmBackup() async {
-    // Pro 未加入なら購入画面を先に表示、加入後にサインイン
-    if (!await ProGate.ensureProPurchaseFirst(context)) return;
+    // Pro 未加入なら「プラン紹介 → 購入画面」の 2 段導線
+    if (!_isPro) {
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.pro,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_cloud_backup,
+        imageAsset: 'assets/subscription/cloud_backup.png',
+        icon: Icons.cloud_upload,
+      );
+      if (!bought) return;
+    }
     if (!mounted) return;
     final ok = await _showConfirmDialog(
       title: 'クラウドにバックアップ',
@@ -103,7 +114,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _confirmRestore() async {
-    if (!await ProGate.ensureProPurchaseFirst(context)) return;
+    if (!_isPro) {
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.pro,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_cloud_restore,
+        imageAsset: 'assets/subscription/cloud_backup.png',
+        icon: Icons.cloud_download,
+      );
+      if (!bought) return;
+    }
     if (!mounted) return;
     final ok = await _showConfirmDialog(
       title: 'バックアップから復元',
@@ -304,7 +325,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
       if (mounted) {
         setState(() {
-          _isPremium = isPremium;
+          // Pro プランは Premium の全機能を含むので、_isPremium は
+          // Premium/Pro どちらの entitlement でも true として扱う
+          _isPremium = isPremium || isPro;
           _isPro = isPro;
           _activePackageType = activeType;
         });
@@ -553,74 +576,68 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          L10n.of(context)!.settings_page_watch_count,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colorScheme.onSurface.withValues(alpha: 0.55),
-                          ),
-                        ),
-                        Text(
-                          L10n.of(context)!
-                              .settings_page_watch_ad_today(watchedAdsToday),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    // 広告視聴ボタン (light grey full-width pill)
-                    SizedBox(
-                      width: double.infinity,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Material(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
+                    // Premium / Pro ユーザーには広告視聴ボタン自体を非表示
+                    // (元「本日の視聴回数」独立表示は廃止し、ボタン内に集約)
+                    if (!_isPremium && !_isPro) ...[
+                      const SizedBox(height: 16),
+                      // 広告視聴ボタン (light grey full-width pill)
+                      SizedBox(
+                        width: double.infinity,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Material(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(12),
-                              onTap: watchedAdsToday >= kDailyAdWatchLimit
-                                  ? null
-                                  : () async {
-                                      await _showRewardedAd();
-                                    },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    L10n.of(context)!.settings_page_watch_ad,
-                                    style: TextStyle(
-                                      color: watchedAdsToday >= kDailyAdWatchLimit
-                                          ? colorScheme.onSurface
-                                              .withValues(alpha: 0.4)
-                                          : (isDark
-                                              ? Colors.white
-                                              : Colors.black87),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: watchedAdsToday >= kDailyAdWatchLimit
+                                    ? null
+                                    : () async {
+                                        await _showRewardedAd();
+                                      },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      L10n.of(context)!
+                                          .settings_page_watch_ad_with_count(
+                                            watchedAdsToday,
+                                            kDailyAdWatchLimit,
+                                          ),
+                                      style: TextStyle(
+                                        color:
+                                            watchedAdsToday >= kDailyAdWatchLimit
+                                                ? colorScheme.onSurface
+                                                    .withValues(alpha: 0.4)
+                                                : (isDark
+                                                    ? Colors.white
+                                                    : Colors.black87),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          if (showAdBadge)
-                            Positioned(top: -4, right: -4, child: _AdBadge()),
-                        ],
+                            if (showAdBadge)
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: _AdBadge(),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (watchedAdsToday >= kDailyAdWatchLimit) ...[
+                    ],
+                    if (!_isPremium &&
+                        !_isPro &&
+                        watchedAdsToday >= kDailyAdWatchLimit) ...[
                       const SizedBox(height: 8),
                       Text(
                         L10n.of(context)!.settings_page_ad_limit_reached,
@@ -679,18 +696,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                   ),
-                ListTile(
-                  title: const Text(
-                    'クラウドにバックアップ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                _proGatedTile(
+                  title: 'クラウドにバックアップ',
                   onTap: _confirmBackup,
                 ),
-                ListTile(
-                  title: const Text(
-                    'バックアップから復元',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                _proGatedTile(
+                  title: 'バックアップから復元',
                   onTap: _confirmRestore,
                 ),
               ],
@@ -773,11 +784,25 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     onChanged: (value) async {
                       if (value == null) return;
                       if (isProOnlyThemeColor(value) && !_isPro) {
-                        if (!await ProGate.ensurePro(context)) return;
+                        final bought = await promptAndOpenPurchase(
+                          context: context,
+                          tier: SubscriptionTier.pro,
+                          featureLabel:
+                              L10n.of(context)!.purchase_feature_theme_teal,
+                          icon: Icons.palette,
+                        );
+                        if (!bought) return;
                         if (!mounted) return;
                       } else if (isPremiumOnlyThemeColor(value) &&
                           !_isPremium) {
-                        if (!await PremiumGate.ensurePremium(context)) return;
+                        final bought = await promptAndOpenPurchase(
+                          context: context,
+                          tier: SubscriptionTier.premium,
+                          featureLabel:
+                              L10n.of(context)!.purchase_feature_theme_gold,
+                          icon: Icons.palette,
+                        );
+                        if (!bought) return;
                         if (!mounted) return;
                         setState(() => _isPremium = true);
                       }
@@ -1000,6 +1025,38 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   // 複数行を Divider 区切りで内包するグループカード
+  /// Pro 限定機能用の ListTile
+  /// 非 Pro ユーザーには「南京錠」+ Pro プランカラー (teal) で示す
+  Widget _proGatedTile({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    const proColor = Color(0xFF00897B);
+    final locked = !_isPro;
+    final textColor = locked ? proColor : null;
+    return ListTile(
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+          ),
+          if (locked) ...[
+            const SizedBox(width: 6),
+            const Icon(Icons.lock, size: 14, color: proColor),
+          ],
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+
   Widget _groupCard({
     required List<Widget> rows,
     required bool isDark,

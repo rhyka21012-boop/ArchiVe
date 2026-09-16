@@ -40,6 +40,10 @@ import 'search_result_page.dart';
 import "save_limit_helper.dart";
 import 'rating_label_provider.dart';
 import 'circle_app_bar_icon.dart';
+import 'smart_thumbnail.dart';
+import 'list_reload_provider.dart';
+import 'subscription_prompt_dialog.dart';
+import 'grid_page.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -90,8 +94,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   late TextEditingController _makerController;
   late TextEditingController _memoController;
 
-  //サムネイル画像のURL
+  //サムネイル画像のURL (グリッド/リストで表示するもの。カスタム時は file://)
   String? _thumbnailUrl;
+
+  // カスタムサムネ設定後もカルーセル 1 ページ目に表示する
+  // 元 URL 由来のサムネ。 (saved_metadata の `original_image` フィールドに永続化)
+  String? _originalThumbnailUrl;
 
   //編集モードの有効無効
   bool isEditing = false;
@@ -137,8 +145,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   List<String> _listNames = [];
   String? isSelectedValue;
 
-  //隠しWebView用のコントローラ
-  InAppWebViewController? _hiddenWebViewController;
 
   //選択なし
   static const String noneListValue = '__none__';
@@ -242,7 +248,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     } else {
       _thumbnailUrl = widget.image; //保存済み画像を使う
     }
-    _updatePalette();
+    // 元 URL 由来サムネ (カスタムサムネ後もカルーセル 1 ページ目で表示するもの)
+    // を saved_metadata から復元。無ければ widget.image がまだ URL 由来なら
+    // それを採用 (最初にサムネ設定するとき用のシード)。
+    // ignore: unawaited_futures
+    _loadOriginalThumbnail();
+
+    // パレット生成は最初のフレーム後に遅延して、初期表示の待ち時間に含めない
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updatePalette();
+    });
 
     _loadAd();
 
@@ -703,7 +718,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       'listName': toSaveListName,
       'url': _urlController.text,
       'title': _titleController.text,
-      'image': widget.image ?? _thumbnailUrl,
+      // _thumbnailUrl は「サムネにする」で更新されるので widget.image より優先。
+      // (widget.image は DetailPage 生成時の固定値なのでユーザー操作後は古い)
+      'image': _thumbnailUrl ?? widget.image,
       'cast': _castController.text,
       'genre': _genreController.text,
       'series': _seriesController.text,
@@ -744,6 +761,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       }
       //RandomImageを更新
       ref.read(randomImageReloadProvider.notifier).state++;
+      // 検索画面のタグ一覧 / リスト画面のカウント等を即再構築させる
+      ref.read(listReloadProvider.notifier).state++;
 
       widget.onCreated?.call(); //作成処理の最後に親に通知
 
@@ -997,30 +1016,35 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           L10n.of(context)!.detail_page_cast_short,
           _castController.text.trim(),
           tags: _parseHashtags(_castController.text),
+          tagCategory: 'cast',
         ),
       if (_genreController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_genre_short,
           _genreController.text.trim(),
           tags: _parseHashtags(_genreController.text),
+          tagCategory: 'genre',
         ),
       if (_seriesController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_series_short,
           _seriesController.text.trim(),
           tags: _parseHashtags(_seriesController.text),
+          tagCategory: 'series',
         ),
       if (_makerController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_maker_short,
           _makerController.text.trim(),
           tags: _parseHashtags(_makerController.text),
+          tagCategory: 'maker',
         ),
       if (_labelController.text.trim().isNotEmpty)
         _InfoRowSpec(
           L10n.of(context)!.detail_page_label_short,
           _labelController.text.trim(),
           tags: _parseHashtags(_labelController.text),
+          tagCategory: 'label',
         ),
       if (_memoController.text.trim().isNotEmpty)
         _InfoRowSpec(
@@ -1066,7 +1090,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                               runSpacing: 6,
                               children: [
                                 for (final t in rows[i].tags!)
-                                  _InfoTagChip(label: t, isDark: isDark),
+                                  _InfoTagChip(
+                                    label: t,
+                                    isDark: isDark,
+                                    onTap: rows[i].tagCategory == null
+                                        ? null
+                                        : () => _openTagSearch(
+                                              category: rows[i].tagCategory!,
+                                              tag: t,
+                                            ),
+                                  ),
                               ],
                             )
                           : Text(
@@ -1088,6 +1121,23 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 閲覧モードのタグ (#hoge) タップ → アプリ内検索の結果画面へ遷移。
+  /// `selectedItems: {category: [tag]}` で GridPage を開く。
+  void _openTagSearch({required String category, required String tag}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GridPage(
+          selectedItems: {category: [tag]},
+          searchText: '',
+          rating: '',
+          listName: '',
+          fromSearch: true,
         ),
       ),
     );
@@ -1269,7 +1319,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           */
 
                             //サムネ表示
-                            if ((widget.image ?? _thumbnailUrl) != null) {
+                            // カスタムサムネを設定していても、詳細ページの 1 ページ目は
+                            // 元 URL 由来サムネ (_originalThumbnailUrl) を優先表示する。
+                            final page0Thumb = _originalThumbnailUrl ??
+                                widget.image ??
+                                _thumbnailUrl;
+                            if (page0Thumb != null) {
                               return AnimatedScale(
                                 scale: _isPressed ? 0.94 : 1.0,
                                 duration: const Duration(milliseconds: 120),
@@ -1287,11 +1342,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                     child: Stack(
                                       alignment: Alignment.center,
                                       children: [
-                                        /// 背景画像
-                                        Image.network(
-                                          widget.image ?? _thumbnailUrl!,
+                                        /// 背景画像 (元 URL 由来サムネを優先)
+                                        SmartThumbnail(
+                                          imageUrl: page0Thumb,
                                           width: double.infinity,
-                                          //height: 200,
                                           fit: BoxFit.cover,
                                         ),
 
@@ -1432,10 +1486,24 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                             }
                           } else {
                             final imageIndex = index - 1;
+                            // ⚠️ ImagePicker 経由の写真は 4000x3000 級のフル解像度で
+                            // 保存されている場合が多く、cacheWidth 未指定で Image.file
+                            // すると main isolate デコードが数秒フリーズ (Davey!)
+                            // 表示先は画面幅 (最大 ~800dp × devicePixelRatio) なので、
+                            // 十分な精度を保ちつつデコード解像度を制限
+                            final dpr =
+                                MediaQuery.of(context).devicePixelRatio;
+                            final cacheWidth =
+                                (MediaQuery.of(context).size.width * dpr)
+                                    .clamp(320.0, 1600.0)
+                                    .toInt();
                             final imageWidget = Image.file(
                               File(_localImagePaths[imageIndex]),
                               fit: BoxFit.contain,
                               width: double.infinity,
+                              cacheWidth: cacheWidth,
+                              filterQuality: FilterQuality.medium,
+                              gaplessPlayback: true,
                             );
                             return Padding(
                               padding: const EdgeInsets.symmetric(
@@ -1450,35 +1518,130 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                   Positioned(
                                     top: 8,
                                     right: 8,
-                                    child: GestureDetector(
-                                      onTap:
-                                          () => _removeLocalImage(imageIndex),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black54,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        padding: EdgeInsets.all(6),
-                                        child: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    width: 0,
-                                    height: 0,
-                                    child: InAppWebView(
-                                      initialSettings: InAppWebViewSettings(
-                                        javaScriptEnabled: true,
-                                        transparentBackground: true,
-                                      ),
-                                      onWebViewCreated: (controller) {
-                                        _hiddenWebViewController = controller;
-                                      },
-                                    ),
+                                    child: Builder(builder: (_) {
+                                      final localPath =
+                                          _localImagePaths[imageIndex];
+                                      final currentThumb = _thumbnailUrl;
+                                      final isActive = currentThumb != null &&
+                                          isLocalThumbnailPath(currentThumb) &&
+                                          stripFileScheme(currentThumb) ==
+                                              localPath;
+                                      final activeColor =
+                                          Theme.of(context).colorScheme.primary;
+                                      return Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // ローカル画像をサムネイルに設定
+                                          GestureDetector(
+                                            onTap: isActive
+                                                ? null
+                                                : () => _setAsThumbnail(
+                                                      localPath,
+                                                    ),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: isActive
+                                                    ? activeColor
+                                                        .withOpacity(0.9)
+                                                    : Colors.black54,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    isActive
+                                                        ? Icons.check_circle
+                                                        : Icons.wallpaper,
+                                                    color: Colors.white,
+                                                    size: 16,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    isActive
+                                                        ? L10n.of(context)!
+                                                            .detail_page_thumbnail_active
+                                                        : L10n.of(context)!
+                                                            .detail_page_use_as_thumbnail,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          // 現在サムネの場合は「元に戻す」ボタン (無料でも押せる)
+                                          if (isActive) ...[
+                                            const SizedBox(width: 6),
+                                            GestureDetector(
+                                              onTap: () =>
+                                                  _revertThumbnailToDefault(),
+                                              child: Container(
+                                                padding: const EdgeInsets
+                                                    .symmetric(
+                                                  horizontal: 10,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black54,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.settings_backup_restore,
+                                                      color: Colors.white,
+                                                      size: 16,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      L10n.of(context)!
+                                                          .detail_page_revert_thumbnail,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(width: 6),
+                                          GestureDetector(
+                                            onTap: () =>
+                                                _removeLocalImage(imageIndex),
+                                            child: Container(
+                                              decoration: const BoxDecoration(
+                                                color: Colors.black54,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              padding: const EdgeInsets.all(6),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }),
                                   ),
                                 ],
                               ),
@@ -1500,8 +1663,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                             label: L10n.of(context)!.detail_page_add_image,
                             colorScheme: colorScheme,
                             onPressed: () async {
-                              if (!await PremiumGate.ensurePremium(context))
-                                return;
+                              final bought = await promptAndOpenPurchase(
+                                context: context,
+                                tier: SubscriptionTier.premium,
+                                featureLabel: L10n.of(context)!
+                                    .purchase_feature_custom_thumbnail,
+                                imageAsset:
+                                    'assets/subscription/custom_thumbnail.png',
+                                icon: Icons.add_photo_alternate,
+                              );
+                              if (!bought) return;
                               setState(() => _isPremium = true);
                               _addLocalImage();
                             },
@@ -3154,17 +3325,49 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     });
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: const {
+          // 多くのサイトでボット扱いされないよう、
+          // モバイル Safari 相当の UA と一般的な Accept ヘッダを付与
+          'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+              'AppleWebKit/605.1.15 (KHTML, like Gecko) '
+              'Version/17.0 Mobile/15E148 Safari/604.1',
+          'Accept':
+              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ja,en;q=0.9',
+        },
+      ).timeout(const Duration(seconds: 8));
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         final document = parse(response.body);
+        // <title> → og:title → twitter:title の順に探す
+        String? found;
         final titleTag = document.getElementsByTagName('title').firstOrNull;
+        if (titleTag != null && titleTag.text.trim().isNotEmpty) {
+          found = titleTag.text.trim();
+        }
+        if (found == null || found.isEmpty) {
+          final og = document
+              .querySelector('meta[property="og:title"]')
+              ?.attributes['content']
+              ?.trim();
+          if (og != null && og.isNotEmpty) found = og;
+        }
+        if (found == null || found.isEmpty) {
+          final tw = document
+              .querySelector('meta[name="twitter:title"]')
+              ?.attributes['content']
+              ?.trim();
+          if (tw != null && tw.isNotEmpty) found = tw;
+        }
 
-        if (titleTag != null) {
+        if (found != null && found.isNotEmpty) {
           setState(() {
-            _titleController.text = titleTag.text.trim();
+            _titleController.text = found!;
           });
         } else {
           _showMessage(L10n.of(context)!.detail_page_fetch_title_fail);
@@ -3282,29 +3485,32 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   //画像から色を取得
   Future<void> _updatePalette() async {
-    //final colorScheme = Theme.of(context).colorScheme;
-
     try {
       final imageUrl = widget.image ?? _thumbnailUrl;
       if (imageUrl == null || imageUrl.isEmpty) {
-        // URLがnullまたは空文字列の場合は早期リターン
         return;
       }
 
-      final imageProvider = NetworkImage(imageUrl);
+      final ImageProvider imageProvider = isLocalThumbnailPath(imageUrl)
+          ? FileImage(File(stripFileScheme(imageUrl)))
+          : NetworkImage(imageUrl);
 
+      // 大きな写真ライブラリ画像を main isolate でフルデコードすると
+      // 数秒フリーズするため、サムネ用途では 100x100 に縮小してから
+      // パレット生成する (十分な精度 & 数十ms で完了)
       final PaletteGenerator paletteGenerator =
-          await PaletteGenerator.fromImageProvider(imageProvider);
+          await PaletteGenerator.fromImageProvider(
+        imageProvider,
+        size: const Size(100, 100),
+        maximumColorCount: 8,
+      );
 
+      if (!mounted) return;
       setState(() {
         _dominantColor =
             paletteGenerator.dominantColor?.color ?? const Color(0xFF2C2C2C);
       });
     } catch (e) {
-      // エラー発生時はデフォルト色を設定
-      setState(() {
-        //_dominantColor = colorScheme.secondary;
-      });
       debugPrint('Failed to generate palette: $e');
     }
   }
@@ -3359,6 +3565,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     final color = locked ? const Color(0xFFB8860B) : colorScheme.primary;
     return TextButton.icon(
       onPressed: onPressed,
+      style: TextButton.styleFrom(
+        // ボタンの視認性向上のためうっすら背景を敷く
+        backgroundColor: color.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
       icon: Icon(icon, color: color, size: 18),
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -3421,10 +3635,107 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     await prefs.setStringList(key, fileNames);
   }
 
+  /// ローカル画像を作品サムネイルとして採用
+  /// saved_metadata の image フィールドを file://<path> で置き換え、
+  /// 表示中の _thumbnailUrl も更新する
+  Future<void> _setAsThumbnail(String localPath) async {
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Text(l.detail_page_set_as_thumbnail_title),
+        content: Text(l.detail_page_set_as_thumbnail_body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            child: Text(l.ok),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+
+    final fileUri = 'file://$localPath';
+
+    // saved_metadata の該当エントリを更新
+    // - image: 新カスタムサムネ (file://) — グリッド/リストで使う
+    // - original_image: 初回のみ元 URL 由来サムネを退避 (詳細ページ 1 ページ目で使う)
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final updated = <String>[];
+    for (final s in savedList) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          // 元の URL 由来サムネを退避 (既に退避済み or 現在の image が file:// なら維持)
+          final existingOrig = map['original_image'];
+          if (existingOrig == null ||
+              (existingOrig is String && existingOrig.isEmpty)) {
+            final currentImage = map['image'];
+            if (currentImage is String &&
+                currentImage.isNotEmpty &&
+                !isLocalThumbnailPath(currentImage)) {
+              map['original_image'] = currentImage;
+            }
+          }
+          map['image'] = fileUri;
+          updated.add(jsonEncode(map));
+        } else {
+          updated.add(s);
+        }
+      } catch (_) {
+        updated.add(s);
+      }
+    }
+    await prefs.setStringList('saved_metadata', updated);
+
+    if (!mounted) return;
+    setState(() {
+      _thumbnailUrl = fileUri;
+      // まだ _originalThumbnailUrl が未設定なら、退避した元 URL サムネを反映
+      if ((_originalThumbnailUrl == null || _originalThumbnailUrl!.isEmpty) &&
+          widget.image != null &&
+          widget.image!.isNotEmpty &&
+          !isLocalThumbnailPath(widget.image)) {
+        _originalThumbnailUrl = widget.image;
+      }
+    });
+    // グリッド / リスト画面のランダムイメージ双方を更新
+    ref.read(randomImageReloadProvider.notifier).state++;
+    ref.read(listReloadProvider.notifier).state++;
+    // Flutter の画像キャッシュに古いエントリが残っていると再表示されないので破棄
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    _updatePalette();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.detail_page_set_as_thumbnail_done)),
+      );
+    }
+  }
+
   //追加処理
   Future<void> _addLocalImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    // 巨大な写真 (数十MB / 4000x3000) をそのまま保存すると
+    // 詳細ページを開くたびに main isolate が数秒フリーズするため、
+    // ピック時にリサイズ + 再エンコードして 2K 相当以下に抑える
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      imageQuality: 85,
+    );
 
     if (pickedFile == null) return;
 
@@ -3445,16 +3756,125 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   void _removeLocalImage(int index) async {
     final pathToRemove = _localImagePaths[index];
 
+    // 削除対象がカスタムサムネとして設定中なら、先に元 (URL 由来 or null) に戻す
+    final current = _thumbnailUrl;
+    final isCurrentThumb = current != null &&
+        isLocalThumbnailPath(current) &&
+        stripFileScheme(current) == pathToRemove;
+
     setState(() {
       _localImagePaths.removeAt(index);
+      _localImageMaxIndex = _localImagePaths.length + 1;
+      if (_localImageCorrentIndex > _localImageMaxIndex) {
+        _localImageCorrentIndex = _localImageMaxIndex;
+      }
     });
+
+    if (isCurrentThumb) {
+      // 現在サムネなら壊れリンクを残さないよう自動で元に戻す
+      await _revertThumbnailToDefault(showSnackBar: false);
+    }
 
     final file = File(pathToRemove);
     if (await file.exists()) {
-      await file.delete(); // 実際にファイルも削除
+      await file.delete();
     }
 
     await _saveLocalImages();
+  }
+
+  /// saved_metadata から `original_image` を読み込んで _originalThumbnailUrl に反映。
+  /// 見つからなければ widget.image が URL 由来 (非 file://) ならそれを暫定値にする。
+  Future<void> _loadOriginalThumbnail() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedList = prefs.getStringList('saved_metadata') ?? [];
+      String? origFromPrefs;
+      for (final s in savedList) {
+        try {
+          final map = jsonDecode(s) as Map<String, dynamic>;
+          if (map['url'] == url) {
+            final v = map['original_image'];
+            if (v is String && v.isNotEmpty) origFromPrefs = v;
+            break;
+          }
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      setState(() {
+        if (origFromPrefs != null) {
+          _originalThumbnailUrl = origFromPrefs;
+        } else if (widget.image != null &&
+            widget.image!.isNotEmpty &&
+            !isLocalThumbnailPath(widget.image)) {
+          _originalThumbnailUrl = widget.image;
+        }
+      });
+    } catch (_) {}
+  }
+
+  /// カスタムサムネ (file://<path>) を元の URL 由来サムネ (or null) に戻す。
+  /// `_setAsThumbnail` の対称操作。無料ユーザーでも実行可能。
+  Future<void> _revertThumbnailToDefault({bool showSnackBar = true}) async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+
+    // 復帰先の優先順:
+    // 1. saved_metadata の original_image (退避してあった元 URL サムネ)
+    // 2. _originalThumbnailUrl (in-memory の退避値)
+    // 3. widget.image が URL 由来ならそれ
+    // どれも該当しない場合は null。次回起動時に URL からフェッチされる。
+    String? restored;
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList('saved_metadata') ?? [];
+    final updated = <String>[];
+    for (final s in savedList) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          final orig = map['original_image'];
+          if (orig is String && orig.isNotEmpty) {
+            restored = orig;
+          } else if (_originalThumbnailUrl != null &&
+              _originalThumbnailUrl!.isNotEmpty) {
+            restored = _originalThumbnailUrl;
+          } else if (widget.image != null &&
+              widget.image!.isNotEmpty &&
+              !isLocalThumbnailPath(widget.image)) {
+            restored = widget.image;
+          }
+          map['image'] = restored;
+          // 元に戻したら退避も不要なので削除
+          map.remove('original_image');
+          updated.add(jsonEncode(map));
+        } else {
+          updated.add(s);
+        }
+      } catch (_) {
+        updated.add(s);
+      }
+    }
+    await prefs.setStringList('saved_metadata', updated);
+
+    if (!mounted) return;
+    setState(() {
+      _thumbnailUrl = restored;
+      _originalThumbnailUrl = null;
+    });
+    ref.read(randomImageReloadProvider.notifier).state++;
+    ref.read(listReloadProvider.notifier).state++;
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    _updatePalette();
+
+    if (showSnackBar && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context)!.detail_page_revert_thumbnail_done)),
+      );
+    }
   }
 
   /// サブスクリプション状態を確認
@@ -3467,7 +3887,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           customerInfo.entitlements.all["Pro Plan"]?.isActive ?? false;
       if (!mounted) return;
       setState(() {
-        _isPremium = isPremium;
+        // Pro は Premium の全機能を含む
+        _isPremium = isPremium || isPro;
         _isPro = isPro;
       });
     } catch (e) {
@@ -3893,11 +4314,15 @@ class _InfoRowSpec {
   final Widget? trailing;
   /// タグ表示にする場合に指定。null の場合は [value] を Text として表示。
   final List<String>? tags;
+  /// tags のカテゴリキー (`cast` / `genre` / `series` / `maker` / `label`)。
+  /// タップ時に search_metadata のどのフィールドで絞り込むかを決める。
+  final String? tagCategory;
   const _InfoRowSpec(
     this.label,
     this.value, {
     this.trailing,
     this.tags,
+    this.tagCategory,
   });
 }
 
@@ -3907,7 +4332,12 @@ class _InfoRowSpec {
 class _InfoTagChip extends StatelessWidget {
   final String label;
   final bool isDark;
-  const _InfoTagChip({required this.label, required this.isDark});
+  final VoidCallback? onTap;
+  const _InfoTagChip({
+    required this.label,
+    required this.isDark,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -3915,7 +4345,7 @@ class _InfoTagChip extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.10)
         : Colors.grey.shade200;
     final fg = isDark ? Colors.white : Colors.black87;
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
@@ -3929,6 +4359,16 @@ class _InfoTagChip extends StatelessWidget {
           fontWeight: FontWeight.w600,
           height: 1.2,
         ),
+      ),
+    );
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: content,
       ),
     );
   }

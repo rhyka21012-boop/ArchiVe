@@ -398,6 +398,107 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
+  /// 価格ブロック: 年額プランのとき、月額 × 12 を取消線で並記して割引を訴求。
+  /// 月額プランのときは従来通り単価のみ。
+  Widget _buildPriceBlock({
+    required Key key,
+    required L10n l,
+    required ColorScheme colorScheme,
+    required Package package,
+    required Package? monthlyPackage,
+  }) {
+    final priceString = package.storeProduct.priceString;
+    final unitLabel = _period == BillingPeriod.monthly
+        ? l.premium_detail_per_month
+        : l.premium_detail_per_year;
+
+    // 年額 & 月額パッケージ両方存在時のみ「月額 × 12」を計算
+    String? originalPriceString;
+    if (_period == BillingPeriod.annual && monthlyPackage != null) {
+      final monthlyPrice = monthlyPackage.storeProduct.price;
+      final annualPrice = package.storeProduct.price;
+      if (monthlyPrice > 0 && annualPrice > 0 && annualPrice < monthlyPrice * 12) {
+        final referencePrice = monthlyPrice * 12;
+        // 通貨記号は月額プランの priceString から取得 (例: "¥500" → "¥")
+        final currency = _extractCurrencySymbol(
+          monthlyPackage.storeProduct.priceString,
+          monthlyPrice,
+        );
+        originalPriceString = _formatPrice(currency, referencePrice);
+      }
+    }
+
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (originalPriceString != null) ...[
+          Text(
+            originalPriceString,
+            style: TextStyle(
+              fontSize: 14,
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w500,
+              decoration: TextDecoration.lineThrough,
+              decorationColor: colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 2),
+        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              priceString,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -1,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                unitLabel,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// 月額 priceString ("¥500" / "$4.99" 等) から通貨記号 (数字以外) を抽出
+  String _extractCurrencySymbol(String priceString, double price) {
+    // 数字・小数点・カンマ・スペースを削って残ったもの
+    final currency = priceString.replaceAll(RegExp(r'[\d.,\s]+'), '');
+    return currency.isEmpty ? '' : currency;
+  }
+
+  /// 通貨記号 + 数値を priceString の一般的なフォーマットで整形
+  String _formatPrice(String currency, double value) {
+    // 端数の丸め: 整数化できるなら整数、そうでなければ小数 2 桁
+    final rounded = value.roundToDouble();
+    final formatted = (value == rounded)
+        ? rounded.toInt().toString()
+        : value.toStringAsFixed(2);
+    // カンマ区切り (日本円等の大きい数字向け)
+    final withCommas = formatted.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (m) => ',',
+    );
+    return currency.isEmpty ? withCommas : '$currency$withCommas';
+  }
+
   // ============================================================
   // Free card
   // ============================================================
@@ -532,6 +633,7 @@ class _PurchasePageState extends State<PurchasePage>
   // ============================================================
   Widget _buildPremiumCard(L10n l, ColorScheme colorScheme) {
     final pkg = _packageOf(_premiumOffering, _period);
+    final monthlyPkg = _packageOf(_premiumOffering, BillingPeriod.monthly);
     final isCurrent = _currentEntitlement == 'Premium Plan' &&
         _currentPeriod == _period;
     return _buildPlanCard(
@@ -543,13 +645,14 @@ class _PurchasePageState extends State<PurchasePage>
       gradientColors: const [_gold, _goldLight, _gold],
       accentColor: _gold,
       package: pkg,
+      monthlyPackage: monthlyPkg,
       features: [
-        l.premium_detail_premium_item01,
-        l.premium_detail_premium_item02,
-        l.premium_detail_premium_item03,
-        l.premium_detail_premium_item04,
-        l.premium_detail_premium_item05,
-        l.premium_detail_premium_item06,
+        (title: l.premium_detail_premium_item01, desc: l.premium_detail_premium_item01_desc),
+        (title: l.premium_detail_premium_item02, desc: l.premium_detail_premium_item02_desc),
+        (title: l.premium_detail_premium_item03, desc: l.premium_detail_premium_item03_desc),
+        (title: l.premium_detail_premium_item04, desc: l.premium_detail_premium_item04_desc),
+        (title: l.premium_detail_premium_item05, desc: l.premium_detail_premium_item05_desc),
+        (title: l.premium_detail_premium_item06, desc: l.premium_detail_premium_item06_desc),
       ],
       isCurrent: isCurrent,
       isPurchasing: _isPurchasingPremium,
@@ -563,6 +666,7 @@ class _PurchasePageState extends State<PurchasePage>
   // ============================================================
   Widget _buildProCard(L10n l, ColorScheme colorScheme) {
     final pkg = _packageOf(_proOffering, _period);
+    final monthlyPkg = _packageOf(_proOffering, BillingPeriod.monthly);
     final isCurrent =
         _currentEntitlement == 'Pro Plan' && _currentPeriod == _period;
     return _buildPlanCard(
@@ -574,13 +678,15 @@ class _PurchasePageState extends State<PurchasePage>
       gradientColors: const [_tealDeep, _tealMid, _tealLight],
       accentColor: _tealMid,
       package: pkg,
+      monthlyPackage: monthlyPkg,
       features: [
-        l.pro_detail_feature_cloud_sync,
-        l.pro_detail_feature_ai_tagging,
-        l.pro_detail_feature_ai_recommend,
-        l.pro_detail_feature_monthly_report,
-        l.pro_detail_feature_public_sharing,
-        l.pro_detail_feature_theme_teal,
+        (title: l.pro_detail_feature_all_premium, desc: l.pro_detail_feature_all_premium_desc),
+        (title: l.pro_detail_feature_cloud_sync, desc: l.pro_detail_feature_cloud_sync_desc),
+        (title: l.pro_detail_feature_ai_tagging, desc: l.pro_detail_feature_ai_tagging_desc),
+        (title: l.pro_detail_feature_ai_recommend, desc: l.pro_detail_feature_ai_recommend_desc),
+        (title: l.pro_detail_feature_monthly_report, desc: l.pro_detail_feature_monthly_report_desc),
+        (title: l.pro_detail_feature_public_sharing, desc: l.pro_detail_feature_public_sharing_desc),
+        (title: l.pro_detail_feature_theme_teal, desc: l.pro_detail_feature_theme_teal_desc),
       ],
       isCurrent: isCurrent,
       isPurchasing: _isPurchasingPro,
@@ -598,7 +704,8 @@ class _PurchasePageState extends State<PurchasePage>
     required List<Color> gradientColors,
     required Color accentColor,
     required Package? package,
-    required List<String> features,
+    Package? monthlyPackage,
+    required List<({String title, String desc})> features,
     required bool isCurrent,
     required bool isPurchasing,
     required bool isPopular,
@@ -696,41 +803,17 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               const SizedBox(height: 18),
 
-              // 価格
+              // 価格 (年額の場合は「月額×12 を取消線」+ 現価格で割引訴求)
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: package != null
-                    ? Row(
+                    ? _buildPriceBlock(
                         key: ValueKey(
                             '${package.storeProduct.priceString}_${_period.name}'),
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            package.storeProduct.priceString,
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -1,
-                              height: 1.0,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              _period == BillingPeriod.monthly
-                                  ? l.premium_detail_per_month
-                                  : l.premium_detail_per_year,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colorScheme.onSurface
-                                    .withValues(alpha: 0.55),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                        l: l,
+                        colorScheme: colorScheme,
+                        package: package,
+                        monthlyPackage: monthlyPackage,
                       )
                     : SizedBox(
                         height: 32,
@@ -748,16 +831,17 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               const SizedBox(height: 18),
 
-              // 機能リスト
+              // 機能リスト (タイトル + 説明)
               ...features.map(
-                (text) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                (f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 18,
-                        height: 18,
+                        width: 20,
+                        height: 20,
+                        margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
@@ -765,18 +849,36 @@ class _PurchasePageState extends State<PurchasePage>
                         child: Icon(
                           Icons.check,
                           color: accentColor,
-                          size: 12,
+                          size: 14,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.35,
-                            color: colorScheme.onSurface,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              f.title,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                height: 1.3,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            if (f.desc.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                f.desc,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  height: 1.4,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],

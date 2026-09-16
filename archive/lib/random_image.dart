@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 
 import 'offline_cleanup.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'thumbnail_setting_provider.dart';
+import 'smart_thumbnail.dart';
 import 'l10n/app_localizations.dart';
 
 class RandomImageContainer extends ConsumerStatefulWidget {
@@ -97,7 +97,7 @@ class _RandomImageContainerState extends ConsumerState<RandomImageContainer> {
               child:
                   imageUrl != null
                       ? (showThumbnail
-                          ? CachedNetworkImage(
+                          ? SmartThumbnail(
                             imageUrl: imageUrl,
                             key: ValueKey(imageUrl),
                             fit: BoxFit.cover,

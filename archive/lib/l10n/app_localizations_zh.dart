@@ -264,6 +264,11 @@ class L10nZh extends L10n {
   String get grid_page_sort_by_date => '按添加日期';
 
   @override
+  String grid_page_search_result_title(String query) {
+    return '「$query」的搜索结果';
+  }
+
+  @override
   String grid_page_sort_current(String label) {
     return '排序: $label';
   }
@@ -322,6 +327,27 @@ class L10nZh extends L10n {
 
   @override
   String get detail_page_add_image => '添加缩略图 ★';
+
+  @override
+  String get detail_page_use_as_thumbnail => '设为缩略图';
+
+  @override
+  String get detail_page_thumbnail_active => '当前缩略图';
+
+  @override
+  String get detail_page_revert_thumbnail => '还原';
+
+  @override
+  String get detail_page_revert_thumbnail_done => '已还原缩略图';
+
+  @override
+  String get detail_page_set_as_thumbnail_title => '将此图片设为缩略图？';
+
+  @override
+  String get detail_page_set_as_thumbnail_body => '将显示在列表和网格视图中。';
+
+  @override
+  String get detail_page_set_as_thumbnail_done => '已更新缩略图';
 
   @override
   String get detail_page_offline => '离线';
@@ -961,6 +987,11 @@ class L10nZh extends L10n {
   String get settings_page_watch_ad => '观看广告（+1个名额）';
 
   @override
+  String settings_page_watch_ad_with_count(int watched, int limit) {
+    return '观看广告 +1个名额（今日: $watched/$limit）';
+  }
+
+  @override
   String get settings_page_ad_limit_reached => '今日广告次数已达上限';
 
   @override
@@ -1026,19 +1057,39 @@ class L10nZh extends L10n {
   String get premium_detail_premium_item01 => '无限保存';
 
   @override
-  String get premium_detail_premium_item02 => '新增主题色 金色';
+  String get premium_detail_premium_item01_desc => '解除免费方案上限，轻松管理包含数千项的收藏';
 
   @override
-  String get premium_detail_premium_item03 => '自由添加图片';
+  String get premium_detail_premium_item02 => '金色主题';
 
   @override
-  String get premium_detail_premium_item04 => '使用多个标签快速搜索';
+  String get premium_detail_premium_item02_desc => 'Premium 专属金色配色方案应用于整个应用';
 
   @override
-  String get premium_detail_premium_item05 => '按类别和评分可视化数据的统计功能';
+  String get premium_detail_premium_item03 => '自由添加图片与自定义缩略图';
 
   @override
-  String get premium_detail_premium_item06 => '去除广告';
+  String get premium_detail_premium_item03_desc => '为每件作品添加参考图片，并可将任意图片设为网格缩略图';
+
+  @override
+  String get premium_detail_premium_item04 => '多标签快速搜索';
+
+  @override
+  String get premium_detail_premium_item04_desc => '组合演员、类别、系列等进行筛选';
+
+  @override
+  String get premium_detail_premium_item05 => '统计与分析功能';
+
+  @override
+  String get premium_detail_premium_item05_desc =>
+      '以图表可视化评分分布、播放数 TOP5、按演员/标签的排行';
+
+  @override
+  String get premium_detail_premium_item06 => '完全去除广告';
+
+  @override
+  String get premium_detail_premium_item06_desc =>
+      '隐藏保存视频与观看时显示的所有广告，带来专注的使用体验';
 
   @override
   String get premium_detail_note => '3 天免费试用后将自动续费。\n随时可以取消。';
@@ -1275,22 +1326,51 @@ class L10nZh extends L10n {
   String get pro_detail_subtitle => '在所有 Premium 功能基础上还包含以下功能';
 
   @override
-  String get pro_detail_feature_cloud_sync => '云同步（多设备）';
+  String get pro_detail_feature_all_premium => '高级版方案的全部功能';
+
+  @override
+  String get pro_detail_feature_all_premium_desc =>
+      '包含全部高级版功能（无限保存、统计、多标签搜索、去广告、金色主题等）';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '云同步';
+
+  @override
+  String get pro_detail_feature_cloud_sync_desc =>
+      '通过云端在多设备间自动同步收藏，即使更换设备也无缝保持';
 
   @override
   String get pro_detail_feature_ai_tagging => 'AI 自动标签';
 
   @override
+  String get pro_detail_feature_ai_tagging_desc =>
+      'Gemini AI 根据 URL 和标题推荐类别、演员、系列等（无限次）';
+
+  @override
   String get pro_detail_feature_ai_recommend => 'AI 推荐关键词';
+
+  @override
+  String get pro_detail_feature_ai_recommend_desc =>
+      'AI 根据你的图书馆趋势推荐下一个值得搜索的关键词';
 
   @override
   String get pro_detail_feature_monthly_report => 'AI 月度报告';
 
   @override
+  String get pro_detail_feature_monthly_report_desc =>
+      '每月自动生成 AI 汇总的上月观看与收藏趋势报告';
+
+  @override
   String get pro_detail_feature_public_sharing => '公开列表分享';
 
   @override
-  String get pro_detail_feature_theme_teal => '新增主题色 青绿色';
+  String get pro_detail_feature_public_sharing_desc => '通过 URL 与其他用户共享你的收藏列表';
+
+  @override
+  String get pro_detail_feature_theme_teal => '青绿色主题';
+
+  @override
+  String get pro_detail_feature_theme_teal_desc => 'Pro 专属青绿色配色方案应用于整个应用';
 
   @override
   String get plans_page_title => '方案';
@@ -1422,6 +1502,60 @@ class L10nZh extends L10n {
   String get plans_page_pro_short => 'Pro';
 
   @override
+  String subscription_prompt_body(String planName, String feature) {
+    return '使用 $planName 方案即可$feature。';
+  }
+
+  @override
+  String subscription_prompt_question(String planName) {
+    return '查看 $planName 方案的详情？';
+  }
+
+  @override
+  String subscription_prompt_confirm(String planName) {
+    return '查看 $planName 详情';
+  }
+
+  @override
+  String get purchase_feature_custom_thumbnail => '添加与自定义缩略图';
+
+  @override
+  String get purchase_feature_analytics => '使用统计与分析功能';
+
+  @override
+  String get purchase_feature_player_extras => '使用播放器音量与睡眠定时器';
+
+  @override
+  String get purchase_feature_save_limit => '解除保存数量上限';
+
+  @override
+  String get purchase_feature_theme_gold => '使用金色主题';
+
+  @override
+  String get purchase_feature_theme_teal => '使用青绿色主题';
+
+  @override
+  String get purchase_feature_cloud_backup => '备份到云端';
+
+  @override
+  String get purchase_feature_cloud_restore => '从云端备份还原';
+
+  @override
+  String get purchase_feature_public_sharing => '共享与公开列表';
+
+  @override
+  String get purchase_feature_ai_monthly_report => '生成 AI 月度报告';
+
+  @override
+  String get purchase_feature_ai_recommend => '生成 AI 推荐关键词';
+
+  @override
+  String get purchase_feature_ai_tagging_unlimited => '无限次使用 AI 标签建议';
+
+  @override
+  String get purchase_feature_multi_tag_search => '组合多个标签进行筛选';
+
+  @override
   String get plans_page_free_short => '免费';
 
   @override
@@ -1431,7 +1565,7 @@ class L10nZh extends L10n {
   String get plans_page_free_item01 => '可保存 100 件';
 
   @override
-  String get plans_page_free_item02 => '观看广告扩展 15 个名额/日';
+  String get plans_page_free_item02 => '观看广告扩展 5 个名额/日';
 
   @override
   String get plans_page_free_item03 => '单一标签搜索';
@@ -1752,6 +1886,11 @@ class L10nZhHans extends L10nZh {
   String get grid_page_sort_by_date => '按添加日期';
 
   @override
+  String grid_page_search_result_title(String query) {
+    return '「$query」的搜索结果';
+  }
+
+  @override
   String grid_page_sort_current(String label) {
     return '排序: $label';
   }
@@ -1810,6 +1949,27 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get detail_page_add_image => '添加缩略图 ★';
+
+  @override
+  String get detail_page_use_as_thumbnail => '设为缩略图';
+
+  @override
+  String get detail_page_thumbnail_active => '当前缩略图';
+
+  @override
+  String get detail_page_revert_thumbnail => '还原';
+
+  @override
+  String get detail_page_revert_thumbnail_done => '已还原缩略图';
+
+  @override
+  String get detail_page_set_as_thumbnail_title => '将此图片设为缩略图？';
+
+  @override
+  String get detail_page_set_as_thumbnail_body => '将显示在列表和网格视图中。';
+
+  @override
+  String get detail_page_set_as_thumbnail_done => '已更新缩略图';
 
   @override
   String get detail_page_offline => '离线';
@@ -2449,6 +2609,11 @@ class L10nZhHans extends L10nZh {
   String get settings_page_watch_ad => '观看广告（+1个名额）';
 
   @override
+  String settings_page_watch_ad_with_count(int watched, int limit) {
+    return '观看广告 +1个名额（今日: $watched/$limit）';
+  }
+
+  @override
   String get settings_page_ad_limit_reached => '今日广告次数已达上限';
 
   @override
@@ -2514,19 +2679,39 @@ class L10nZhHans extends L10nZh {
   String get premium_detail_premium_item01 => '无限保存';
 
   @override
-  String get premium_detail_premium_item02 => '新增主题色 金色';
+  String get premium_detail_premium_item01_desc => '解除免费方案上限，轻松管理包含数千项的收藏';
 
   @override
-  String get premium_detail_premium_item03 => '自由添加图片';
+  String get premium_detail_premium_item02 => '金色主题';
 
   @override
-  String get premium_detail_premium_item04 => '使用多个标签快速搜索';
+  String get premium_detail_premium_item02_desc => 'Premium 专属金色配色方案应用于整个应用';
 
   @override
-  String get premium_detail_premium_item05 => '按类别和评分可视化数据的统计功能';
+  String get premium_detail_premium_item03 => '自由添加图片与自定义缩略图';
 
   @override
-  String get premium_detail_premium_item06 => '去除广告';
+  String get premium_detail_premium_item03_desc => '为每件作品添加参考图片，并可将任意图片设为网格缩略图';
+
+  @override
+  String get premium_detail_premium_item04 => '多标签快速搜索';
+
+  @override
+  String get premium_detail_premium_item04_desc => '组合演员、类别、系列等进行筛选';
+
+  @override
+  String get premium_detail_premium_item05 => '统计与分析功能';
+
+  @override
+  String get premium_detail_premium_item05_desc =>
+      '以图表可视化评分分布、播放数 TOP5、按演员/标签的排行';
+
+  @override
+  String get premium_detail_premium_item06 => '完全去除广告';
+
+  @override
+  String get premium_detail_premium_item06_desc =>
+      '隐藏保存视频与观看时显示的所有广告，带来专注的使用体验';
 
   @override
   String get premium_detail_note => '3 天免费试用后将自动续费。\n随时可以取消。';
@@ -2763,22 +2948,51 @@ class L10nZhHans extends L10nZh {
   String get pro_detail_subtitle => '在所有 Premium 功能基础上还包含以下功能';
 
   @override
-  String get pro_detail_feature_cloud_sync => '云同步（多设备）';
+  String get pro_detail_feature_all_premium => '高级版方案的全部功能';
+
+  @override
+  String get pro_detail_feature_all_premium_desc =>
+      '包含全部高级版功能（无限保存、统计、多标签搜索、去广告、金色主题等）';
+
+  @override
+  String get pro_detail_feature_cloud_sync => '云同步';
+
+  @override
+  String get pro_detail_feature_cloud_sync_desc =>
+      '通过云端在多设备间自动同步收藏，即使更换设备也无缝保持';
 
   @override
   String get pro_detail_feature_ai_tagging => 'AI 自动标签';
 
   @override
+  String get pro_detail_feature_ai_tagging_desc =>
+      'Gemini AI 根据 URL 和标题推荐类别、演员、系列等（无限次）';
+
+  @override
   String get pro_detail_feature_ai_recommend => 'AI 推荐关键词';
+
+  @override
+  String get pro_detail_feature_ai_recommend_desc =>
+      'AI 根据你的图书馆趋势推荐下一个值得搜索的关键词';
 
   @override
   String get pro_detail_feature_monthly_report => 'AI 月度报告';
 
   @override
+  String get pro_detail_feature_monthly_report_desc =>
+      '每月自动生成 AI 汇总的上月观看与收藏趋势报告';
+
+  @override
   String get pro_detail_feature_public_sharing => '公开列表分享';
 
   @override
-  String get pro_detail_feature_theme_teal => '新增主题色 青绿色';
+  String get pro_detail_feature_public_sharing_desc => '通过 URL 与其他用户共享你的收藏列表';
+
+  @override
+  String get pro_detail_feature_theme_teal => '青绿色主题';
+
+  @override
+  String get pro_detail_feature_theme_teal_desc => 'Pro 专属青绿色配色方案应用于整个应用';
 
   @override
   String get plans_page_title => '方案';
@@ -2910,6 +3124,60 @@ class L10nZhHans extends L10nZh {
   String get plans_page_pro_short => 'Pro';
 
   @override
+  String subscription_prompt_body(String planName, String feature) {
+    return '使用 $planName 方案即可$feature。';
+  }
+
+  @override
+  String subscription_prompt_question(String planName) {
+    return '查看 $planName 方案的详情？';
+  }
+
+  @override
+  String subscription_prompt_confirm(String planName) {
+    return '查看 $planName 详情';
+  }
+
+  @override
+  String get purchase_feature_custom_thumbnail => '添加与自定义缩略图';
+
+  @override
+  String get purchase_feature_analytics => '使用统计与分析功能';
+
+  @override
+  String get purchase_feature_player_extras => '使用播放器音量与睡眠定时器';
+
+  @override
+  String get purchase_feature_save_limit => '解除保存数量上限';
+
+  @override
+  String get purchase_feature_theme_gold => '使用金色主题';
+
+  @override
+  String get purchase_feature_theme_teal => '使用青绿色主题';
+
+  @override
+  String get purchase_feature_cloud_backup => '备份到云端';
+
+  @override
+  String get purchase_feature_cloud_restore => '从云端备份还原';
+
+  @override
+  String get purchase_feature_public_sharing => '共享与公开列表';
+
+  @override
+  String get purchase_feature_ai_monthly_report => '生成 AI 月度报告';
+
+  @override
+  String get purchase_feature_ai_recommend => '生成 AI 推荐关键词';
+
+  @override
+  String get purchase_feature_ai_tagging_unlimited => '无限次使用 AI 标签建议';
+
+  @override
+  String get purchase_feature_multi_tag_search => '组合多个标签进行筛选';
+
+  @override
   String get plans_page_free_short => '免费';
 
   @override
@@ -2919,7 +3187,7 @@ class L10nZhHans extends L10nZh {
   String get plans_page_free_item01 => '可保存 100 件';
 
   @override
-  String get plans_page_free_item02 => '观看广告扩展 15 个名额/日';
+  String get plans_page_free_item02 => '观看广告扩展 5 个名额/日';
 
   @override
   String get plans_page_free_item03 => '单一标签搜索';

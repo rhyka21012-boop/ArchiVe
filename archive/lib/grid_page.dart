@@ -9,8 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-
 import 'l10n/app_localizations.dart';
 import 'tutorial_page.dart';
 import 'detail_page.dart';
@@ -28,6 +26,8 @@ import 'theme_provider.dart';
 import 'rating_label_provider.dart';
 import 'circle_app_bar_icon.dart';
 import 'local_video_player_page.dart';
+import 'smart_thumbnail.dart';
+import 'subscription_prompt_dialog.dart';
 import 'mini_player_provider.dart';
 import 'offline_indicators.dart';
 import 'browser_session_provider.dart';
@@ -39,6 +39,10 @@ class GridPage extends ConsumerStatefulWidget {
   final String rating;
   final String listName;
   final VoidCallback? onDeleted;
+  /// アプリ内検索の結果として開かれた場合 true。
+  /// - AppBar タイトルを「〇〇 の検索結果」形式に切替
+  /// - リスト共有ボタンを非表示にする
+  final bool fromSearch;
 
   const GridPage({
     required this.selectedItems,
@@ -46,6 +50,7 @@ class GridPage extends ConsumerStatefulWidget {
     required this.rating,
     required this.listName,
     this.onDeleted,
+    this.fromSearch = false,
     super.key,
   });
 
@@ -60,9 +65,11 @@ class GridPageState extends ConsumerState<GridPage> {
   List<Map<String, dynamic>> _sortedItems = [];
 
   //ソートボタンの選択値
-  List<bool> _sortedMenuSelected = [false, true, false, false, false]; // 既定は new
+  // _searchedItems は saved_metadata に append された順 = 追加が古い順 なので
+  // 初期表示と選択チップを揃えるため既定を 'old' にする
+  List<bool> _sortedMenuSelected = [false, false, true, false, false];
   // 現在のソートキー (AppBar チップに表示、拡張ソート対応)
-  String _sortKey = 'new';
+  String _sortKey = 'old';
 
   //スクロール管理
   final ScrollController _scrollController = ScrollController();
@@ -142,6 +149,19 @@ class GridPageState extends ConsumerState<GridPage> {
     _loadLocalImages();
     _loadViewSettings();
     _loadAd();
+
+    // DetailPage 側から saved_metadata が更新された時 (サムネ変更等) に
+    // GridPage も再フェッチしてサムネを即反映する
+    ref.listenManual<int>(listReloadProvider, (prev, next) {
+      if (prev == next) return;
+      if (!mounted) return;
+      _searchMetadata();
+    });
+    ref.listenManual<int>(randomImageReloadProvider, (prev, next) {
+      if (prev == next) return;
+      if (!mounted) return;
+      _searchMetadata();
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ref.watch(tutorialStepProvider) == TutorialStep.tapList) {
@@ -245,10 +265,12 @@ class GridPageState extends ConsumerState<GridPage> {
                       const SizedBox(width: 4),
                     ]
                   : [
-                      CircleAppBarIcon(
-                        icon: Icons.share,
-                        onPressed: () => _openShareDialog(itemsToShow),
-                      ),
+                      // アプリ内検索の結果画面ではリスト共有ボタンを非表示
+                      if (!widget.fromSearch)
+                        CircleAppBarIcon(
+                          icon: Icons.share,
+                          onPressed: () => _openShareDialog(itemsToShow),
+                        ),
                       // 現在のソート順を表示するチップ + 並び替えメニュー呼び出し
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -613,7 +635,8 @@ class GridPageState extends ConsumerState<GridPage> {
                                 children: [
                                   Positioned.fill(
                                     child: item['image'] != null
-                                        ? CachedNetworkImage(
+                                        ? SmartThumbnail(
+                                            key: ValueKey(item['image']),
                                             imageUrl: item['image'],
                                             fit: BoxFit.cover,
                                             errorWidget: (context, url, error) =>
@@ -682,7 +705,8 @@ class GridPageState extends ConsumerState<GridPage> {
                         children: [
                           Positioned.fill(
                             child: item['image'] != null
-                                ? CachedNetworkImage(
+                                ? SmartThumbnail(
+                                    key: ValueKey(item['image']),
                                     imageUrl: item['image'],
                                     fit: BoxFit.cover,
                                     errorWidget: (context, url, error) =>
@@ -902,6 +926,13 @@ class GridPageState extends ConsumerState<GridPage> {
             return true;
           }).toList();
     });
+
+    // 現在選択中のソートを維持 (削除・移動・追加後にソートがデフォルトに
+    // 戻って、AppBar のソートチップ表示と食い違う問題を防ぐ)
+    // 既定 'old' は _searchedItems の順そのままなので再適用不要
+    if (_sortedItems.isNotEmpty || _sortKey != 'old') {
+      await _sortSearchedItems(_sortKey);
+    }
   }
 
   //全角→半角変換、ひらがな→カタカナ変換
@@ -1168,10 +1199,11 @@ class GridPageState extends ConsumerState<GridPage> {
 
     await Future.delayed(const Duration(milliseconds: 250));
 
+    // _searchMetadata が末尾で現在のソートを再適用するため、
+    // ここで _sortedItems.clear() はしない (チップ表示との食い違いを防ぐ)
     await _searchMetadata();
 
     setState(() {
-      _sortedItems.clear();
       _removingIndexes.clear();
       _selectedIndexes.clear();
       _isSelectionMode = false;
@@ -1334,7 +1366,8 @@ class GridPageState extends ConsumerState<GridPage> {
                   width: 64,
                   height: 64,
                   child: item['image'] != null
-                      ? CachedNetworkImage(
+                      ? SmartThumbnail(
+                          key: ValueKey(item['image']),
                           imageUrl: item['image'],
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
@@ -1628,12 +1661,39 @@ class GridPageState extends ConsumerState<GridPage> {
 
   // AppBar に表示するセクション名 (リスト名 / 評価名 / 全てのアイテム)
   String _sectionName() {
+    if (widget.fromSearch) {
+      // アプリ内検索の結果画面: 「〇〇 の検索結果」表記
+      final base = _searchQuerySummary();
+      if (base.isNotEmpty) {
+        return L10n.of(context)!.grid_page_search_result_title(base);
+      }
+    }
     if (widget.listName.isNotEmpty) return widget.listName;
     if (widget.rating.isNotEmpty) {
       final labels = ref.watch(ratingLabelsProvider);
       return ratingLabelOf(context, labels, widget.rating);
     }
     return L10n.of(context)!.all_item_list_name;
+  }
+
+  /// fromSearch 用の "〇〇" 部分を組み立てる。
+  /// テキスト検索 > 選択タグ > 評価 の優先順で、複数タグはカンマ区切り。
+  String _searchQuerySummary() {
+    if (widget.searchText.trim().isNotEmpty) {
+      return widget.searchText.trim();
+    }
+    if (widget.selectedItems.isNotEmpty) {
+      final flat = widget.selectedItems.values
+          .expand((v) => v)
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (flat.isNotEmpty) return flat.join(', ');
+    }
+    if (widget.rating.isNotEmpty) {
+      final labels = ref.watch(ratingLabelsProvider);
+      return ratingLabelOf(context, labels, widget.rating);
+    }
+    return '';
   }
 
   //評価ごとの色
@@ -1654,13 +1714,19 @@ class GridPageState extends ConsumerState<GridPage> {
   //ソートのモーダルウィンドウ
   //====================
   Future<void> _openShareDialog(List<Map<String, dynamic>> items) async {
-    // Pro 未加入なら、購入を促すダイアログを表示
+    // Pro 未加入なら「プラン紹介 → 購入」の 2 段導線
     final isPro = await ProGate.isPro();
     if (!mounted) return;
     if (!isPro) {
-      final shouldPurchase = await _showProRequiredDialog();
-      if (shouldPurchase != true || !mounted) return;
-      if (!await ProGate.ensureProPurchaseFirst(context)) return;
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.pro,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_public_sharing,
+        imageAsset: 'assets/subscription/public_sharing.png',
+        icon: Icons.share,
+      );
+      if (!bought) return;
       if (!mounted) return;
     }
 

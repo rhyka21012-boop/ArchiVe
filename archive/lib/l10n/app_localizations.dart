@@ -608,6 +608,12 @@ abstract class L10n {
   /// **'追加日順'**
   String get grid_page_sort_by_date;
 
+  /// No description provided for @grid_page_search_result_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'「{query}」の検索結果'**
+  String grid_page_search_result_title(String query);
+
   /// No description provided for @grid_page_sort_current.
   ///
   /// In ja, this message translates to:
@@ -715,6 +721,48 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'サムネイル画像を追加★'**
   String get detail_page_add_image;
+
+  /// No description provided for @detail_page_use_as_thumbnail.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネにする'**
+  String get detail_page_use_as_thumbnail;
+
+  /// No description provided for @detail_page_thumbnail_active.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネ設定中'**
+  String get detail_page_thumbnail_active;
+
+  /// No description provided for @detail_page_revert_thumbnail.
+  ///
+  /// In ja, this message translates to:
+  /// **'元に戻す'**
+  String get detail_page_revert_thumbnail;
+
+  /// No description provided for @detail_page_revert_thumbnail_done.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネイルを元に戻しました'**
+  String get detail_page_revert_thumbnail_done;
+
+  /// No description provided for @detail_page_set_as_thumbnail_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'この画像をサムネイルにしますか？'**
+  String get detail_page_set_as_thumbnail_title;
+
+  /// No description provided for @detail_page_set_as_thumbnail_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品一覧やグリッド表示のサムネイルとして使われます。'**
+  String get detail_page_set_as_thumbnail_body;
+
+  /// No description provided for @detail_page_set_as_thumbnail_done.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネイルを更新しました'**
+  String get detail_page_set_as_thumbnail_done;
 
   /// No description provided for @detail_page_offline.
   ///
@@ -1916,6 +1964,12 @@ abstract class L10n {
   /// **'広告を見て +1 枠'**
   String get settings_page_watch_ad;
 
+  /// No description provided for @settings_page_watch_ad_with_count.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告を見て +1 枠 (本日: {watched} / {limit} 回)'**
+  String settings_page_watch_ad_with_count(int watched, int limit);
+
   /// No description provided for @settings_page_ad_limit_reached.
   ///
   /// In ja, this message translates to:
@@ -2039,38 +2093,74 @@ abstract class L10n {
   /// No description provided for @premium_detail_premium_item01.
   ///
   /// In ja, this message translates to:
-  /// **'無制限の保存数'**
+  /// **'保存数無制限'**
   String get premium_detail_premium_item01;
+
+  /// No description provided for @premium_detail_premium_item01_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'無料プランの上限を撤廃。数千件のコレクションも快適に管理できます'**
+  String get premium_detail_premium_item01_desc;
 
   /// No description provided for @premium_detail_premium_item02.
   ///
   /// In ja, this message translates to:
-  /// **'テーマカラー ゴールドを追加'**
+  /// **'ゴールドテーマ'**
   String get premium_detail_premium_item02;
+
+  /// No description provided for @premium_detail_premium_item02_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'通常のカラーに加え、Premium限定のゴールド系配色をアプリ全体に適用'**
+  String get premium_detail_premium_item02_desc;
 
   /// No description provided for @premium_detail_premium_item03.
   ///
   /// In ja, this message translates to:
-  /// **'画像を自由に追加'**
+  /// **'画像を自由に追加・サムネ変更'**
   String get premium_detail_premium_item03;
+
+  /// No description provided for @premium_detail_premium_item03_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品ごとに参考画像を追加し、任意の画像をグリッドのサムネイルに設定可能'**
+  String get premium_detail_premium_item03_desc;
 
   /// No description provided for @premium_detail_premium_item04.
   ///
   /// In ja, this message translates to:
-  /// **'複数のタグで素早く検索'**
+  /// **'複数タグで素早く検索'**
   String get premium_detail_premium_item04;
+
+  /// No description provided for @premium_detail_premium_item04_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'出演者・ジャンル・シリーズ等を組み合わせて絞り込み検索'**
+  String get premium_detail_premium_item04_desc;
 
   /// No description provided for @premium_detail_premium_item05.
   ///
   /// In ja, this message translates to:
-  /// **'ジャンル別・評価別にデータを可視化する統計機能'**
+  /// **'統計・分析機能'**
   String get premium_detail_premium_item05;
+
+  /// No description provided for @premium_detail_premium_item05_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価分布、視聴回数TOP5、出演者/タグ別ランキングをグラフで可視化'**
+  String get premium_detail_premium_item05_desc;
 
   /// No description provided for @premium_detail_premium_item06.
   ///
   /// In ja, this message translates to:
-  /// **'広告の非表示'**
+  /// **'広告を完全に非表示'**
   String get premium_detail_premium_item06;
+
+  /// No description provided for @premium_detail_premium_item06_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'動画保存時や視聴中に表示される広告を全て非表示にして、集中できるUXに'**
+  String get premium_detail_premium_item06_desc;
 
   /// No description provided for @premium_detail_note.
   ///
@@ -2528,11 +2618,29 @@ abstract class L10n {
   /// **'プレミアム全機能に加えて、以下が利用可能'**
   String get pro_detail_subtitle;
 
+  /// No description provided for @pro_detail_feature_all_premium.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアムプランの全機能'**
+  String get pro_detail_feature_all_premium;
+
+  /// No description provided for @pro_detail_feature_all_premium_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'プレミアムの機能 (保存数無制限、統計、複数タグ検索、広告非表示、ゴールドテーマ 等) をすべて含みます'**
+  String get pro_detail_feature_all_premium_desc;
+
   /// No description provided for @pro_detail_feature_cloud_sync.
   ///
   /// In ja, this message translates to:
-  /// **'クラウド同期（複数端末）'**
+  /// **'クラウド同期'**
   String get pro_detail_feature_cloud_sync;
+
+  /// No description provided for @pro_detail_feature_cloud_sync_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'クラウド経由で複数端末間のコレクションを自動同期。機種変更もそのまま'**
+  String get pro_detail_feature_cloud_sync_desc;
 
   /// No description provided for @pro_detail_feature_ai_tagging.
   ///
@@ -2540,11 +2648,23 @@ abstract class L10n {
   /// **'AI自動タグ付け'**
   String get pro_detail_feature_ai_tagging;
 
+  /// No description provided for @pro_detail_feature_ai_tagging_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'URL・タイトルからGemini AIがジャンル・出演者・シリーズ等を提案（無制限）'**
+  String get pro_detail_feature_ai_tagging_desc;
+
   /// No description provided for @pro_detail_feature_ai_recommend.
   ///
   /// In ja, this message translates to:
   /// **'AIおすすめキーワード'**
   String get pro_detail_feature_ai_recommend;
+
+  /// No description provided for @pro_detail_feature_ai_recommend_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'あなたのライブラリ傾向から次に探すべきキーワードをAIがレコメンド'**
+  String get pro_detail_feature_ai_recommend_desc;
 
   /// No description provided for @pro_detail_feature_monthly_report.
   ///
@@ -2552,17 +2672,35 @@ abstract class L10n {
   /// **'AI月次レポート'**
   String get pro_detail_feature_monthly_report;
 
+  /// No description provided for @pro_detail_feature_monthly_report_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'前月の視聴傾向・お気に入り傾向をAIが要約したレポートを毎月生成'**
+  String get pro_detail_feature_monthly_report_desc;
+
   /// No description provided for @pro_detail_feature_public_sharing.
   ///
   /// In ja, this message translates to:
   /// **'公開リスト共有'**
   String get pro_detail_feature_public_sharing;
 
+  /// No description provided for @pro_detail_feature_public_sharing_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'お気に入りリストをURLで他ユーザーに共有できる機能'**
+  String get pro_detail_feature_public_sharing_desc;
+
   /// No description provided for @pro_detail_feature_theme_teal.
   ///
   /// In ja, this message translates to:
-  /// **'テーマカラー ティールを追加'**
+  /// **'ティールテーマ'**
   String get pro_detail_feature_theme_teal;
+
+  /// No description provided for @pro_detail_feature_theme_teal_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro限定のティール系カラースキームをアプリ全体に適用'**
+  String get pro_detail_feature_theme_teal_desc;
 
   /// No description provided for @plans_page_title.
   ///
@@ -2816,6 +2954,102 @@ abstract class L10n {
   /// **'Pro'**
   String get plans_page_pro_short;
 
+  /// No description provided for @subscription_prompt_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'{planName}プランでは{feature}ができます。'**
+  String subscription_prompt_body(String planName, String feature);
+
+  /// No description provided for @subscription_prompt_question.
+  ///
+  /// In ja, this message translates to:
+  /// **'{planName}プランの詳細を確認しますか？'**
+  String subscription_prompt_question(String planName);
+
+  /// No description provided for @subscription_prompt_confirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'{planName}の詳細を見る'**
+  String subscription_prompt_confirm(String planName);
+
+  /// No description provided for @purchase_feature_custom_thumbnail.
+  ///
+  /// In ja, this message translates to:
+  /// **'サムネイル画像の追加・変更'**
+  String get purchase_feature_custom_thumbnail;
+
+  /// No description provided for @purchase_feature_analytics.
+  ///
+  /// In ja, this message translates to:
+  /// **'統計・分析機能の利用'**
+  String get purchase_feature_analytics;
+
+  /// No description provided for @purchase_feature_player_extras.
+  ///
+  /// In ja, this message translates to:
+  /// **'動画プレイヤーの音量調整・スリープタイマー利用'**
+  String get purchase_feature_player_extras;
+
+  /// No description provided for @purchase_feature_save_limit.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存数上限の解除'**
+  String get purchase_feature_save_limit;
+
+  /// No description provided for @purchase_feature_theme_gold.
+  ///
+  /// In ja, this message translates to:
+  /// **'ゴールドテーマカラーの適用'**
+  String get purchase_feature_theme_gold;
+
+  /// No description provided for @purchase_feature_theme_teal.
+  ///
+  /// In ja, this message translates to:
+  /// **'ティールテーマカラーの適用'**
+  String get purchase_feature_theme_teal;
+
+  /// No description provided for @purchase_feature_cloud_backup.
+  ///
+  /// In ja, this message translates to:
+  /// **'クラウドへのバックアップ'**
+  String get purchase_feature_cloud_backup;
+
+  /// No description provided for @purchase_feature_cloud_restore.
+  ///
+  /// In ja, this message translates to:
+  /// **'バックアップからの復元'**
+  String get purchase_feature_cloud_restore;
+
+  /// No description provided for @purchase_feature_public_sharing.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品リストの共有・公開'**
+  String get purchase_feature_public_sharing;
+
+  /// No description provided for @purchase_feature_ai_monthly_report.
+  ///
+  /// In ja, this message translates to:
+  /// **'AI月次レポートの生成'**
+  String get purchase_feature_ai_monthly_report;
+
+  /// No description provided for @purchase_feature_ai_recommend.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIおすすめキーワードの生成'**
+  String get purchase_feature_ai_recommend;
+
+  /// No description provided for @purchase_feature_ai_tagging_unlimited.
+  ///
+  /// In ja, this message translates to:
+  /// **'AIタグ提案の回数無制限利用'**
+  String get purchase_feature_ai_tagging_unlimited;
+
+  /// No description provided for @purchase_feature_multi_tag_search.
+  ///
+  /// In ja, this message translates to:
+  /// **'複数タグを組み合わせた絞り込み検索'**
+  String get purchase_feature_multi_tag_search;
+
   /// No description provided for @plans_page_free_short.
   ///
   /// In ja, this message translates to:
@@ -2837,7 +3071,7 @@ abstract class L10n {
   /// No description provided for @plans_page_free_item02.
   ///
   /// In ja, this message translates to:
-  /// **'広告視聴で15枠/日 拡張可能'**
+  /// **'広告視聴で5枠/日 拡張可能'**
   String get plans_page_free_item02;
 
   /// No description provided for @plans_page_free_item03.

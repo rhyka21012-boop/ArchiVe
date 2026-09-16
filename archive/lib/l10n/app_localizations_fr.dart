@@ -268,6 +268,11 @@ class L10nFr extends L10n {
   String get grid_page_sort_by_date => 'Par date d\'ajout';
 
   @override
+  String grid_page_search_result_title(String query) {
+    return 'Résultats pour « $query »';
+  }
+
+  @override
   String grid_page_sort_current(String label) {
     return 'Tri : $label';
   }
@@ -329,6 +334,29 @@ class L10nFr extends L10n {
 
   @override
   String get detail_page_add_image => 'Ajouter une miniature ★';
+
+  @override
+  String get detail_page_use_as_thumbnail => 'Comme miniature';
+
+  @override
+  String get detail_page_thumbnail_active => 'Miniature actuelle';
+
+  @override
+  String get detail_page_revert_thumbnail => 'Rétablir';
+
+  @override
+  String get detail_page_revert_thumbnail_done => 'Miniature rétablie';
+
+  @override
+  String get detail_page_set_as_thumbnail_title =>
+      'Utiliser cette image comme miniature ?';
+
+  @override
+  String get detail_page_set_as_thumbnail_body =>
+      'Elle sera affichée dans les vues liste et grille.';
+
+  @override
+  String get detail_page_set_as_thumbnail_done => 'Miniature mise à jour';
 
   @override
   String get detail_page_offline => 'Hors ligne';
@@ -994,6 +1022,11 @@ class L10nFr extends L10n {
   String get settings_page_watch_ad => 'Regarder une pub (+1 emplacement)';
 
   @override
+  String settings_page_watch_ad_with_count(int watched, int limit) {
+    return 'Regarder une pub +1 emplacement (Aujourd\'\'hui : $watched/$limit)';
+  }
+
+  @override
   String get settings_page_ad_limit_reached =>
       'Limite quotidienne de publicités atteinte';
 
@@ -1063,21 +1096,44 @@ class L10nFr extends L10n {
   String get premium_detail_premium_item01 => 'Sauvegardes illimitées';
 
   @override
-  String get premium_detail_premium_item02 => 'Ajouter la couleur de thème Or';
+  String get premium_detail_premium_item01_desc =>
+      'Aucune limite du plan gratuit — gérez confortablement des collections de milliers d\'éléments';
 
   @override
-  String get premium_detail_premium_item03 => 'Ajouter librement des images';
+  String get premium_detail_premium_item02 => 'Thème Or';
 
   @override
-  String get premium_detail_premium_item04 =>
-      'Recherche rapide avec plusieurs tags';
+  String get premium_detail_premium_item02_desc =>
+      'Appliquez à toute l\'app une palette dorée exclusive à Premium';
 
   @override
-  String get premium_detail_premium_item05 =>
-      'Statistiques pour visualiser les données par genre et évaluation';
+  String get premium_detail_premium_item03 =>
+      'Images & miniatures personnalisées';
 
   @override
-  String get premium_detail_premium_item06 => 'Supprimer les publicités';
+  String get premium_detail_premium_item03_desc =>
+      'Ajoutez des images de référence à chaque œuvre et choisissez-en une comme miniature';
+
+  @override
+  String get premium_detail_premium_item04 => 'Recherche multi-tags rapide';
+
+  @override
+  String get premium_detail_premium_item04_desc =>
+      'Filtrez en combinant casting, genre, série, etc.';
+
+  @override
+  String get premium_detail_premium_item05 => 'Statistiques & analyses';
+
+  @override
+  String get premium_detail_premium_item05_desc =>
+      'Visualisez la répartition des notes, TOP 5 des vues et classements casting/tag en graphiques';
+
+  @override
+  String get premium_detail_premium_item06 => 'Expérience sans publicité';
+
+  @override
+  String get premium_detail_premium_item06_desc =>
+      'Masque toutes les pubs affichées lors de l\'enregistrement ou du visionnage, pour une UX concentrée';
 
   @override
   String get premium_detail_note =>
@@ -1331,24 +1387,54 @@ class L10nFr extends L10n {
       'Toutes les fonctionnalités Premium plus les suivantes';
 
   @override
-  String get pro_detail_feature_cloud_sync =>
-      'Synchronisation cloud (multi-appareils)';
+  String get pro_detail_feature_all_premium =>
+      'Toutes les fonctionnalités Premium';
+
+  @override
+  String get pro_detail_feature_all_premium_desc =>
+      'Inclut toutes les fonctionnalités Premium (sauvegardes illimitées, statistiques, recherche multi-tags, sans pub, thème Or, etc.)';
+
+  @override
+  String get pro_detail_feature_cloud_sync => 'Synchronisation cloud';
+
+  @override
+  String get pro_detail_feature_cloud_sync_desc =>
+      'Votre collection se synchronise automatiquement entre appareils via le cloud — même en changeant de mobile';
 
   @override
   String get pro_detail_feature_ai_tagging => 'Étiquetage automatique IA';
 
   @override
+  String get pro_detail_feature_ai_tagging_desc =>
+      'Gemini AI suggère genre, casting, série, etc. à partir de l\'URL et du titre (illimité)';
+
+  @override
   String get pro_detail_feature_ai_recommend => 'Mots-clés recommandés par IA';
+
+  @override
+  String get pro_detail_feature_ai_recommend_desc =>
+      'L\'IA recommande quoi chercher ensuite selon les tendances de votre bibliothèque';
 
   @override
   String get pro_detail_feature_monthly_report => 'Rapport mensuel IA';
 
   @override
-  String get pro_detail_feature_public_sharing => 'Partage de listes publiques';
+  String get pro_detail_feature_monthly_report_desc =>
+      'Recevez chaque mois un résumé IA de vos tendances de visionnage et favoris';
 
   @override
-  String get pro_detail_feature_theme_teal =>
-      'Ajouter la couleur de thème Sarcelle';
+  String get pro_detail_feature_public_sharing => 'Listes publiques';
+
+  @override
+  String get pro_detail_feature_public_sharing_desc =>
+      'Partagez vos listes favorites avec d\'autres utilisateurs via URL';
+
+  @override
+  String get pro_detail_feature_theme_teal => 'Thème Sarcelle';
+
+  @override
+  String get pro_detail_feature_theme_teal_desc =>
+      'Appliquez à toute l\'app une palette sarcelle exclusive à Pro';
 
   @override
   String get plans_page_title => 'Forfaits';
@@ -1486,6 +1572,70 @@ class L10nFr extends L10n {
   String get plans_page_pro_short => 'Pro';
 
   @override
+  String subscription_prompt_body(String planName, String feature) {
+    return 'Avec le plan $planName, vous pouvez $feature.';
+  }
+
+  @override
+  String subscription_prompt_question(String planName) {
+    return 'Voir les détails du plan $planName ?';
+  }
+
+  @override
+  String subscription_prompt_confirm(String planName) {
+    return 'Voir les détails $planName';
+  }
+
+  @override
+  String get purchase_feature_custom_thumbnail =>
+      'ajouter et personnaliser les miniatures';
+
+  @override
+  String get purchase_feature_analytics =>
+      'utiliser les statistiques et analyses';
+
+  @override
+  String get purchase_feature_player_extras =>
+      'utiliser le volume et le minuteur du lecteur';
+
+  @override
+  String get purchase_feature_save_limit =>
+      'supprimer la limite de sauvegardes';
+
+  @override
+  String get purchase_feature_theme_gold => 'appliquer le thème Or';
+
+  @override
+  String get purchase_feature_theme_teal => 'appliquer le thème Sarcelle';
+
+  @override
+  String get purchase_feature_cloud_backup => 'sauvegarder dans le cloud';
+
+  @override
+  String get purchase_feature_cloud_restore =>
+      'restaurer depuis une sauvegarde cloud';
+
+  @override
+  String get purchase_feature_public_sharing =>
+      'partager et publier des listes';
+
+  @override
+  String get purchase_feature_ai_monthly_report =>
+      'générer le rapport mensuel IA';
+
+  @override
+  String get purchase_feature_ai_recommend =>
+      'générer des recommandations de mots-clés IA';
+
+  @override
+  String get purchase_feature_ai_tagging_unlimited =>
+      'utiliser les suggestions de tags IA sans limite';
+
+  @override
+  String get purchase_feature_multi_tag_search =>
+      'filtrer en combinant plusieurs tags';
+
+  @override
   String get plans_page_free_short => 'Gratuit';
 
   @override
@@ -1496,7 +1646,7 @@ class L10nFr extends L10n {
 
   @override
   String get plans_page_free_item02 =>
-      'Regarder des pubs : +15 emplacements/jour';
+      'Regarder des pubs : +5 emplacements/jour';
 
   @override
   String get plans_page_free_item03 => 'Recherche par tag unique';

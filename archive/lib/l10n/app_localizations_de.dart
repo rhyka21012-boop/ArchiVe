@@ -267,6 +267,11 @@ class L10nDe extends L10n {
   String get grid_page_sort_by_date => 'Nach Hinzufügedatum';
 
   @override
+  String grid_page_search_result_title(String query) {
+    return 'Suchergebnisse für „$query“';
+  }
+
+  @override
   String grid_page_sort_current(String label) {
     return 'Sortierung: $label';
   }
@@ -328,6 +333,29 @@ class L10nDe extends L10n {
 
   @override
   String get detail_page_add_image => 'Miniaturbild hinzufügen ★';
+
+  @override
+  String get detail_page_use_as_thumbnail => 'Als Vorschaubild';
+
+  @override
+  String get detail_page_thumbnail_active => 'Aktuelles Vorschaubild';
+
+  @override
+  String get detail_page_revert_thumbnail => 'Zurücksetzen';
+
+  @override
+  String get detail_page_revert_thumbnail_done => 'Vorschaubild zurückgesetzt';
+
+  @override
+  String get detail_page_set_as_thumbnail_title =>
+      'Dieses Bild als Vorschaubild verwenden?';
+
+  @override
+  String get detail_page_set_as_thumbnail_body =>
+      'Es wird in Listen- und Rasteransichten angezeigt.';
+
+  @override
+  String get detail_page_set_as_thumbnail_done => 'Vorschaubild aktualisiert';
 
   @override
   String get detail_page_offline => 'Offline';
@@ -995,6 +1023,11 @@ class L10nDe extends L10n {
   String get settings_page_watch_ad => 'Werbung ansehen (+1 Slot)';
 
   @override
+  String settings_page_watch_ad_with_count(int watched, int limit) {
+    return 'Werbung ansehen +1 Slot (Heute: $watched/$limit)';
+  }
+
+  @override
   String get settings_page_ad_limit_reached => 'Tägliches Werbelimit erreicht';
 
   @override
@@ -1061,21 +1094,43 @@ class L10nDe extends L10n {
   String get premium_detail_premium_item01 => 'Unbegrenzte Speicherungen';
 
   @override
-  String get premium_detail_premium_item02 => 'Designfarbe Gold hinzufügen';
+  String get premium_detail_premium_item01_desc =>
+      'Kein Speicherlimit — verwalte auch Sammlungen mit Tausenden von Einträgen komfortabel';
 
   @override
-  String get premium_detail_premium_item03 => 'Bilder frei hinzufügen';
+  String get premium_detail_premium_item02 => 'Gold-Design';
 
   @override
-  String get premium_detail_premium_item04 =>
-      'Schnelle Suche mit mehreren Tags';
+  String get premium_detail_premium_item02_desc =>
+      'Aktiviere ein exklusives Gold-Farbschema in der gesamten App';
 
   @override
-  String get premium_detail_premium_item05 =>
-      'Statistiken zur Visualisierung nach Genre und Bewertung';
+  String get premium_detail_premium_item03 => 'Bilder & Vorschau frei anpassen';
 
   @override
-  String get premium_detail_premium_item06 => 'Werbung entfernen';
+  String get premium_detail_premium_item03_desc =>
+      'Füge jedem Eintrag Referenzbilder hinzu und wähle eines als Rasteransicht-Vorschau';
+
+  @override
+  String get premium_detail_premium_item04 => 'Schnelle Mehrfach-Tag-Suche';
+
+  @override
+  String get premium_detail_premium_item04_desc =>
+      'Kombiniere Darsteller, Genre, Serie usw. zum Filtern';
+
+  @override
+  String get premium_detail_premium_item05 => 'Statistik & Analyse';
+
+  @override
+  String get premium_detail_premium_item05_desc =>
+      'Visualisiere Bewertungen, TOP-5-Aufrufe und Ranglisten nach Darsteller/Tag als Diagramm';
+
+  @override
+  String get premium_detail_premium_item06 => 'Werbefreie Nutzung';
+
+  @override
+  String get premium_detail_premium_item06_desc =>
+      'Blendet alle Anzeigen beim Speichern oder Ansehen von Videos aus — für eine fokussierte Erfahrung';
 
   @override
   String get premium_detail_note =>
@@ -1330,23 +1385,53 @@ class L10nDe extends L10n {
       'Alle Premium-Funktionen plus die Folgenden';
 
   @override
-  String get pro_detail_feature_cloud_sync =>
-      'Cloud-Synchronisation (mehrere Geräte)';
+  String get pro_detail_feature_all_premium => 'Alle Premium-Funktionen';
+
+  @override
+  String get pro_detail_feature_all_premium_desc =>
+      'Umfasst sämtliche Premium-Funktionen (unbegrenzte Speicherungen, Statistiken, Mehrfach-Tag-Suche, werbefrei, Gold-Design usw.)';
+
+  @override
+  String get pro_detail_feature_cloud_sync => 'Cloud-Synchronisation';
+
+  @override
+  String get pro_detail_feature_cloud_sync_desc =>
+      'Deine Sammlung wird über die Cloud automatisch geräteübergreifend synchronisiert — sogar bei Gerätewechsel';
 
   @override
   String get pro_detail_feature_ai_tagging => 'KI-Auto-Tagging';
 
   @override
-  String get pro_detail_feature_ai_recommend => 'KI-empfohlene Stichwörter';
+  String get pro_detail_feature_ai_tagging_desc =>
+      'Gemini AI schlägt aus URL & Titel Genre, Darsteller, Serie usw. vor (unbegrenzt)';
+
+  @override
+  String get pro_detail_feature_ai_recommend => 'KI-Stichwortempfehlungen';
+
+  @override
+  String get pro_detail_feature_ai_recommend_desc =>
+      'Die KI empfiehlt basierend auf deinen Bibliothekstrends, wonach du als Nächstes suchen solltest';
 
   @override
   String get pro_detail_feature_monthly_report => 'KI-Monatsbericht';
 
   @override
-  String get pro_detail_feature_public_sharing => 'Listen öffentlich teilen';
+  String get pro_detail_feature_monthly_report_desc =>
+      'Erhalte monatlich eine KI-generierte Zusammenfassung deiner Seh- und Favoritentrends';
 
   @override
-  String get pro_detail_feature_theme_teal => 'Designfarbe Türkis hinzufügen';
+  String get pro_detail_feature_public_sharing => 'Öffentliche Listen';
+
+  @override
+  String get pro_detail_feature_public_sharing_desc =>
+      'Teile deine Favoritenlisten per URL mit anderen Nutzern';
+
+  @override
+  String get pro_detail_feature_theme_teal => 'Türkis-Design';
+
+  @override
+  String get pro_detail_feature_theme_teal_desc =>
+      'Aktiviere ein exklusives Türkis-Farbschema in der gesamten App';
 
   @override
   String get plans_page_title => 'Tarife';
@@ -1482,6 +1567,68 @@ class L10nDe extends L10n {
   String get plans_page_pro_short => 'Pro';
 
   @override
+  String subscription_prompt_body(String planName, String feature) {
+    return 'Mit dem $planName-Plan kannst du $feature.';
+  }
+
+  @override
+  String subscription_prompt_question(String planName) {
+    return 'Details zum $planName-Plan ansehen?';
+  }
+
+  @override
+  String subscription_prompt_confirm(String planName) {
+    return '$planName-Details ansehen';
+  }
+
+  @override
+  String get purchase_feature_custom_thumbnail =>
+      'Vorschaubilder hinzufügen und anpassen';
+
+  @override
+  String get purchase_feature_analytics => 'Statistiken & Analysen nutzen';
+
+  @override
+  String get purchase_feature_player_extras =>
+      'Player-Lautstärke und Sleep-Timer nutzen';
+
+  @override
+  String get purchase_feature_save_limit => 'das Speicherlimit aufheben';
+
+  @override
+  String get purchase_feature_theme_gold => 'das Gold-Design anwenden';
+
+  @override
+  String get purchase_feature_theme_teal => 'das Türkis-Design anwenden';
+
+  @override
+  String get purchase_feature_cloud_backup => 'in der Cloud sichern';
+
+  @override
+  String get purchase_feature_cloud_restore =>
+      'aus einem Cloud-Backup wiederherstellen';
+
+  @override
+  String get purchase_feature_public_sharing =>
+      'Listen teilen und veröffentlichen';
+
+  @override
+  String get purchase_feature_ai_monthly_report =>
+      'den KI-Monatsbericht erstellen';
+
+  @override
+  String get purchase_feature_ai_recommend =>
+      'KI-Stichwortempfehlungen generieren';
+
+  @override
+  String get purchase_feature_ai_tagging_unlimited =>
+      'KI-Tag-Vorschläge unbegrenzt nutzen';
+
+  @override
+  String get purchase_feature_multi_tag_search =>
+      'mehrere Tags zum Filtern kombinieren';
+
+  @override
   String get plans_page_free_short => 'Kostenlos';
 
   @override
@@ -1491,7 +1638,7 @@ class L10nDe extends L10n {
   String get plans_page_free_item01 => 'Bis zu 100 Einträge speichern';
 
   @override
-  String get plans_page_free_item02 => 'Werbung ansehen: +15 Slots/Tag';
+  String get plans_page_free_item02 => 'Werbung ansehen: +5 Slots/Tag';
 
   @override
   String get plans_page_free_item03 => 'Suche mit einem einzelnen Tag';

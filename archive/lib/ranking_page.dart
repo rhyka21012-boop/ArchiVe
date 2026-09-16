@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'detail_page.dart';
+import 'smart_thumbnail.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -350,7 +350,7 @@ class _RankingPageState extends State<RankingPage> {
     final localImages = _localImagesMap[url] ?? [];
 
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return CachedNetworkImage(
+      return SmartThumbnail(
         imageUrl: imageUrl,
         width: width,
         height: height,

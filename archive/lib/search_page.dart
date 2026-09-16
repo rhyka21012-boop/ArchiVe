@@ -12,10 +12,13 @@ import 'package:confetti/confetti.dart';
 
 import 'search_result_page.dart';
 import 'grid_page.dart';
+import 'smart_thumbnail.dart';
+import 'subscription_prompt_dialog.dart';
 import 'detail_page.dart';
 import 'l10n/app_localizations.dart';
 import 'favorite_site_provider.dart';
 import 'search_tab_index_provider.dart';
+import 'list_reload_provider.dart';
 import 'ai_service.dart';
 import 'pro_detail.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -86,6 +89,9 @@ class SearchPageState extends ConsumerState<SearchPage> {
   List<RecommendedKeyword> _aiRecommendations = [];
   String? _aiRecommendError;
   bool _isPro = false;
+  bool _isPremium = false;
+  // Pro プランは Premium の全機能を含むので、両方を有効判定する
+  bool get _isPremiumOrPro => _isPremium || _isPro;
 
   // Web 検索バーの hint テキストローテーション
   int _webHintIndex = 0;
@@ -110,6 +116,13 @@ class SearchPageState extends ConsumerState<SearchPage> {
       } else {
         _removeOverlay();
       }
+    });
+
+    // 作品編集 (タグ追加/削除) がどこかで行われたら、タグ一覧を即再構築する
+    ref.listenManual<int>(listReloadProvider, (prev, next) {
+      if (prev == next) return;
+      if (!mounted) return;
+      _loadSavedMetadata();
     });
   }
 
@@ -137,8 +150,13 @@ class SearchPageState extends ConsumerState<SearchPage> {
     try {
       final info = await Purchases.getCustomerInfo();
       final isPro = info.entitlements.all['Pro Plan']?.isActive ?? false;
+      final isPremium =
+          info.entitlements.all['Premium Plan']?.isActive ?? false;
       if (!mounted) return;
-      setState(() => _isPro = isPro);
+      setState(() {
+        _isPro = isPro;
+        _isPremium = isPremium;
+      });
     } catch (_) {}
   }
 
@@ -418,11 +436,19 @@ class SearchPageState extends ConsumerState<SearchPage> {
 
     final text = _searchController.text.trim();
 
-    // 複数カテゴリ指定はプレミアム限定
+    // 複数カテゴリ指定は Premium 以上限定 (Pro も含む)
     final selectedCategoryCount = _countSelectedCategories();
-    if (!isWeb && selectedCategoryCount >= 2) {
-      await _showPremiumInfoDialog();
-      return;
+    if (!isWeb && selectedCategoryCount >= 2 && !_isPremiumOrPro) {
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.premium,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_multi_tag_search,
+        icon: Icons.filter_alt,
+      );
+      if (!bought) return;
+      if (!mounted) return;
+      setState(() => _isPremium = true);
     }
 
     final favorites = ref.read(favoriteSitesProvider);
@@ -455,6 +481,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
             searchText: text,
             rating: '',
             listName: '',
+            fromSearch: true,
           ),
         ),
       );
@@ -560,6 +587,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
                                   searchText: text,
                                   rating: '',
                                   listName: '',
+                                  fromSearch: true,
                                 ),
                           ),
                         );
@@ -1569,8 +1597,16 @@ class SearchPageState extends ConsumerState<SearchPage> {
   Future<void> _generateAiRecommendations() async {
     if (_isLoadingAiRecommend) return;
 
-    // Pro限定（購入先行型: 未加入ユーザーにサインインを促さず購入画面を表示）
-    if (!await ProGate.ensureProPurchaseFirst(context)) return;
+    // Pro 限定 (プラン紹介 → 購入 の 2 段導線)
+    final bought = await promptAndOpenPurchase(
+      context: context,
+      tier: SubscriptionTier.pro,
+      featureLabel:
+          L10n.of(context)!.purchase_feature_ai_recommend,
+      imageAsset: 'assets/subscription/ai_recommend.png',
+      icon: Icons.auto_awesome,
+    );
+    if (!bought) return;
     if (!mounted) return;
 
     final l = L10n.of(context)!;
@@ -2518,7 +2554,7 @@ class _RouletteCard extends StatelessWidget {
               ? Colors.grey[200]
               : const Color(0xFF2C2C2C),
           child: item['image'] != null
-              ? Image.network(item['image'], fit: BoxFit.cover)
+              ? SmartThumbnail(imageUrl: item['image'], fit: BoxFit.cover)
               : const SizedBox.shrink(),
         ),
       ),
