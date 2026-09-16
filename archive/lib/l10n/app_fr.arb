@@ -37,6 +37,8 @@
   "browser_home_history_clear": "Effacer",
   "browser_home_history_clear_confirm": "Effacer tout l'historique ?",
   "browser_home_favorites": "Sites favoris",
+  "browser_open_in_external": "Ouvrir dans un navigateur externe",
+  "browser_open_in_external_failed": "Impossible d''ouvrir dans le navigateur externe",
   "main_page_analytics": "Statistiques",
   "main_page_settings": "Paramètres",
   "main_page_update_info": "Avis de mise à jour",
@@ -486,10 +488,11 @@
   "share_description": "Toute personne avec l'URL peut voir cette liste (lecture seule)",
   "share_limit_notice": "Jusqu'à 200 éléments seront partagés",
   "analytics_monthly_report_title": "Résumé IA",
-  "analytics_monthly_report_subtitle": "Résumé du mois {month}",
+  "analytics_monthly_report_show": "Afficher le rapport mensuel IA",
+  "analytics_monthly_report_subtitle": "Résumé des {days} derniers jours",
   "@analytics_monthly_report_subtitle": {
     "placeholders": {
-      "month": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "analytics_monthly_report_generate": "Générer un résumé",

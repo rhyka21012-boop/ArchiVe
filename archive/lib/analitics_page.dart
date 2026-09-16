@@ -48,11 +48,13 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   String? _monthlyReport;
   bool _debugBypassPremium = false;
 
-  // 今月の AI サマリーをユーザーが閉じたかどうか
+  // AI サマリー (直近30日) をユーザーが閉じたかどうか
   bool _monthlyReportDismissed = false;
-  static const _kPrefDismissedMonth = 'monthly_report_dismissed_month';
-  static const _kPrefReportMonth = 'monthly_report_cached_month';
+  static const _kPrefDismissedMonth = 'monthly_report_dismissed_day';
+  static const _kPrefReportMonth = 'monthly_report_cached_day';
   static const _kPrefReportText = 'monthly_report_cached_text';
+  // 直近サマリーの対象期間 (日数)
+  static const _kReportDays = 30;
 
   Map<String, int> viewingCountByRating = {
     'critical': 0,
@@ -88,21 +90,32 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   void initState() {
     super.initState();
     _loadAll();
-    _checkSubscriptionStatus();
-    _loadDismissedState();
+    // dismiss/キャッシュ状態を先に読み、その後サブスク判定 → 自動生成へ
+    _initAsyncFlow();
   }
 
-  /// レポート対象月（前月）の YYYY-MM キー
+  Future<void> _initAsyncFlow() async {
+    await _loadDismissedState();
+    if (!mounted) return;
+    await _checkSubscriptionStatus();
+    if (!mounted) return;
+    _maybeAutoGenerateReport();
+  }
+
+  /// Pro 加入 & 未 dismiss & 未生成 の場合のみ AI サマリーを自動生成する。
+  /// Cloud Function 側で 24h キャッシュ済みなら再呼び出しコストは無視できる。
+  void _maybeAutoGenerateReport() {
+    if (!_isPro) return;
+    if (_monthlyReportDismissed) return;
+    if (_isLoadingReport) return;
+    if (_monthlyReport != null && _monthlyReport!.isNotEmpty) return;
+    _generateMonthlyReport();
+  }
+
+  /// レポート対象期間のキー: 「recent_30_yyyy-mm-dd」形式 (Cloud Function と合わせる)
   String _reportMonthKey() {
-    final now = DateTime.now();
-    final prev = DateTime(now.year, now.month - 1, 1);
-    return '${prev.year}-${prev.month.toString().padLeft(2, '0')}';
-  }
-
-  /// 表示用の月（前月の月番号）
-  int _reportMonth() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month - 1, 1).month;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return 'recent_${_kReportDays}_$today';
   }
 
   Future<void> _loadDismissedState() async {
@@ -229,8 +242,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      l.analytics_monthly_report_subtitle(
-                          _reportMonth()),
+                      l.analytics_monthly_report_subtitle(_kReportDays),
                       style: TextStyle(
                         fontSize: 11,
                         color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -311,7 +323,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                       ),
                     ),
                     Text(
-                      l.analytics_monthly_report_subtitle(_reportMonth()),
+                      l.analytics_monthly_report_subtitle(_kReportDays),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -612,6 +624,20 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               tooltip: 'Debug: Premium toggle',
               onPressed: () =>
                   setState(() => _debugBypassPremium = !_debugBypassPremium),
+            ),
+          // 月次レポートを閉じたあとに再表示できる導線
+          if (_monthlyReportDismissed)
+            CircleAppBarIcon(
+              icon: Icons.auto_awesome,
+              tooltip: L10n.of(context)!.analytics_monthly_report_show,
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove(_kPrefDismissedMonth);
+                if (!mounted) return;
+                setState(() => _monthlyReportDismissed = false);
+                // 再表示ボタン → 未生成なら即生成 (キャッシュがあれば瞬時)
+                _maybeAutoGenerateReport();
+              },
             ),
           CircleAppBarIcon(
             icon: Icons.refresh,
@@ -1662,6 +1688,7 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 ),
               ),
               onPressed: () async {
+                if (_isPremium) return;
                 final bought = await promptAndOpenPurchase(
                   context: context,
                   tier: SubscriptionTier.premium,

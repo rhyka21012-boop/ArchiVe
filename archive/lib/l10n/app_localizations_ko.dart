@@ -120,6 +120,12 @@ class L10nKo extends L10n {
   String get browser_home_favorites => '즐겨찾는 사이트';
 
   @override
+  String get browser_open_in_external => '외부 브라우저에서 열기';
+
+  @override
+  String get browser_open_in_external_failed => '외부 브라우저에서 열 수 없습니다';
+
+  @override
   String get main_page_analytics => '통계';
 
   @override
@@ -1467,8 +1473,11 @@ class L10nKo extends L10n {
   String get analytics_monthly_report_title => 'AI 요약';
 
   @override
-  String analytics_monthly_report_subtitle(int month) {
-    return '$month월 요약';
+  String get analytics_monthly_report_show => 'AI 월간 보고서 표시';
+
+  @override
+  String analytics_monthly_report_subtitle(int days) {
+    return '최근 $days일 요약';
   }
 
   @override

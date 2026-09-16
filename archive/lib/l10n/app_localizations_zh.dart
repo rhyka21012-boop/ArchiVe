@@ -120,6 +120,12 @@ class L10nZh extends L10n {
   String get browser_home_favorites => '常用网站';
 
   @override
+  String get browser_open_in_external => '在外部浏览器中打开';
+
+  @override
+  String get browser_open_in_external_failed => '无法在外部浏览器中打开';
+
+  @override
   String get main_page_analytics => '统计';
 
   @override
@@ -1455,8 +1461,11 @@ class L10nZh extends L10n {
   String get analytics_monthly_report_title => 'AI 摘要';
 
   @override
-  String analytics_monthly_report_subtitle(int month) {
-    return '$month月摘要';
+  String get analytics_monthly_report_show => '显示 AI 月度报告';
+
+  @override
+  String analytics_monthly_report_subtitle(int days) {
+    return '近 $days 天摘要';
   }
 
   @override
@@ -1742,6 +1751,12 @@ class L10nZhHans extends L10nZh {
   String get browser_home_favorites => '常用网站';
 
   @override
+  String get browser_open_in_external => '在外部浏览器中打开';
+
+  @override
+  String get browser_open_in_external_failed => '无法在外部浏览器中打开';
+
+  @override
   String get main_page_analytics => '统计';
 
   @override
@@ -3077,8 +3092,11 @@ class L10nZhHans extends L10nZh {
   String get analytics_monthly_report_title => 'AI 摘要';
 
   @override
-  String analytics_monthly_report_subtitle(int month) {
-    return '$month月摘要';
+  String get analytics_monthly_report_show => '显示 AI 月度报告';
+
+  @override
+  String analytics_monthly_report_subtitle(int days) {
+    return '近 $days 天摘要';
   }
 
   @override

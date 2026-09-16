@@ -120,6 +120,12 @@ class L10nJa extends L10n {
   String get browser_home_favorites => 'お気に入りサイト';
 
   @override
+  String get browser_open_in_external => '外部ブラウザで開く';
+
+  @override
+  String get browser_open_in_external_failed => '外部ブラウザで開けませんでした';
+
+  @override
   String get main_page_analytics => '統計';
 
   @override
@@ -1469,8 +1475,11 @@ class L10nJa extends L10n {
   String get analytics_monthly_report_title => 'AIサマリー';
 
   @override
-  String analytics_monthly_report_subtitle(int month) {
-    return '$month月のまとめ';
+  String get analytics_monthly_report_show => 'AI月次レポートを表示';
+
+  @override
+  String analytics_monthly_report_subtitle(int days) {
+    return '直近$days日のまとめ';
   }
 
   @override

@@ -691,7 +691,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                             if (_canGoBack) {
                               await _controller.goBack();
                             } else {
-                              Navigator.pop(context);
+                              // WebView に履歴が無いときは、Navigator を pop
+                              // すると browserTab の唯一のルートが消えて画面が
+                              // 空になってしまうため、代わりに現在タブを
+                              // ホーム画面へ戻す (Chrome の "新規タブへ戻る" 相当)
+                              _resetActiveTabToHome();
                             }
                           },
                         ),
@@ -974,6 +978,33 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
     await Share.share(text);
   }
 
+  /// 現在の URL を外部ブラウザ (Safari / Chrome 等) で開く
+  Future<void> _openInExternalBrowser() async {
+    final url = _currentUrl ?? widget.initialUrl;
+    if (url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.of(context)!.browser_open_in_external_failed),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.of(context)!.browser_open_in_external_failed),
+          ),
+        );
+      }
+    }
+  }
+
   /// ブラウザメニュー (お気に入り / 共有 等) のボトムシート
   Future<void> _showBrowserMenu(bool isFav) async {
     final l = L10n.of(context)!;
@@ -1018,6 +1049,14 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
               onTap: () {
                 Navigator.pop(bctx);
                 _shareCurrentUrl();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.open_in_new),
+              title: Text(l.browser_open_in_external),
+              onTap: () async {
+                Navigator.pop(bctx);
+                await _openInExternalBrowser();
               },
             ),
             const SizedBox(height: 6),

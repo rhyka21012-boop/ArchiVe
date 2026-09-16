@@ -1663,17 +1663,20 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                             label: L10n.of(context)!.detail_page_add_image,
                             colorScheme: colorScheme,
                             onPressed: () async {
-                              final bought = await promptAndOpenPurchase(
-                                context: context,
-                                tier: SubscriptionTier.premium,
-                                featureLabel: L10n.of(context)!
-                                    .purchase_feature_custom_thumbnail,
-                                imageAsset:
-                                    'assets/subscription/custom_thumbnail.png',
-                                icon: Icons.add_photo_alternate,
-                              );
-                              if (!bought) return;
-                              setState(() => _isPremium = true);
+                              // 既に Premium/Pro なら promo をスキップして即実行
+                              if (!_isPremium) {
+                                final bought = await promptAndOpenPurchase(
+                                  context: context,
+                                  tier: SubscriptionTier.premium,
+                                  featureLabel: L10n.of(context)!
+                                      .purchase_feature_custom_thumbnail,
+                                  imageAsset:
+                                      'assets/subscription/custom_thumbnail.png',
+                                  icon: Icons.add_photo_alternate,
+                                );
+                                if (!bought) return;
+                                setState(() => _isPremium = true);
+                              }
                               _addLocalImage();
                             },
                           ),

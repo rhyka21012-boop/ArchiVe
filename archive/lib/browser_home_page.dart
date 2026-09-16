@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ai_recommend_card.dart';
 import 'browser_scroll_top_provider.dart';
 import 'favorite_site_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -704,6 +705,12 @@ class _BrowserHomeBodyState extends ConsumerState<BrowserHomeBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // AI おすすめキーワード (Pro 機能)。タップで通常の検索と同じく
+          // ブラウザ (このタブの WebView) にキーワード検索を開く。
+          AiRecommendCard(
+            onOpenKeyword: (keyword) => widget.onOpenUrl(keyword),
+          ),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(

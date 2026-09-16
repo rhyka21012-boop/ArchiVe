@@ -37,6 +37,8 @@
   "browser_home_history_clear": "履歴をクリア",
   "browser_home_history_clear_confirm": "履歴を全て削除しますか？",
   "browser_home_favorites": "お気に入りサイト",
+  "browser_open_in_external": "外部ブラウザで開く",
+  "browser_open_in_external_failed": "外部ブラウザで開けませんでした",
   "main_page_analytics": "統計",
   "main_page_settings": "設定",
   "main_page_update_info": "アップデートのお知らせ",
@@ -500,10 +502,11 @@
   "share_description": "共有URLをこのリストの内容を誰でも閲覧できます（読み取り専用）",
   "share_limit_notice": "最大200件まで共有されます",
   "analytics_monthly_report_title": "AIサマリー",
-  "analytics_monthly_report_subtitle": "{month}月のまとめ",
+  "analytics_monthly_report_show": "AI月次レポートを表示",
+  "analytics_monthly_report_subtitle": "直近{days}日のまとめ",
   "@analytics_monthly_report_subtitle": {
     "placeholders": {
-      "month": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "analytics_monthly_report_generate": "まとめを生成",

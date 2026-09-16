@@ -37,6 +37,8 @@
   "browser_home_history_clear": "지우기",
   "browser_home_history_clear_confirm": "모든 방문 기록을 삭제하시겠습니까?",
   "browser_home_favorites": "즐겨찾는 사이트",
+  "browser_open_in_external": "외부 브라우저에서 열기",
+  "browser_open_in_external_failed": "외부 브라우저에서 열 수 없습니다",
   "main_page_analytics": "통계",
   "main_page_settings": "설정",
   "main_page_update_info": "업데이트 안내",
@@ -486,10 +488,11 @@
   "share_description": "URL이 있는 사람은 누구나 이 목록을 볼 수 있습니다 (읽기 전용)",
   "share_limit_notice": "최대 200개 항목이 공유됩니다",
   "analytics_monthly_report_title": "AI 요약",
-  "analytics_monthly_report_subtitle": "{month}월 요약",
+  "analytics_monthly_report_show": "AI 월간 보고서 표시",
+  "analytics_monthly_report_subtitle": "최근 {days}일 요약",
   "@analytics_monthly_report_subtitle": {
     "placeholders": {
-      "month": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "analytics_monthly_report_generate": "요약 생성",

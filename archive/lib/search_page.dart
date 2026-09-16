@@ -1158,8 +1158,7 @@ class SearchPageState extends ConsumerState<SearchPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAiRecommendCard(),
-            const SizedBox(height: 20),
+            // AI おすすめキーワードはブラウザタブに移動済み
             // お気に入りサイトを白背景コンテンツで囲う
             Container(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -1597,17 +1596,20 @@ class SearchPageState extends ConsumerState<SearchPage> {
   Future<void> _generateAiRecommendations() async {
     if (_isLoadingAiRecommend) return;
 
-    // Pro 限定 (プラン紹介 → 購入 の 2 段導線)
-    final bought = await promptAndOpenPurchase(
-      context: context,
-      tier: SubscriptionTier.pro,
-      featureLabel:
-          L10n.of(context)!.purchase_feature_ai_recommend,
-      imageAsset: 'assets/subscription/ai_recommend.png',
-      icon: Icons.auto_awesome,
-    );
-    if (!bought) return;
-    if (!mounted) return;
+    // Pro 未加入時のみ「プラン紹介 → 購入」の 2 段導線
+    if (!_isPro) {
+      final bought = await promptAndOpenPurchase(
+        context: context,
+        tier: SubscriptionTier.pro,
+        featureLabel:
+            L10n.of(context)!.purchase_feature_ai_recommend,
+        imageAsset: 'assets/subscription/ai_recommend.png',
+        icon: Icons.auto_awesome,
+      );
+      if (!bought) return;
+      if (!mounted) return;
+      setState(() => _isPro = true);
+    }
 
     final l = L10n.of(context)!;
 

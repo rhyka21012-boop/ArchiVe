@@ -290,10 +290,16 @@ interface MonthlyReportResponse {
 }
 
 /**
- * 今月のアーカイブ活動の AI レポートを生成
- * キャッシュ：同月のレポートは 24 時間再利用
+ * 直近 N 日のアーカイブ活動の AI レポートを生成 (デフォルト: 過去30日)
+ * キャッシュ：同一 window は 24 時間再利用 (キャッシュキーは "recent_<days>_<yyyy-mm-dd>")
  */
-export const generateMonthlyReport = onCall<{force?: boolean; year?: number; month?: number}>(
+export const generateMonthlyReport = onCall<{
+  force?: boolean;
+  days?: number;
+  // 後方互換: 旧クライアントから year/month が来た場合はその月を返す
+  year?: number;
+  month?: number;
+}>(
   {
     secrets: [geminiKey],
     maxInstances: 5,
@@ -306,27 +312,49 @@ export const generateMonthlyReport = onCall<{force?: boolean; year?: number; mon
     const uid = request.auth.uid;
     const force = request.data?.force === true;
 
-    // クライアントから明示的に年月が渡ってきたらそれを使う (端末ローカル時刻ベース)
-    // フォールバック: サーバー時刻 (UTC) の前月
-    let year: number;
-    let month: number; // 1-12
+    // 対象期間の決定:
+    //   1. days が渡ってきた場合 → 直近 N 日
+    //   2. year/month が渡ってきた場合 → その月 (旧クライアント互換)
+    //   3. デフォルト → 直近 30 日
+    const paramDays = request.data?.days;
     const paramYear = request.data?.year;
     const paramMonth = request.data?.month;
+
+    let windowStart: Date;
+    let windowEnd: Date;
+    let reportId: string;
+    let periodLabel: string; // Gemini プロンプト用の期間ラベル
+    let year: number;
+    let month: number;
+
+    const now = new Date();
     if (
       typeof paramYear === "number" &&
       typeof paramMonth === "number" &&
       paramMonth >= 1 &&
       paramMonth <= 12
     ) {
+      // 旧: 月指定
       year = paramYear;
       month = paramMonth;
+      windowStart = new Date(year, month - 1, 1);
+      windowEnd = new Date(year, month, 1);
+      reportId = `${year}-${String(month).padStart(2, "0")}`;
+      periodLabel = `${year}年${month}月`;
     } else {
-      const now = new Date();
-      const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      year = prevMonthDate.getFullYear();
-      month = prevMonthDate.getMonth() + 1;
+      // 新: 直近 N 日 (デフォルト 30)
+      const days = typeof paramDays === "number" && paramDays > 0 && paramDays <= 365
+        ? Math.floor(paramDays)
+        : 30;
+      windowEnd = now;
+      windowStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      // キャッシュキーは日単位で「recent_30_2026-09-16」形式
+      const today = now.toISOString().slice(0, 10);
+      reportId = `recent_${days}_${today}`;
+      periodLabel = `直近${days}日`;
+      year = now.getFullYear();
+      month = now.getMonth() + 1;
     }
-    const reportId = `${year}-${String(month).padStart(2, "0")}`;
 
     const cacheRef = db.doc(`users/${uid}/monthly_reports/${reportId}`);
 
@@ -355,17 +383,13 @@ export const generateMonthlyReport = onCall<{force?: boolean; year?: number; mon
       }
     }
 
-    // 対象月のアイテムを集計（updatedAt 基準、対象月1日〜翌月1日未満）
-    const startOfMonth = admin.firestore.Timestamp.fromDate(
-      new Date(year, month - 1, 1),
-    );
-    const startOfNextMonth = admin.firestore.Timestamp.fromDate(
-      new Date(year, month, 1),
-    );
+    // 対象期間のアイテムを集計 (updatedAt 基準)
+    const startTs = admin.firestore.Timestamp.fromDate(windowStart);
+    const endTs = admin.firestore.Timestamp.fromDate(windowEnd);
     const itemsCol = db.collection(`users/${uid}/items`);
     const snapshot = await itemsCol
-      .where("updatedAt", ">=", startOfMonth)
-      .where("updatedAt", "<", startOfNextMonth)
+      .where("updatedAt", ">=", startTs)
+      .where("updatedAt", "<", endTs)
       .get();
     const items = snapshot.docs.map((d) => d.data());
     const totalCount = items.length;
@@ -376,7 +400,7 @@ export const generateMonthlyReport = onCall<{force?: boolean; year?: number; mon
       const allSnap = await itemsCol.limit(1).get();
       const hasAny = !allSnap.empty;
       report = hasAny
-        ? `${month}月は新しい保存・編集がありませんでした。今月もお気に入りのコンテンツを見つけたら追加してみてください。`
+        ? `${periodLabel}は新しい保存・編集がありませんでした。お気に入りのコンテンツを見つけたら追加してみてください。`
         : "保存したアイテムがまだありません。気になるコンテンツを見つけたら、ぜひ ArchiVe に追加してみてください。";
     } else {
       // 統計集計
@@ -419,9 +443,9 @@ export const generateMonthlyReport = onCall<{force?: boolean; year?: number; mon
         .map(([g, c]) => `${g}(${c})`)
         .join(", ");
 
-      const prompt = `あなたはアーカイブアプリのアシスタントです。ユーザーの先月の保存活動を、親しみやすいトーンで3〜4文の日本語で振り返ってまとめてください。
+      const prompt = `あなたはアーカイブアプリのアシスタントです。ユーザーの最近の保存活動を、親しみやすいトーンで3〜4文の日本語で振り返ってまとめてください。
 
-${year}年${month}月のデータ:
+${periodLabel}のデータ:
 - 保存・更新したアイテム数: ${totalCount}件
 - ジャンル傾向: ${topGenres || "（未分類）"}
 - よく出てくる出演者: ${topCasts || "（情報なし）"}
@@ -442,7 +466,7 @@ ${year}年${month}月のデータ:
         });
         report = (response.text?.trim() ?? "").substring(0, 1000);
         if (!report) {
-          report = `${month}月は${totalCount}件のアイテムが追加・更新されました。`;
+          report = `${periodLabel}に${totalCount}件のアイテムが追加・更新されました。`;
         }
       } catch (e) {
         console.error("Gemini error:", e);

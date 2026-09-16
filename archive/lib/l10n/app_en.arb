@@ -37,6 +37,8 @@
   "browser_home_history_clear": "Clear",
   "browser_home_history_clear_confirm": "Clear all browsing history?",
   "browser_home_favorites": "Favorite sites",
+  "browser_open_in_external": "Open in external browser",
+  "browser_open_in_external_failed": "Could not open in external browser",
   "main_page_analytics": "Analytics",
   "main_page_settings": "Settings",
   "main_page_update_info": "Update Notice",
@@ -486,10 +488,11 @@
   "share_description": "Anyone with the URL can view this list (read-only)",
   "share_limit_notice": "Up to 200 items will be shared",
   "analytics_monthly_report_title": "AI Summary",
-  "analytics_monthly_report_subtitle": "Summary for month {month}",
+  "analytics_monthly_report_show": "Show AI monthly report",
+  "analytics_monthly_report_subtitle": "Summary of the last {days} days",
   "@analytics_monthly_report_subtitle": {
     "placeholders": {
-      "month": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "analytics_monthly_report_generate": "Generate Summary",

@@ -543,6 +543,7 @@ class GridPageState extends ConsumerState<GridPage> {
     int index,
     ColorScheme colorScheme,
   ) {
+    final isDark = colorScheme.brightness == Brightness.dark;
     // build() と同じ優先順で並び替え結果を反映
     final itemsToShow =
         _sortedItems.isNotEmpty ? _sortedItems : _searchedItems;
@@ -633,16 +634,27 @@ class GridPageState extends ConsumerState<GridPage> {
                               width: double.infinity,
                               child: Stack(
                                 children: [
+                                  // YouTube風グリッドはサムネ全体が見えるよう
+                                  // 長辺基準のフィット (BoxFit.contain)。
+                                  // 余白はカードの色調に合わせた背景で埋める。
                                   Positioned.fill(
-                                    child: item['image'] != null
-                                        ? SmartThumbnail(
-                                            key: ValueKey(item['image']),
-                                            imageUrl: item['image'],
-                                            fit: BoxFit.cover,
-                                            errorWidget: (context, url, error) =>
-                                                placeholderWidget(context),
-                                          )
-                                        : placeholderWidget(context),
+                                    child: Container(
+                                      color: (isDark
+                                              ? Colors.white
+                                              : Colors.black)
+                                          .withValues(alpha: 0.05),
+                                      child: item['image'] != null
+                                          ? SmartThumbnail(
+                                              key: ValueKey(item['image']),
+                                              imageUrl: item['image'],
+                                              fit: BoxFit.contain,
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      placeholderWidget(
+                                                          context),
+                                            )
+                                          : placeholderWidget(context),
+                                    ),
                                   ),
                                   // 前回シークバーのみサムネ上端に重ねる
                                   Positioned(

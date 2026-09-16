@@ -37,6 +37,8 @@
   "browser_home_history_clear": "Borrar",
   "browser_home_history_clear_confirm": "¿Borrar todo el historial?",
   "browser_home_favorites": "Sitios favoritos",
+  "browser_open_in_external": "Abrir en navegador externo",
+  "browser_open_in_external_failed": "No se pudo abrir en el navegador externo",
   "main_page_analytics": "Estadísticas",
   "main_page_settings": "Ajustes",
   "main_page_update_info": "Aviso de actualización",
@@ -486,10 +488,11 @@
   "share_description": "Cualquiera con la URL puede ver esta lista (solo lectura)",
   "share_limit_notice": "Se compartirán hasta 200 elementos",
   "analytics_monthly_report_title": "Resumen IA",
-  "analytics_monthly_report_subtitle": "Resumen del mes {month}",
+  "analytics_monthly_report_show": "Mostrar informe mensual IA",
+  "analytics_monthly_report_subtitle": "Resumen de los últimos {days} días",
   "@analytics_monthly_report_subtitle": {
     "placeholders": {
-      "month": { "type": "int" }
+      "days": { "type": "int" }
     }
   },
   "analytics_monthly_report_generate": "Generar resumen",

@@ -120,6 +120,13 @@ class L10nEs extends L10n {
   String get browser_home_favorites => 'Sitios favoritos';
 
   @override
+  String get browser_open_in_external => 'Abrir en navegador externo';
+
+  @override
+  String get browser_open_in_external_failed =>
+      'No se pudo abrir en el navegador externo';
+
+  @override
   String get main_page_analytics => 'Estadísticas';
 
   @override
@@ -1524,8 +1531,11 @@ class L10nEs extends L10n {
   String get analytics_monthly_report_title => 'Resumen IA';
 
   @override
-  String analytics_monthly_report_subtitle(int month) {
-    return 'Resumen del mes $month';
+  String get analytics_monthly_report_show => 'Mostrar informe mensual IA';
+
+  @override
+  String analytics_monthly_report_subtitle(int days) {
+    return 'Resumen de los últimos $days días';
   }
 
   @override

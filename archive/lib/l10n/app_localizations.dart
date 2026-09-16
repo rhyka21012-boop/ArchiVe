@@ -332,6 +332,18 @@ abstract class L10n {
   /// **'お気に入りサイト'**
   String get browser_home_favorites;
 
+  /// No description provided for @browser_open_in_external.
+  ///
+  /// In ja, this message translates to:
+  /// **'外部ブラウザで開く'**
+  String get browser_open_in_external;
+
+  /// No description provided for @browser_open_in_external_failed.
+  ///
+  /// In ja, this message translates to:
+  /// **'外部ブラウザで開けませんでした'**
+  String get browser_open_in_external_failed;
+
   /// No description provided for @main_page_analytics.
   ///
   /// In ja, this message translates to:
@@ -2864,11 +2876,17 @@ abstract class L10n {
   /// **'AIサマリー'**
   String get analytics_monthly_report_title;
 
+  /// No description provided for @analytics_monthly_report_show.
+  ///
+  /// In ja, this message translates to:
+  /// **'AI月次レポートを表示'**
+  String get analytics_monthly_report_show;
+
   /// No description provided for @analytics_monthly_report_subtitle.
   ///
   /// In ja, this message translates to:
-  /// **'{month}月のまとめ'**
-  String analytics_monthly_report_subtitle(int month);
+  /// **'直近{days}日のまとめ'**
+  String analytics_monthly_report_subtitle(int days);
 
   /// No description provided for @analytics_monthly_report_generate.
   ///
