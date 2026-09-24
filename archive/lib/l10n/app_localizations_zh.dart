@@ -123,6 +123,15 @@ class L10nZh extends L10n {
   String get browser_open_in_external => '在外部浏览器中打开';
 
   @override
+  String get remove_ads_promo_message => '去除广告？';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => '隐藏全部广告';
+
+  @override
   String get browser_open_in_external_failed => '无法在外部浏览器中打开';
 
   @override
@@ -345,6 +354,24 @@ class L10nZh extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => '已还原缩略图';
+
+  @override
+  String get detail_page_field_cleared => '已清空输入';
+
+  @override
+  String get detail_page_unsaved_title => '有未保存的更改';
+
+  @override
+  String get detail_page_unsaved_body => '编辑内容尚未保存。要放弃并关闭吗？';
+
+  @override
+  String get detail_page_unsaved_discard => '放弃并关闭';
+
+  @override
+  String get detail_page_open_in_app_browser_title => '打开原始页面？';
+
+  @override
+  String get detail_page_open_in_app_browser_body => '在应用内浏览器中打开该作品的 URL。';
 
   @override
   String get detail_page_set_as_thumbnail_title => '将此图片设为缩略图？';
@@ -1754,6 +1781,15 @@ class L10nZhHans extends L10nZh {
   String get browser_open_in_external => '在外部浏览器中打开';
 
   @override
+  String get remove_ads_promo_message => '去除广告？';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => '隐藏全部广告';
+
+  @override
   String get browser_open_in_external_failed => '无法在外部浏览器中打开';
 
   @override
@@ -1976,6 +2012,24 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get detail_page_revert_thumbnail_done => '已还原缩略图';
+
+  @override
+  String get detail_page_field_cleared => '已清空输入';
+
+  @override
+  String get detail_page_unsaved_title => '有未保存的更改';
+
+  @override
+  String get detail_page_unsaved_body => '编辑内容尚未保存。要放弃并关闭吗？';
+
+  @override
+  String get detail_page_unsaved_discard => '放弃并关闭';
+
+  @override
+  String get detail_page_open_in_app_browser_title => '打开原始页面？';
+
+  @override
+  String get detail_page_open_in_app_browser_body => '在应用内浏览器中打开该作品的 URL。';
 
   @override
   String get detail_page_set_as_thumbnail_title => '将此图片设为缩略图？';

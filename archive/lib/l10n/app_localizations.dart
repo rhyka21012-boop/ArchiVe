@@ -338,6 +338,24 @@ abstract class L10n {
   /// **'外部ブラウザで開く'**
   String get browser_open_in_external;
 
+  /// No description provided for @remove_ads_promo_message.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告を非表示にするには？'**
+  String get remove_ads_promo_message;
+
+  /// No description provided for @remove_ads_promo_action.
+  ///
+  /// In ja, this message translates to:
+  /// **'Premium'**
+  String get remove_ads_promo_action;
+
+  /// No description provided for @remove_ads_promo_feature.
+  ///
+  /// In ja, this message translates to:
+  /// **'広告を全て非表示にする'**
+  String get remove_ads_promo_feature;
+
   /// No description provided for @browser_open_in_external_failed.
   ///
   /// In ja, this message translates to:
@@ -757,6 +775,42 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'サムネイルを元に戻しました'**
   String get detail_page_revert_thumbnail_done;
+
+  /// No description provided for @detail_page_field_cleared.
+  ///
+  /// In ja, this message translates to:
+  /// **'入力を消去しました'**
+  String get detail_page_field_cleared;
+
+  /// No description provided for @detail_page_unsaved_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存されていない変更があります'**
+  String get detail_page_unsaved_title;
+
+  /// No description provided for @detail_page_unsaved_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'編集した内容は保存されていません。破棄してこの画面を閉じますか？'**
+  String get detail_page_unsaved_body;
+
+  /// No description provided for @detail_page_unsaved_discard.
+  ///
+  /// In ja, this message translates to:
+  /// **'破棄して閉じる'**
+  String get detail_page_unsaved_discard;
+
+  /// No description provided for @detail_page_open_in_app_browser_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'元ページを開きますか？'**
+  String get detail_page_open_in_app_browser_title;
+
+  /// No description provided for @detail_page_open_in_app_browser_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'この作品の元 URL をアプリ内ブラウザで開きます。'**
+  String get detail_page_open_in_app_browser_body;
 
   /// No description provided for @detail_page_set_as_thumbnail_title.
   ///

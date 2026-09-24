@@ -5,6 +5,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'remove_ads_promo.dart';
+
 /// ダウンロード完了時に 3 回に 1 回インターステイシャル広告を表示するサービス。
 /// - Premium/Pro プランのユーザーは表示しない
 /// - カウントは SharedPreferences に永続化 (アプリ再起動を跨ぐ)
@@ -97,6 +99,9 @@ class DownloadAdService {
       onAdDismissedFullScreenContent: (a) {
         a.dispose();
         preload();
+        // 広告閉じたタイミングで「広告を非表示にするには？」プロモを出す
+        // (1 日 1 回まで、SnackBar なので操作を阻害しない)
+        if (context.mounted) showRemoveAdsPromoIfNeeded(context);
       },
       onAdFailedToShowFullScreenContent: (a, _) {
         a.dispose();

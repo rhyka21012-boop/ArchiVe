@@ -124,6 +124,15 @@ class L10nEn extends L10n {
   String get browser_open_in_external => 'Open in external browser';
 
   @override
+  String get remove_ads_promo_message => 'Want to remove ads?';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => 'hide all ads';
+
+  @override
   String get browser_open_in_external_failed =>
       'Could not open in external browser';
 
@@ -350,6 +359,26 @@ class L10nEn extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => 'Thumbnail reverted';
+
+  @override
+  String get detail_page_field_cleared => 'Field cleared';
+
+  @override
+  String get detail_page_unsaved_title => 'You have unsaved changes';
+
+  @override
+  String get detail_page_unsaved_body =>
+      'Your edits have not been saved. Discard and close?';
+
+  @override
+  String get detail_page_unsaved_discard => 'Discard and close';
+
+  @override
+  String get detail_page_open_in_app_browser_title => 'Open the source page?';
+
+  @override
+  String get detail_page_open_in_app_browser_body =>
+      'Open this work\'s URL in the in-app browser.';
 
   @override
   String get detail_page_set_as_thumbnail_title =>

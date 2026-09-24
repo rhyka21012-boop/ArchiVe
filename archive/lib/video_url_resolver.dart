@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 /// ページ URL から動画直リンク (mp4 等) を推測する。
@@ -32,6 +34,10 @@ class VideoUrlResolver {
     if (looksLikeDirectVideo(url)) {
       return ResolvedVideoUrl(url: url, source: 'direct');
     }
+    // X / Twitter は SSR HTML に引用ポストの動画も混入するため、
+    // 公式 syndication API から主ツイート単体の動画を取得する
+    final twitter = await _resolveTwitter(url, preferredHeight: preferredHeight);
+    if (twitter != null) return twitter;
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -62,6 +68,143 @@ class VideoUrlResolver {
     } catch (_) {
       return null;
     }
+  }
+
+  /// ツイート URL から ID を抽出。
+  /// 対応: `https://x.com/user/status/123`, `https://twitter.com/user/status/123`,
+  ///        末尾の `?...` / `/photo/1` / `/video/1` 等の付加パスも許容。
+  static String? _extractTwitterStatusId(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    final host = uri.host.toLowerCase();
+    if (!(host == 'twitter.com' ||
+        host == 'x.com' ||
+        host == 'mobile.twitter.com' ||
+        host == 'mobile.x.com' ||
+        host.endsWith('.twitter.com') ||
+        host.endsWith('.x.com'))) {
+      return null;
+    }
+    // /user/status/<id>[/...]
+    final segs = uri.pathSegments;
+    for (int i = 0; i < segs.length - 1; i++) {
+      if (segs[i] == 'status' || segs[i] == 'statuses') {
+        final id = segs[i + 1];
+        if (RegExp(r'^\d+$').hasMatch(id)) return id;
+      }
+    }
+    return null;
+  }
+
+  /// syndication API 経由で「主ツイート単体」の動画 URL を取得。
+  /// 引用ポストの動画に釣られないよう、`quoted_tweet` はスキップする。
+  /// 失敗時 null → 呼び出し側で従来の HTML パースにフォールバック。
+  static Future<ResolvedVideoUrl?> _resolveTwitter(
+    String url, {
+    int? preferredHeight,
+  }) async {
+    final id = _extractTwitterStatusId(url);
+    if (id == null) return null;
+    try {
+      // token は 12 文字前後の任意の英数字で通る (URL 末尾 token パラメータ必須)
+      final apiUrl = Uri.parse(
+        'https://cdn.syndication.twimg.com/tweet-result'
+        '?id=$id&token=arch1v3',
+      );
+      final response = await http.get(
+        apiUrl,
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode >= 400) return null;
+      final data = jsonDecode(response.body);
+      if (data is! Map<String, dynamic>) return null;
+      // 主ツイートの video / mediaDetails のみを対象 (quoted_tweet はスキップ)
+      final variants = _twitterMainVariants(data);
+      if (variants.isEmpty) return null;
+      final picked = _pickTwitterVariant(variants, preferredHeight);
+      if (picked == null) return null;
+      return ResolvedVideoUrl(
+        url: picked,
+        mimeType: 'video/mp4',
+        source: 'twitter-syndication',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// syndication レスポンスから "主ツイート" の mp4 variant を集める。
+  /// - `video.variants`
+  /// - `mediaDetails[].video_info.variants`
+  /// 引用ポスト (quoted_tweet) 配下は明示的に除外。
+  static List<_TwitterVariant> _twitterMainVariants(
+      Map<String, dynamic> data) {
+    final result = <_TwitterVariant>[];
+
+    void addFromList(List raw) {
+      for (final v in raw) {
+        if (v is! Map) continue;
+        final type = (v['content_type'] ?? v['type'] ?? '').toString();
+        final src = (v['url'] ?? v['src'] ?? '').toString();
+        if (src.isEmpty) continue;
+        if (!type.contains('mp4') && !src.contains('.mp4')) continue;
+        // アスペクトから高さ推定 (bitrate 高い=高解像) → bitrate と高さヒントを保持
+        final bitrate = (v['bitrate'] is num) ? (v['bitrate'] as num).toInt() : 0;
+        final heightHint = _guessHeightFromTwitterUrl(src);
+        result.add(_TwitterVariant(src, bitrate, heightHint));
+      }
+    }
+
+    final video = data['video'];
+    if (video is Map && video['variants'] is List) {
+      addFromList(video['variants'] as List);
+    }
+    final mediaDetails = data['mediaDetails'];
+    if (mediaDetails is List) {
+      for (final m in mediaDetails) {
+        if (m is! Map) continue;
+        final vi = m['video_info'];
+        if (vi is Map && vi['variants'] is List) {
+          addFromList(vi['variants'] as List);
+        }
+      }
+    }
+    return result;
+  }
+
+  /// Twitter 動画 URL の `/vid/720x1280/` 部分から高さを推定
+  static int? _guessHeightFromTwitterUrl(String url) {
+    final m = RegExp(r'/vid(?:/[^/]+)?/(\d+)x(\d+)/').firstMatch(url);
+    if (m == null) return null;
+    return int.tryParse(m.group(2)!);
+  }
+
+  static String? _pickTwitterVariant(
+    List<_TwitterVariant> variants,
+    int? preferredHeight,
+  ) {
+    if (variants.isEmpty) return null;
+    if (preferredHeight != null) {
+      final exact = variants
+          .where((v) => v.heightHint == preferredHeight)
+          .toList();
+      if (exact.isNotEmpty) return exact.first.url;
+      final lower = variants
+          .where((v) =>
+              v.heightHint != null && v.heightHint! <= preferredHeight)
+          .toList();
+      if (lower.isNotEmpty) {
+        lower.sort((a, b) => b.heightHint!.compareTo(a.heightHint!));
+        return lower.first.url;
+      }
+    }
+    // 高ビットレート優先
+    variants.sort((a, b) => b.bitrate.compareTo(a.bitrate));
+    return variants.first.url;
   }
 
   static ResolvedVideoUrl? _extractFromHtml(String html, String baseUrl,
@@ -373,4 +516,11 @@ class _RankedUrl {
   final int score;
   final int? heightHint;
   const _RankedUrl(this.url, this.score, {this.heightHint});
+}
+
+class _TwitterVariant {
+  final String url;
+  final int bitrate;
+  final int? heightHint;
+  const _TwitterVariant(this.url, this.bitrate, this.heightHint);
 }

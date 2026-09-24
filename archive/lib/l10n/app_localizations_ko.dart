@@ -123,6 +123,15 @@ class L10nKo extends L10n {
   String get browser_open_in_external => '외부 브라우저에서 열기';
 
   @override
+  String get remove_ads_promo_message => '광고를 제거하시겠어요?';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => '모든 광고 숨기기';
+
+  @override
   String get browser_open_in_external_failed => '외부 브라우저에서 열 수 없습니다';
 
   @override
@@ -346,6 +355,25 @@ class L10nKo extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => '썸네일을 되돌렸습니다';
+
+  @override
+  String get detail_page_field_cleared => '입력을 지웠습니다';
+
+  @override
+  String get detail_page_unsaved_title => '저장되지 않은 변경 사항이 있습니다';
+
+  @override
+  String get detail_page_unsaved_body => '편집 내용이 저장되지 않았습니다. 폐기하고 닫을까요?';
+
+  @override
+  String get detail_page_unsaved_discard => '폐기하고 닫기';
+
+  @override
+  String get detail_page_open_in_app_browser_title => '원본 페이지를 열까요?';
+
+  @override
+  String get detail_page_open_in_app_browser_body =>
+      '이 작품의 원본 URL을 앱 내 브라우저에서 엽니다.';
 
   @override
   String get detail_page_set_as_thumbnail_title => '이 이미지를 썸네일로 설정할까요?';

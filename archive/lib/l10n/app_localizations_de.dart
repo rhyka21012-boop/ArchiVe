@@ -123,6 +123,15 @@ class L10nDe extends L10n {
   String get browser_open_in_external => 'Im externen Browser öffnen';
 
   @override
+  String get remove_ads_promo_message => 'Werbung entfernen?';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => 'alle Anzeigen ausblenden';
+
+  @override
   String get browser_open_in_external_failed =>
       'Konnte nicht im externen Browser geöffnet werden';
 
@@ -352,6 +361,26 @@ class L10nDe extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => 'Vorschaubild zurückgesetzt';
+
+  @override
+  String get detail_page_field_cleared => 'Eingabe gelöscht';
+
+  @override
+  String get detail_page_unsaved_title => 'Nicht gespeicherte Änderungen';
+
+  @override
+  String get detail_page_unsaved_body =>
+      'Deine Änderungen wurden nicht gespeichert. Verwerfen und schließen?';
+
+  @override
+  String get detail_page_unsaved_discard => 'Verwerfen und schließen';
+
+  @override
+  String get detail_page_open_in_app_browser_title => 'Quellseite öffnen?';
+
+  @override
+  String get detail_page_open_in_app_browser_body =>
+      'Öffnet die URL dieses Eintrags im In-App-Browser.';
 
   @override
   String get detail_page_set_as_thumbnail_title =>

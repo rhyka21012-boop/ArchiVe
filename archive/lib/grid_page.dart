@@ -70,6 +70,8 @@ class GridPageState extends ConsumerState<GridPage> {
   List<bool> _sortedMenuSelected = [false, false, true, false, false];
   // 現在のソートキー (AppBar チップに表示、拡張ソート対応)
   String _sortKey = 'old';
+  // アプリ全体で保持するグローバル設定 (SharedPreferences)
+  static const _kPrefGridSortKey = 'grid_sort_key';
 
   //スクロール管理
   final ScrollController _scrollController = ScrollController();
@@ -145,7 +147,7 @@ class GridPageState extends ConsumerState<GridPage> {
   @override
   void initState() {
     super.initState();
-    _searchMetadata();
+    _loadSortPreference().then((_) => _searchMetadata());
     _loadLocalImages();
     _loadViewSettings();
     _loadAd();
@@ -2118,8 +2120,37 @@ class GridPageState extends ConsumerState<GridPage> {
   }
 
   //ソートされたリストを返す
+  /// アプリ全体で保持するソート設定を SharedPreferences から復元。
+  /// initState 直後に呼び、`_searchMetadata` より前に実行する。
+  Future<void> _loadSortPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_kPrefGridSortKey);
+      if (saved == null || saved.isEmpty) return;
+      _sortKey = saved;
+      // 上部モーダルのラジオ選択も同期 (5 択のうち該当があれば反映)
+      const modalKeys = ['titleAsc', 'new', 'old', 'countDesc', 'countAsc'];
+      final idx = modalKeys.indexOf(saved);
+      if (idx >= 0) {
+        _sortedMenuSelected = List<bool>.generate(
+          modalKeys.length,
+          (i) => i == idx,
+        );
+      } else {
+        // 拡張ソート (rating / random / byCast 等) が保存されている場合は
+        // モーダルの 5 択どれも該当しないので全 false
+        _sortedMenuSelected = List<bool>.filled(modalKeys.length, false);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _sortSearchedItems(String sortType) async {
     _sortKey = sortType;
+    // グローバルに保存 (アプリ全体、次回起動時も維持)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPrefGridSortKey, sortType);
+    } catch (_) {}
     final source = List<Map<String, dynamic>>.from(_searchedItems);
     switch (sortType) {
       case 'titleAsc':

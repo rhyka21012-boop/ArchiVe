@@ -123,6 +123,15 @@ class L10nEs extends L10n {
   String get browser_open_in_external => 'Abrir en navegador externo';
 
   @override
+  String get remove_ads_promo_message => '¿Quitar los anuncios?';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => 'ocultar todos los anuncios';
+
+  @override
   String get browser_open_in_external_failed =>
       'No se pudo abrir en el navegador externo';
 
@@ -352,6 +361,27 @@ class L10nEs extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => 'Miniatura restaurada';
+
+  @override
+  String get detail_page_field_cleared => 'Campo borrado';
+
+  @override
+  String get detail_page_unsaved_title => 'Cambios sin guardar';
+
+  @override
+  String get detail_page_unsaved_body =>
+      'Tus cambios no se han guardado. ¿Descartar y cerrar?';
+
+  @override
+  String get detail_page_unsaved_discard => 'Descartar y cerrar';
+
+  @override
+  String get detail_page_open_in_app_browser_title =>
+      '¿Abrir la página original?';
+
+  @override
+  String get detail_page_open_in_app_browser_body =>
+      'Abre la URL de este elemento en el navegador integrado.';
 
   @override
   String get detail_page_set_as_thumbnail_title =>

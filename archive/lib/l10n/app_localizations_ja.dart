@@ -123,6 +123,15 @@ class L10nJa extends L10n {
   String get browser_open_in_external => '外部ブラウザで開く';
 
   @override
+  String get remove_ads_promo_message => '広告を非表示にするには？';
+
+  @override
+  String get remove_ads_promo_action => 'Premium';
+
+  @override
+  String get remove_ads_promo_feature => '広告を全て非表示にする';
+
+  @override
   String get browser_open_in_external_failed => '外部ブラウザで開けませんでした';
 
   @override
@@ -346,6 +355,25 @@ class L10nJa extends L10n {
 
   @override
   String get detail_page_revert_thumbnail_done => 'サムネイルを元に戻しました';
+
+  @override
+  String get detail_page_field_cleared => '入力を消去しました';
+
+  @override
+  String get detail_page_unsaved_title => '保存されていない変更があります';
+
+  @override
+  String get detail_page_unsaved_body => '編集した内容は保存されていません。破棄してこの画面を閉じますか？';
+
+  @override
+  String get detail_page_unsaved_discard => '破棄して閉じる';
+
+  @override
+  String get detail_page_open_in_app_browser_title => '元ページを開きますか？';
+
+  @override
+  String get detail_page_open_in_app_browser_body =>
+      'この作品の元 URL をアプリ内ブラウザで開きます。';
 
   @override
   String get detail_page_set_as_thumbnail_title => 'この画像をサムネイルにしますか？';

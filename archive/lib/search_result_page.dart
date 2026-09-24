@@ -26,6 +26,7 @@ import 'browser_home_page.dart';
 import 'browser_session_provider.dart';
 import 'browser_scroll_top_provider.dart';
 import 'download_queue_provider.dart';
+import 'remove_ads_promo.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -1072,6 +1073,63 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
     // 周囲のグレー背景と区別するため、URL 入力部分は反対トーンで塗る
     final bg = isDark ? Colors.white12 : Colors.white;
 
+    // 編集中でもホーム画面でもない場合は、TextField ではなく Text で表示する。
+    // TextField はカーソル位置 (0) 起点で描画するため長い URL のパス部分が
+    // クリップされて見えなくなる。Text ならホスト〜パス途中まで自然に
+    // 出せ、あふれた場合も末尾を ellipsis で省略できる。
+    if (!_isUrlBarEditing && !_activeTab.isHome) {
+      final url = _currentUrl ?? _urlBarController.text;
+      return Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            setState(() {
+              _isUrlBarEditing = true;
+              _urlBarController.text = url;
+              _urlBarController.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _urlBarController.text.length,
+              );
+            });
+            _urlBarFocus.requestFocus();
+          },
+          child: SizedBox(
+            height: 38,
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                Icon(
+                  (_currentUrl?.startsWith('https://') ?? false)
+                      ? Icons.lock
+                      : Icons.public,
+                  size: 16,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    url,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 36, minHeight: 36),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  onPressed: () => _controller.reload(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: 38,
       decoration: BoxDecoration(
@@ -1113,21 +1171,13 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
           // ホームタブでは reload/clear のサフィックスも非表示
           suffixIcon: _activeTab.isHome
               ? null
-              : (_isUrlBarEditing
-                  ? IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints:
-                          const BoxConstraints(minWidth: 36, minHeight: 36),
-                      icon: const Icon(Icons.clear, size: 16),
-                      onPressed: () => _urlBarController.clear(),
-                    )
-                  : IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints:
-                          const BoxConstraints(minWidth: 36, minHeight: 36),
-                      icon: const Icon(Icons.refresh, size: 18),
-                      onPressed: () => _controller.reload(),
-                    )),
+              : IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 36, minHeight: 36),
+                  icon: const Icon(Icons.clear, size: 16),
+                  onPressed: () => _urlBarController.clear(),
+                ),
         ),
         onTap: () {
           if (!_isUrlBarEditing) {
@@ -2535,6 +2585,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         _loadInterstitialAd();
+        // 広告閉じたタイミングで「広告を非表示にするには？」プロモを出す
+        // (1 日 1 回まで、SnackBar なので操作を阻害しない)
+        if (mounted) showRemoveAdsPromoIfNeeded(context);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();

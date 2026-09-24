@@ -378,6 +378,98 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _memoController = TextEditingController(text: widget.memo ?? '');
     selectedRating = widget.rating;
     isEditing = !widget.isReadOnly;
+    _snapshotEditFields();
+  }
+
+  /// 編集中の入力内容の「保存済みスナップショット」を撮る。
+  /// 保存 or 破棄後にリセット、保存漏れダイアログの差分判定に使う。
+  Map<String, String?> _lastSavedSnapshot = const {};
+  void _snapshotEditFields() {
+    _lastSavedSnapshot = {
+      'url': _urlController.text,
+      'title': _titleController.text,
+      'cast': _castController.text,
+      'genre': _genreController.text,
+      'series': _seriesController.text,
+      'label': _labelController.text,
+      'maker': _makerController.text,
+      'memo': _memoController.text,
+      'rating': selectedRating,
+      'listName': isSelectedValue,
+    };
+  }
+
+  bool _hasUnsavedChanges() {
+    if (_lastSavedSnapshot.isEmpty) return false;
+    if (_lastSavedSnapshot['url'] != _urlController.text) return true;
+    if (_lastSavedSnapshot['title'] != _titleController.text) return true;
+    if (_lastSavedSnapshot['cast'] != _castController.text) return true;
+    if (_lastSavedSnapshot['genre'] != _genreController.text) return true;
+    if (_lastSavedSnapshot['series'] != _seriesController.text) return true;
+    if (_lastSavedSnapshot['label'] != _labelController.text) return true;
+    if (_lastSavedSnapshot['maker'] != _makerController.text) return true;
+    if (_lastSavedSnapshot['memo'] != _memoController.text) return true;
+    if (_lastSavedSnapshot['rating'] != selectedRating) return true;
+    if (_lastSavedSnapshot['listName'] != isSelectedValue) return true;
+    return false;
+  }
+
+  /// 未保存の変更があれば「保存されていません」ダイアログを出し、
+  /// 「破棄」を選ばれた場合のみ true (画面遷移許可) を返す。
+  /// 未編集モード or 差分なしの場合は即 true。
+  Future<bool> _confirmDiscardIfDirty() async {
+    if (!isEditing) return true;
+    if (!_hasUnsavedChanges()) return true;
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Center(
+          child: Text(
+            l.detail_page_unsaved_title,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Text(
+          l.detail_page_unsaved_body,
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+              foregroundColor: MaterialStateProperty.all(Colors.black),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              backgroundColor: MaterialStateProperty.all(colorScheme.primary),
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            child: Text(l.detail_page_unsaved_discard),
+          ),
+        ],
+      ),
+    );
+    return result == true;
   }
 
   /*
@@ -754,6 +846,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     //保存完了時
     if (success) {
+      // 保存済みスナップショット更新 → 以降 unsaved diff が無い状態に
+      _snapshotEditFields();
       // 新規保存 (URL 一致なし = 追加) のみ ActivityService に記録
       if (!found) {
         // ignore: unawaited_futures
@@ -790,6 +884,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     for (final focusNode in _hashButtonFocusNodes.values) {
       focusNode.dispose();
     }
+    for (final node in _clearFocusNodes.values) {
+      node.dispose();
+    }
     _urlFocusNode.dispose();
     _skipTimer?.cancel();
     super.dispose();
@@ -805,7 +902,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       surfaceTintColor: Colors.transparent,
       leading: CircleAppBarIcon(
         icon: Icons.arrow_back,
-        onPressed: () => Navigator.of(context).maybePop(),
+        onPressed: () async {
+          if (!await _confirmDiscardIfDirty()) return;
+          if (!mounted) return;
+          Navigator.of(context).maybePop();
+        },
         backgroundColor: chipBg,
       ),
       title: Text(
@@ -1206,7 +1307,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     return Stack(
       children: [
         WillPopScope(
-          onWillPop: () async => !_isLoadingThumbnail,
+          onWillPop: () async {
+            if (_isLoadingThumbnail) return false;
+            // 未保存の変更があれば確認ダイアログを出す
+            return await _confirmDiscardIfDirty();
+          },
           child: Scaffold(
             //backgroundColor: Colors.transparent,
             extendBodyBehindAppBar: true,
@@ -1337,6 +1442,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                   onTapCancel:
                                       () => setState(() => _isPressed = false),
                                   onTap: () => openPlayer(widget.url!),
+                                  onLongPress: _promptOpenInAppBrowser,
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
                                     child: Stack(
@@ -1460,6 +1566,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                     openPlayer(widget.url!);
                                   }
                                 },
+                                onLongPress: _promptOpenInAppBrowser,
                                 child: Stack(
                                   alignment: Alignment.bottomRight,
                                   children: [
@@ -1972,26 +2079,47 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   ),
 
                 //URLからタイトル取得
+                // ③ URL が入力済み & タイトルが空 のときのみ表示。
+                // 埋まっている場合は × クリアで消せば再度現れる。
                 if (isEditing && withFetchTitle)
-                  TextButton.icon(
-                    key: _fetchTitleKey,
-                    onPressed: _fetchTitleFromUrl,
-                    icon:
-                        _isFetchingTitle
-                            ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : Icon(
-                              Icons.download,
-                              size: 18,
-                              color: colorScheme.onPrimary,
-                            ),
-                    label: Text(
-                      L10n.of(context)!.detail_page_fetch_title,
-                      style: TextStyle(color: colorScheme.onPrimary),
-                    ),
+                  ListenableBuilder(
+                    listenable: Listenable.merge(
+                        [_urlController, _titleController]),
+                    builder: (_, __) {
+                      final urlHasText =
+                          _urlController.text.trim().isNotEmpty;
+                      final titleEmpty =
+                          _titleController.text.trim().isEmpty;
+                      final shouldShow = urlHasText && titleEmpty;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: !shouldShow
+                            ? const SizedBox.shrink()
+                            : TextButton.icon(
+                                key: _fetchTitleKey,
+                                onPressed: _fetchTitleFromUrl,
+                                icon: _isFetchingTitle
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.download,
+                                        size: 18,
+                                        color: colorScheme.onPrimary,
+                                      ),
+                                label: Text(
+                                  L10n.of(context)!.detail_page_fetch_title,
+                                  style: TextStyle(
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ),
+                      );
+                    },
                   ),
 
 
@@ -2025,28 +2153,60 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               autocompleteKey != null
                   ? _layerLinks[autocompleteKey]!
                   : LayerLink(),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: TextField(
-              controller: controller,
-              // URL 欄はフォーカス変化を検知したいので専用のノードを渡す
-              focusNode:
-                  controller == _urlController ? _urlFocusNode : focusNode,
-              readOnly: !isEditing,
-              decoration: InputDecoration(
-                hintText: hintLabel,
-                hintStyle: const TextStyle(color: Colors.grey),
-                filled: true,
-                fillColor: isEditing ? Colors.white : Colors.grey[300],
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
+          child: Builder(builder: (context) {
+            // クリアボタン制御用の FocusNode 決定
+            final resolvedFocusNode = controller == _urlController
+                ? _urlFocusNode
+                : (focusNode ?? _clearFocusFor(controller));
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                controller: controller,
+                focusNode: resolvedFocusNode,
+                readOnly: !isEditing,
+                decoration: InputDecoration(
+                  hintText: hintLabel,
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: isEditing ? Colors.white : Colors.grey[300],
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  suffixIcon: !isEditing
+                      ? null
+                      : ListenableBuilder(
+                          listenable: Listenable.merge(
+                              [controller, resolvedFocusNode]),
+                          builder: (_, __) {
+                            if (!resolvedFocusNode.hasFocus) {
+                              return const SizedBox.shrink();
+                            }
+                            if (controller.text.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () => _clearWithUndo(controller),
+                            );
+                          },
+                        ),
                 ),
+                style:
+                    const TextStyle(fontSize: 14, color: Colors.black),
               ),
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-            ),
-          ),
+            );
+          }),
         ),
         const SizedBox(height: 16),
       ],
@@ -2068,6 +2228,19 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
   final Map<String, FocusNode> _hashButtonFocusNodes = {};
+  // 各テキストフィールドの × クリアボタン用の FocusNode。
+  // 既存の autocomplete 用 FocusNode が無いフィールド (タイトル/メモ 等) 向けに
+  // TextEditingController 単位で 1 つずつ遅延生成する。
+  final Map<TextEditingController, FocusNode> _clearFocusNodes = {};
+
+  FocusNode _clearFocusFor(TextEditingController c) =>
+      _clearFocusNodes.putIfAbsent(c, () => FocusNode());
+
+  /// テキストフィールドの × ボタンで即クリア。SnackBar 等の通知は出さない。
+  void _clearWithUndo(TextEditingController controller) {
+    if (controller.text.isEmpty) return;
+    controller.clear();
+  }
 
   void _onFieldChanged(String fieldKey) async {
     final controller = _controllers[fieldKey]!;
@@ -2165,6 +2338,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               offset: const Offset(0.0, 40.0),
               child: Material(
                 elevation: 4.0,
+                // ダーク/ライトモードに関わらず白塗りで統一
+                color: Colors.white,
                 child: SizedBox(
                   height: (_suggestions.length * 60).clamp(0, 240).toDouble(),
                   child: ListView(
@@ -2173,7 +2348,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     children:
                         _suggestions.map((suggestion) {
                           return ListTile(
-                            title: Text(suggestion),
+                            title: Text(
+                              suggestion,
+                              style: const TextStyle(color: Colors.black87),
+                            ),
                             onTap: () {
                               final controller = _controllers[fieldKey]!;
                               final text = controller.text;
@@ -2301,12 +2479,16 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         isSelectedValue = noneListValue;
       }
     });
+    // リスト初期化後にスナップショット再取得
+    // (initState 時は isSelectedValue が null なので差分が誤検知される)
+    _snapshotEditFields();
   }
 
   //======================
   //メモ欄のテキストフィールド
   //======================
   Widget _buildMemoTextField() {
+    final focusNode = _clearFocusFor(_memoController);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2314,7 +2496,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           L10n.of(context)!.detail_page_memo,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            //color: Colors.white,
           ),
         ),
         const SizedBox(height: 4),
@@ -2322,6 +2503,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           borderRadius: BorderRadius.circular(12),
           child: TextField(
             controller: _memoController,
+            focusNode: focusNode,
             readOnly: !isEditing,
             keyboardType: TextInputType.multiline,
             maxLines: 15,
@@ -2333,6 +2515,37 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               fillColor: isEditing ? Colors.white : Colors.grey[300],
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(top: 12.0, left: 12.0),
+              // メモは複数行なので × を上寄せに
+              suffixIconConstraints:
+                  const BoxConstraints(minWidth: 40, minHeight: 40),
+              suffixIcon: !isEditing
+                  ? null
+                  : ListenableBuilder(
+                      listenable:
+                          Listenable.merge([_memoController, focusNode]),
+                      builder: (_, __) {
+                        if (!focusNode.hasFocus ||
+                            _memoController.text.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            icon: const Icon(
+                              Icons.close,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => _clearWithUndo(_memoController),
+                          ),
+                        );
+                      },
+                    ),
             ),
             style: TextStyle(fontSize: 14, color: Colors.black),
           ),
@@ -3601,7 +3814,80 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       );
       return;
     }
-    // 外部ブラウザではなくアプリ内ブラウザで開く
+    // 外部ブラウザで開く (アプリ内ブラウザは再生ボタンの長押しに移設)
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.detail_page_url_unable)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.detail_page_url_unable)),
+        );
+      }
+    }
+  }
+
+  /// 再生ボタン長押し: 「元ページをアプリ内ブラウザで開きますか？」ダイアログ → 開く
+  Future<void> _promptOpenInAppBrowser() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+    final l = L10n.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: colorScheme.secondary,
+        title: Center(
+          child: Text(
+            l.detail_page_open_in_app_browser_title,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Text(
+          l.detail_page_open_in_app_browser_body,
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              backgroundColor: MaterialStateProperty.all(Colors.grey[300]),
+              foregroundColor: MaterialStateProperty.all(Colors.black),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, true),
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+              backgroundColor: MaterialStateProperty.all(colorScheme.primary),
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            child: Text(l.ok),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     ref.read(browserSessionProvider.notifier).requestOpen(
           url,
           title: _titleController.text.trim(),
