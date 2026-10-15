@@ -1,0 +1,66 @@
+{
+  "_comment": "ストアスクショの定義。capture に captures/ 配下のファイル名を指定する (無ければプレースホルダ描画)。",
+
+  "theme": {
+    "accent": "#FB8C00",
+    "accent2": "#26A69A",
+    "bgTop": "#F7F4EE",
+    "bgBottom": "#EDE6DA",
+    "textColor": "#1A1A1E",
+    "textSubColor": "#6B6B75"
+  },
+
+  "themeDark": {
+    "accent": "#FB8C00",
+    "accent2": "#26A69A",
+    "bgTop": "#1B1B20",
+    "bgBottom": "#0E0E12",
+    "textColor": "#FFFFFF",
+    "textSubColor": "#A0A0AC"
+  },
+
+  "slides": [
+    {
+      "id": "01-collection",
+      "capture": "grid.png",
+      "dark": false,
+      "caption": { "ja": "お気に入りを、<span class=\"hl\">コレクション</span>に。", "en": "Turn favorites into a <span class=\"hl\">collection</span>." },
+      "subcaption": { "ja": "保存して終わりじゃない。並べて、見返して、育てる。", "en": "Not just saved — arranged, revisited, and grown." }
+    },
+    {
+      "id": "02-search",
+      "capture": "search.png",
+      "dark": false,
+      "caption": { "ja": "<span class=\"hl\">複数タグ</span>で、すぐ見つかる。", "en": "Find it fast with <span class=\"hl\">multiple tags</span>." },
+      "subcaption": { "ja": "出演者・ジャンル・シリーズを組み合わせて絞り込み。", "en": "Combine cast, genre, and series to narrow down." }
+    },
+    {
+      "id": "03-ranking",
+      "capture": "ranking.png",
+      "dark": false,
+      "caption": { "ja": "自分だけの<span class=\"hl\">ランキング</span>。", "en": "Your own <span class=\"hl\">ranking</span>." },
+      "subcaption": { "ja": "ドラッグ＆ドロップでベスト作品を並べ替え。", "en": "Drag and drop to rank your best picks." }
+    },
+    {
+      "id": "04-analytics",
+      "capture": "analytics.png",
+      "dark": true,
+      "caption": { "ja": "<span class=\"hl\">統計</span>で傾向がわかる。", "en": "See your taste in <span class=\"hl\">numbers</span>." },
+      "subcaption": { "ja": "評価分布・視聴回数・出演者ランキングをグラフで可視化。", "en": "Ratings, view counts, and cast rankings — visualized." }
+    },
+    {
+      "id": "05-browser",
+      "capture": "browser.png",
+      "dark": true,
+      "caption": { "ja": "アプリ内<span class=\"hl\">ブラウザ</span>でそのまま保存。", "en": "Save directly from the built-in <span class=\"hl\">browser</span>." },
+      "subcaption": { "ja": "タブ対応。見つけたらワンタップでコレクションへ。", "en": "Tabbed browsing. One tap to add to your collection." }
+    },
+    {
+      "id": "06-ai",
+      "capture": "ai.png",
+      "dark": true,
+      "caption": { "ja": "<span class=\"hl\">AI</span> が整理を手伝う。", "en": "Let <span class=\"hl\">AI</span> do the tagging." },
+      "subcaption": { "ja": "タグの自動提案、おすすめキーワード、月次サマリー。", "en": "Auto tag suggestions, keyword ideas, and monthly summaries." }
+    }
+  ]
+}

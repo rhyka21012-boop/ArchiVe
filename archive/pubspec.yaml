@@ -4,7 +4,7 @@ description: "A new Flutter project."
 
 publish_to: 'none' 
 
-version: 2.2.4+60
+version: 2.3.0+61
 
 environment:
   sdk: ^3.7.2
@@ -29,7 +29,7 @@ dependencies:
   google_mobile_ads: ^6.0.0
   path_provider: ^2.1.1
   path: ^1.9.0
-  purchases_flutter: ^9.2.1
+  purchases_flutter: ^10.16.0
   app_tracking_transparency: ^2.0.6+1
 
   # Firebase + Auth
@@ -63,6 +63,8 @@ dependencies:
   simple_pip_mode: ^1.1.0
   screen_brightness: ^2.1.0
   flutter_volume_controller: ^1.3.2
+  background_downloader: ^9.5.9
+  ffmpeg_kit_flutter_new_min: ^3.6.7
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

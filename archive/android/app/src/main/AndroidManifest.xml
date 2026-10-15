@@ -2,6 +2,15 @@
     package="com.walkinggoblins.archive">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.vending.BILLING"/>
+    <!-- バックグラウンドダウンロードの進捗通知 (API 33 以降で必須) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Android 14 以降で User Initiated Data Transfer を使い、
+         既定の 9 分タイムアウトを回避するために必要 -->
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS"/>
+    <!-- ダウンロードを前景サービスで実行するために必要 (API 34 以降)。
+         一部端末 (ColorOS 等) はジョブのホストプロセスを短時間で停止し、
+         タスクが先頭からやり直しになるため、前景サービス化して停止を抑える -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <application
         android:label="ArchiVe"
         android:name="${applicationName}"
@@ -45,6 +54,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- background_downloader が前景サービスでダウンロードを走らせるための
+             サービス種別宣言。権限だけでは API 34 以降で起動できない -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

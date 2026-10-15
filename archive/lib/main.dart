@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:background_downloader/background_downloader.dart';
+import 'download_queue_provider.dart';
 import 'launch_gate.dart';
+import 'offline_cleanup.dart';
+import 'offline_video_path.dart';
 import 'global_player_layer.dart';
 import 'pip_helper.dart';
 import 'download_ad_service.dart';
@@ -30,10 +34,50 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+  // オフライン動画のパス解決用ディレクトリを先に確定させる。
+  // build() 内から同期的に参照するため runApp より前に必須。
+  await OfflineVideoPaths.init();
+  // 旧形式 (絶対パス) で保存された参照をファイル名へ移行する
+  await OfflineVideoPaths.migrateLegacyPaths();
+  // 参照の無いオフラインファイルを掃除する (中断や重複投入で残った分)。
+  // ダウンロード開始より前に実行すること (進行中のファイルを見ないため)。
+  await OfflineCleanup.sweepOrphans();
+
   final container = ProviderContainer();
   await container.read(themeModeProvider.notifier).loadTheme();
   await container.read(themeColorProvider.notifier).loadColor();
   await container.read(ratingLabelsProvider.notifier).load();
+  // 評価名と同様、最初の描画前に読んでおく (後読みだと既定名が一瞬見える)
+  await container.read(tagLabelsProvider.notifier).load();
+
+  // バックグラウンドダウンロードの基盤初期化。
+  //
+  // 順序が重要。trackTasks は「アプリ停止中に完了したタスク」の完了イベントを
+  // 発火するが、パッケージの注意書きどおり *コールバック登録より前* に呼ぶと
+  // そのイベントは受け手がおらず捨てられる。
+  // そのため先に provider を生成し、コールバックを登録しておく。
+  container.read(downloadQueueProvider.notifier);
+  try {
+    // start() がパッケージ推奨の順序でまとめて行う:
+    //   trackTasks → resumeFromBackground → 5 秒後に rescheduleKilledTasks
+    //
+    // resumeFromBackground は停止中に蓄積した状態/進捗の回収処理で、
+    // これを呼ばないとバックグラウンドで進んだ結果がアプリ側に反映されない。
+    // rescheduleKilledTasks は DB と native キューの差分を再投入するため、
+    // 回収前に実行すると取りこぼしや重複投入を招く (ので start() に任せる)。
+    // Android: ダウンロードを前景サービスで実行する。
+    // 一部端末 (ColorOS 等) はジョブのホストプロセスを 30 秒〜数分で停止し、
+    // そのたびにタスクが先頭からやり直しになる (実測でそうなっていた)。
+    // 前景サービス化すると停止されにくくなり、9 分制限も外れる。
+    // 'running' 通知が設定されていることが前提
+    // (MaterialApp の builder から configureNotificationForGroup で設定済み)。
+    await FileDownloader().configure(
+      androidConfig: (Config.runInForeground, Config.always),
+    );
+    await FileDownloader().start();
+  } catch (_) {
+    // 初期化に失敗してもアプリ起動は継続させる
+  }
 
   // トラッキング許可ダイアログ
   //final status = await AppTrackingTransparency.requestTrackingAuthorization();
@@ -79,13 +123,67 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _initialized = false;
+  bool _downloadNotificationsConfigured = false;
+
+  /// ダウンロード通知の文言を設定する。
+  ///
+  /// L10n は MaterialApp より下の context でしか使えないため main() では設定できず、
+  /// MaterialApp の builder から一度だけ呼ぶ。
+  /// またタスクは専用グループに属するため、既定グループ向けの
+  /// configureNotification ではなく configureNotificationForGroup を使う必要がある。
+  /// 通知が無いと Android の UIDT (9 分制限の回避) が有効にならない。
+  void _configureDownloadNotifications(BuildContext context) {
+    if (_downloadNotificationsConfigured) return;
+    final l = L10n.of(context);
+    if (l == null) return;
+    _downloadNotificationsConfigured = true;
+    // 本文はファイル名が <taskId>.mp4 で利用者に意味が無いため空にし、
+    // 進捗はプログレスバーに任せる。
+    FileDownloader().configureNotificationForGroup(
+      kOfflineDownloadGroup,
+      running: TaskNotification(l.download_notification_running, ''),
+      complete: TaskNotification(l.download_notification_complete, ''),
+      error: TaskNotification(l.download_notification_error, ''),
+      paused: TaskNotification(l.download_notification_paused, ''),
+      progressBar: true,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _waitForInitialization();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // アプリが前面に戻ったら、停止中に溜まった状態/進捗を回収する。
+    //
+    // 特に iOS は URLSession が裏で完了させた結果をローカルに溜め込むだけで、
+    // retrieveLocallyStoredData (= resumeFromBackground) を呼ばない限り
+    // アプリ側へ届かない。起動時の start() ではコールドスタートしか
+    // カバーできないため、復帰のたびに回収する。
+    if (state == AppLifecycleState.resumed) {
+      _resumeDownloadsFromBackground();
+    }
+  }
+
+  Future<void> _resumeDownloadsFromBackground() async {
+    try {
+      await FileDownloader().resumeFromBackground();
+    } catch (_) {
+      // 回収に失敗してもアプリの通常動作は継続させる
+    }
   }
 
   Future<void> _waitForInitialization() async {
@@ -129,6 +227,8 @@ class _MyAppState extends State<MyApp> {
           home: const LaunchGate(),
           // 全ルート上にミニプレイヤーを重ねる (どの画面でも表示される)
           builder: (context, child) {
+            // ここは MaterialApp 配下なので L10n が使える
+            _configureDownloadNotifications(context);
             return Stack(
               children: [
                 if (child != null) child,

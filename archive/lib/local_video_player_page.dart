@@ -11,6 +11,7 @@ import 'l10n/app_localizations.dart';
 import 'mini_player_provider.dart';
 import 'offline_quality_picker.dart';
 import 'pip_helper.dart';
+import 'watch_progress.dart';
 
 /// ダウンロード済みのローカル動画をフルスクリーンで再生するプレイヤー画面。
 /// プレイヤー本体は [miniPlayerProvider] が保持し、この画面はビューとして機能する。
@@ -111,8 +112,8 @@ class _LocalVideoPlayerPageState extends ConsumerState<LocalVideoPlayerPage>
       final sec = prefs.getInt(posKey(url));
       if (sec == null || sec <= 3) return; // 数秒以内なら復元しない
       final dur = c.value.duration;
-      // 動画終端付近 (残り 10 秒未満) なら復元せず先頭から
-      if (dur.inSeconds > 0 && dur.inSeconds - sec < 10) return;
+      // 動画終端付近なら復元せず先頭から (保存側と同じしきい値で判定する)
+      if (isNearEnd(dur.inSeconds, sec)) return;
       await c.seekTo(Duration(seconds: sec));
     } catch (_) {}
   }
@@ -134,7 +135,7 @@ class _LocalVideoPlayerPageState extends ConsumerState<LocalVideoPlayerPage>
       final dur = c.value.duration.inSeconds;
       if (dur > 0) await prefs.setInt(durKey(url), dur);
       // 動画終端付近ならクリア (次回は最初から)
-      if (dur > 0 && dur - pos < 10) {
+      if (isNearEnd(dur, pos)) {
         await prefs.remove(posKey(url));
       } else if (pos > 3) {
         await prefs.setInt(posKey(url), pos);

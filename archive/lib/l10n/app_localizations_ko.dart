@@ -177,6 +177,45 @@ class L10nKo extends L10n {
   String get list_page_reorder => '정렬';
 
   @override
+  String get list_page_customize => '홈 맞춤설정';
+
+  @override
+  String get home_widget_add_title => '위젯 추가';
+
+  @override
+  String get home_widget_open_tabs => '보고 있는 사이트';
+
+  @override
+  String get home_widget_open_tabs_desc => '브라우저에서 열어 둔 페이지 중 하나를 표시합니다';
+
+  @override
+  String get home_widget_open_tabs_empty => '열려 있는 사이트가 없습니다';
+
+  @override
+  String get home_widget_continue => '이어서 보기';
+
+  @override
+  String get home_widget_continue_desc => '보던 동영상을 이어서 재생합니다';
+
+  @override
+  String get home_widget_continue_empty => '이어서 볼 항목이 없습니다';
+
+  @override
+  String get home_widget_random => '랜덤 1개';
+
+  @override
+  String get home_widget_random_desc => '저장된 항목 중 하나를 무작위로 표시합니다';
+
+  @override
+  String get home_widget_random_empty => '저장된 항목이 없습니다';
+
+  @override
+  String get home_widget_download => '다운로드 상태';
+
+  @override
+  String get home_widget_download_desc => '진행 중인 다운로드 상황을 표시합니다';
+
+  @override
   String get list_page_reorder_done => '완료';
 
   @override
@@ -234,7 +273,7 @@ class L10nKo extends L10n {
   String get grid_page_by_web => '웹 검색으로 추가';
 
   @override
-  String get grid_page_by_manual => '직접 추가';
+  String get grid_page_by_manual => 'URL로 추가';
 
   @override
   String get grid_page_cant_load_image => '이미지를 불러올 수 없습니다';
@@ -810,6 +849,28 @@ class L10nKo extends L10n {
 
   @override
   String get offline_quality_none => '오프라인 다운로드 안 함';
+
+  @override
+  String get offline_quality_audio_only => '오디오만';
+
+  @override
+  String get download_notification_running => '다운로드 중';
+
+  @override
+  String get download_notification_complete => '다운로드 완료';
+
+  @override
+  String get download_notification_error => '다운로드 실패';
+
+  @override
+  String get download_notification_paused => '일시정지됨';
+
+  @override
+  String get download_notification_permission_title => '백그라운드 다운로드에는 알림이 필요합니다';
+
+  @override
+  String get download_notification_permission_body =>
+      '알림이 허용되지 않으면 앱을 벗어날 때 다운로드가 중단됩니다. 특히 모바일 데이터에서 그렇습니다. 설정에서 알림을 켜주세요.';
 
   @override
   String get search_result_page_has_saved => '항목이 저장되었습니다';
@@ -1676,4 +1737,56 @@ class L10nKo extends L10n {
   @override
   String get search_page_ai_recommend_intro =>
       '버튼을 누르면 저장한 라이브러리에서 관련 키워드를 AI가 제안합니다.';
+
+  @override
+  String get tutorial_tips_title => '작품을 추가하는 방법은 더 있습니다';
+
+  @override
+  String get tutorial_tips_share_title => '기기의 공유 기능으로 추가';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      '다른 앱의 공유 메뉴에서 ArchiVe를 선택하면 보고 있는 페이지를 그대로 저장할 수 있습니다. (기기에 따라 사용할 수 없는 경우가 있습니다.)';
+
+  @override
+  String get tutorial_tips_browser_title => '브라우저의 저장 버튼으로 추가';
+
+  @override
+  String get tutorial_tips_browser_desc =>
+      '앱 내 브라우저에서 찾은 동영상은 저장 버튼만 누르면 리스트에 모을 수 있습니다.';
+
+  @override
+  String get tutorial_tips_footer => '꼭 활용해 보세요!';
+
+  @override
+  String get tutorial_tips_start => '시작하기';
+
+  @override
+  String get settings_page_display_names => '평가 이름·태그 이름 변경';
+
+  @override
+  String get settings_page_display_names_desc => '비워 두면 기본 이름으로 돌아갑니다.';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return '평가 $n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return '태그 $n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => '표시 이름을 저장했습니다';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (# 여러 개)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }

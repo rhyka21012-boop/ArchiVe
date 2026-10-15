@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'http_body_decoder.dart';
+
 /// ページ URL から動画直リンク (mp4 等) を推測する。
 /// 対応する検出源:
 /// - 拡張子が動画拡張子ならそのまま
@@ -63,7 +65,7 @@ class VideoUrlResolver {
           ct.isNotEmpty) {
         return null;
       }
-      return _extractFromHtml(response.body, url,
+      return _extractFromHtml(decodeHttpBody(response), url,
           preferredHeight: preferredHeight);
     } catch (_) {
       return null;
@@ -120,7 +122,7 @@ class VideoUrlResolver {
         },
       ).timeout(const Duration(seconds: 10));
       if (response.statusCode >= 400) return null;
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(decodeHttpBody(response));
       if (data is! Map<String, dynamic>) return null;
       // 主ツイートの video / mediaDetails のみを対象 (quoted_tweet はスキップ)
       final variants = _twitterMainVariants(data);
@@ -209,8 +211,30 @@ class VideoUrlResolver {
 
   static ResolvedVideoUrl? _extractFromHtml(String html, String baseUrl,
       {int? preferredHeight}) {
-    // 優先度: og:video:secure_url > og:video:url > og:video > twitter:player:stream
-    //         > <video src> > <source src type=video/*> > <source src=*.mp4 等>
+    // 解像度ラダーを持つ埋め込み URL が最優先。
+    //
+    // og:video は「プレビュー/ティザー (数秒)」を指すサイトがあり、これを先に
+    // 拾うと選んだ画質が無視されて短い動画が落ちてくる。
+    // 画質ピッカーの候補は _probeHeightsFromHtml (= _extractEmbeddedUrls) 由来
+    // なので、実際のダウンロードも同じ経路から選ばないと食い違う。
+    //
+    // og:video は SNS カード用のメタデータなので、プレビューを指すのは
+    // 構造的な必然。実測では 5 秒 / 362x204 / 音声トラック無しの
+    // サムネイル動画が返ってきた。対して埋め込み URL は実際のプレーヤーが
+    // 再生するものなので、候補が 1 つでもあればそちらを信用する。
+    final embedded = _extractEmbeddedUrls(html);
+    if (embedded.isNotEmpty) {
+      final best = _pickEmbedded(embedded, preferredHeight);
+      if (best != null) {
+        return ResolvedVideoUrl(
+          url: _resolveUrl(best.url, baseUrl),
+          source: 'embedded',
+        );
+      }
+    }
+
+    // 次点: og:video:secure_url > og:video:url > og:video > twitter:player:stream
+    //       > <video src> > <source src type=video/*> > <source src=*.mp4 等>
     final candidates = <_Candidate>[
       _Candidate(_findMeta(html, 'property', 'og:video:secure_url'),
           'og:video:secure_url'),
@@ -266,46 +290,50 @@ class VideoUrlResolver {
           source: '<source src>');
     }
 
-    // フォールバック: HTML 中 (JS プレイヤー内など) に埋め込まれた動画 URL を抽出
+    // フォールバック: HTML 中 (JS プレイヤー内など) に埋め込まれた動画 URL。
+    // 冒頭で解像度ヒント付きの候補は処理済みなので、ここに来るのはヒントを
+    // 持たない候補だけ。
     // 例: xvideos の setVideoUrlHigh('https://...mp4?secure=...'),
     //     多くのストリーミングサイトが同様のパターン
-    final embedded = _extractEmbeddedUrls(html);
-    if (embedded.isNotEmpty) {
-      // preferredHeight が与えられた場合、その解像度に一致する URL を優先
-      _RankedUrl best;
-      if (preferredHeight != null) {
-        // 1) 完全一致
-        final exact =
-            embedded.where((r) => r.heightHint == preferredHeight).toList();
-        if (exact.isNotEmpty) {
-          exact.sort((a, b) => b.score.compareTo(a.score));
-          best = exact.first;
-        } else {
-          // 2) preferredHeight 以下で最大 (画質不足だが超過より安全)
-          final lower = embedded
-              .where((r) =>
-                  r.heightHint != null && r.heightHint! <= preferredHeight)
-              .toList();
-          if (lower.isNotEmpty) {
-            lower.sort((a, b) => b.heightHint!.compareTo(a.heightHint!));
-            best = lower.first;
-          } else {
-            // 3) 何もなければ全体最高
-            embedded.sort((a, b) => b.score.compareTo(a.score));
-            best = embedded.first;
-          }
-        }
-      } else {
-        embedded.sort((a, b) => b.score.compareTo(a.score));
-        best = embedded.first;
-      }
+    final fallback = _pickEmbedded(embedded, preferredHeight);
+    if (fallback != null) {
       return ResolvedVideoUrl(
-        url: _resolveUrl(best.url, baseUrl),
+        url: _resolveUrl(fallback.url, baseUrl),
         source: 'embedded',
       );
     }
 
     return null;
+  }
+
+  /// 埋め込み候補から 1 件選ぶ。
+  /// [preferredHeight] があれば 完全一致 → それ以下で最大 → スコア最高 の順。
+  /// 音声のみ保存では height が null で呼ばれるため、その場合は最良ストリームを選ぶ。
+  static _RankedUrl? _pickEmbedded(
+      List<_RankedUrl> embedded, int? preferredHeight) {
+    if (embedded.isEmpty) return null;
+    if (preferredHeight != null) {
+      // 1) 完全一致
+      final exact =
+          embedded.where((r) => r.heightHint == preferredHeight).toList();
+      if (exact.isNotEmpty) {
+        exact.sort((a, b) => b.score.compareTo(a.score));
+        return exact.first;
+      }
+      // 2) preferredHeight 以下で最大 (画質不足だが超過より安全)
+      final lower = embedded
+          .where(
+              (r) => r.heightHint != null && r.heightHint! <= preferredHeight)
+          .toList();
+      if (lower.isNotEmpty) {
+        lower.sort((a, b) => b.heightHint!.compareTo(a.heightHint!));
+        return lower.first;
+      }
+    }
+    // 3) スコア最高 (解像度指定なし / 該当なし)。
+    // 呼び出し元が embedded を再利用するため、複製を並べ替える。
+    final sorted = [...embedded]..sort((a, b) => b.score.compareTo(a.score));
+    return sorted.first;
   }
 
   /// HTML 全体から動画 URL を抜き出す (JS 埋め込みも含む)。
@@ -357,6 +385,17 @@ class VideoUrlResolver {
     final c = context.toLowerCase();
     // HLS は最後の手段
     if (u.endsWith('.m3u8') || u.contains('.m3u8?')) score -= 50;
+    // プレビュー / サムネイル動画は数秒・音声トラック無しのことが多く、
+    // これを掴むと「5 秒の無音動画」が保存されてしまう。
+    // 解像度キーワードの加点を打ち消せる大きさで減点する。
+    if (u.contains('preview') ||
+        u.contains('thumb') ||
+        u.contains('trailer') ||
+        u.contains('/teaser') ||
+        c.contains('preview') ||
+        c.contains('thumb')) {
+      score -= 300;
+    }
     // 解像度キーワード
     if (u.contains('2160') || c.contains('2160') || c.contains('4k')) {
       score += 200;
@@ -454,7 +493,7 @@ class VideoUrlResolver {
           ct.isNotEmpty) {
         return null;
       }
-      return _probeHeightsFromHtml(response.body);
+      return _probeHeightsFromHtml(decodeHttpBody(response));
     } catch (_) {
       return null;
     }

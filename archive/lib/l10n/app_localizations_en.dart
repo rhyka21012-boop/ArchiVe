@@ -179,6 +179,46 @@ class L10nEn extends L10n {
   String get list_page_reorder => 'Reorder';
 
   @override
+  String get list_page_customize => 'Customize home';
+
+  @override
+  String get home_widget_add_title => 'Add widget';
+
+  @override
+  String get home_widget_open_tabs => 'Sites you\'re browsing';
+
+  @override
+  String get home_widget_open_tabs_desc =>
+      'Shows one of the pages open in your browser';
+
+  @override
+  String get home_widget_open_tabs_empty => 'No open sites';
+
+  @override
+  String get home_widget_continue => 'Continue watching';
+
+  @override
+  String get home_widget_continue_desc => 'Resume a video you partly watched';
+
+  @override
+  String get home_widget_continue_empty => 'Nothing to continue watching';
+
+  @override
+  String get home_widget_random => 'Random pick';
+
+  @override
+  String get home_widget_random_desc => 'Shows one saved item at random';
+
+  @override
+  String get home_widget_random_empty => 'No saved items yet';
+
+  @override
+  String get home_widget_download => 'Downloads';
+
+  @override
+  String get home_widget_download_desc => 'Shows progress of ongoing downloads';
+
+  @override
   String get list_page_reorder_done => 'Done';
 
   @override
@@ -237,7 +277,7 @@ class L10nEn extends L10n {
   String get grid_page_by_web => 'Add via web search';
 
   @override
-  String get grid_page_by_manual => 'Add manually';
+  String get grid_page_by_manual => 'Add from URL';
 
   @override
   String get grid_page_cant_load_image => 'Unable to load image';
@@ -825,6 +865,29 @@ class L10nEn extends L10n {
 
   @override
   String get offline_quality_none => 'No offline download';
+
+  @override
+  String get offline_quality_audio_only => 'Audio only';
+
+  @override
+  String get download_notification_running => 'Downloading';
+
+  @override
+  String get download_notification_complete => 'Download complete';
+
+  @override
+  String get download_notification_error => 'Download failed';
+
+  @override
+  String get download_notification_paused => 'Paused';
+
+  @override
+  String get download_notification_permission_title =>
+      'Notifications are required to keep downloading';
+
+  @override
+  String get download_notification_permission_body =>
+      'Without notification permission, downloads stop when you leave the app — especially on mobile data. Please enable notifications in Settings.';
 
   @override
   String get search_result_page_has_saved => 'Item has been saved';
@@ -1717,4 +1780,58 @@ class L10nEn extends L10n {
   @override
   String get search_page_ai_recommend_intro =>
       'Tap the button to let AI suggest related search keywords from your saved library.';
+
+  @override
+  String get tutorial_tips_title => 'There are more ways to add items';
+
+  @override
+  String get tutorial_tips_share_title => 'Add from your device\'s share menu';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      'Pick ArchiVe from another app\'s share menu to save the page you are viewing right away. (Not available on some devices.)';
+
+  @override
+  String get tutorial_tips_browser_title =>
+      'Add with the browser\'s save button';
+
+  @override
+  String get tutorial_tips_browser_desc =>
+      'Found a video in the in-app browser? Just tap the save button to collect it into your list.';
+
+  @override
+  String get tutorial_tips_footer => 'Give them a try!';
+
+  @override
+  String get tutorial_tips_start => 'Get started';
+
+  @override
+  String get settings_page_display_names => 'Rename ratings and tags';
+
+  @override
+  String get settings_page_display_names_desc =>
+      'Leave a field empty to restore its default name.';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return 'Rating $n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return 'Tag $n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => 'Display names saved';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (# multiple)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }

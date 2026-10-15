@@ -177,6 +177,45 @@ class L10nJa extends L10n {
   String get list_page_reorder => '並べ替え';
 
   @override
+  String get list_page_customize => 'ホームをカスタマイズ';
+
+  @override
+  String get home_widget_add_title => 'ウィジェットを追加';
+
+  @override
+  String get home_widget_open_tabs => '閲覧中のサイト';
+
+  @override
+  String get home_widget_open_tabs_desc => 'ブラウザで開いているページから1件を表示します';
+
+  @override
+  String get home_widget_open_tabs_empty => '開いているサイトはありません';
+
+  @override
+  String get home_widget_continue => '続きから見る';
+
+  @override
+  String get home_widget_continue_desc => '途中まで見た動画を続きから再生します';
+
+  @override
+  String get home_widget_continue_empty => '続きから見られる作品はありません';
+
+  @override
+  String get home_widget_random => 'ランダム1件';
+
+  @override
+  String get home_widget_random_desc => '保存済みアイテムから無作為に1件を表示します';
+
+  @override
+  String get home_widget_random_empty => '保存済みのアイテムがありません';
+
+  @override
+  String get home_widget_download => 'ダウンロード状況';
+
+  @override
+  String get home_widget_download_desc => '進行中のダウンロードの進捗を表示します';
+
+  @override
   String get list_page_reorder_done => '完了';
 
   @override
@@ -234,7 +273,7 @@ class L10nJa extends L10n {
   String get grid_page_by_web => 'Web検索で追加';
 
   @override
-  String get grid_page_by_manual => '手動で追加';
+  String get grid_page_by_manual => 'URLから追加';
 
   @override
   String get grid_page_cant_load_image => '画像を読み込めません';
@@ -810,6 +849,28 @@ class L10nJa extends L10n {
 
   @override
   String get offline_quality_none => 'オフラインダウンロードなし';
+
+  @override
+  String get offline_quality_audio_only => '音声のみ';
+
+  @override
+  String get download_notification_running => 'ダウンロード中';
+
+  @override
+  String get download_notification_complete => 'ダウンロード完了';
+
+  @override
+  String get download_notification_error => 'ダウンロードに失敗しました';
+
+  @override
+  String get download_notification_paused => '一時停止中';
+
+  @override
+  String get download_notification_permission_title => 'バックグラウンド継続に通知が必要です';
+
+  @override
+  String get download_notification_permission_body =>
+      '通知が許可されていないため、アプリを離れるとダウンロードが中断されます（特にモバイル通信時）。設定で通知を有効にしてください。';
 
   @override
   String get search_result_page_has_saved => '作品を保存しました';
@@ -1677,4 +1738,56 @@ class L10nJa extends L10n {
   @override
   String get search_page_ai_recommend_intro =>
       'ボタンを押すと、保存ライブラリの傾向から関連キーワードをAIが提案します。';
+
+  @override
+  String get tutorial_tips_title => '作品を追加する方法は他にもあります';
+
+  @override
+  String get tutorial_tips_share_title => '端末の共有機能から追加';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      '他のアプリの共有メニューから ArchiVe を選ぶと、見ているページをそのまま保存できます。（端末により使用できない場合があります）';
+
+  @override
+  String get tutorial_tips_browser_title => 'ブラウザの保存ボタンから追加';
+
+  @override
+  String get tutorial_tips_browser_desc =>
+      'アプリ内のブラウザで見つけた動画は、保存ボタンを押すだけでリストに集められます。';
+
+  @override
+  String get tutorial_tips_footer => 'ぜひ活用してみてください！';
+
+  @override
+  String get tutorial_tips_start => 'はじめる';
+
+  @override
+  String get settings_page_display_names => '評価名・タグ名の変更';
+
+  @override
+  String get settings_page_display_names_desc => '空欄にすると既定の名前に戻ります。';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return '評価$n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return 'タグ$n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => '表示名を保存しました';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (#で複数入力)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }

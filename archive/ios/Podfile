@@ -43,5 +43,16 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Xcode 27 は iOS 15.0 未満のデプロイメントターゲットを受け付けず、
+    # "Target Integrity" エラーでビルドが止まる。
+    # 一部の Pod は podspec 側でより古い値 (10.0〜13.0) を持っており、
+    # flutter_additional_ios_build_settings もそこまでは上げてくれないため、
+    # Podfile の platform (15.0) に合わせてここで底上げする。
+    target.build_configurations.each do |config|
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
+    end
   end
 end

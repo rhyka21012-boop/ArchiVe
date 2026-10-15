@@ -24,6 +24,7 @@ import 'download_queue_provider.dart';
 import 'download_progress_fab.dart';
 import 'offline_quality_picker.dart';
 import 'local_video_player_page.dart';
+import 'offline_video_path.dart';
 import 'mini_player_provider.dart';
 import 'browser_session_provider.dart';
 import 'offline_cleanup.dart';
@@ -44,6 +45,7 @@ import 'smart_thumbnail.dart';
 import 'list_reload_provider.dart';
 import 'subscription_prompt_dialog.dart';
 import 'grid_page.dart';
+import 'http_body_decoder.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   final String? listName;
@@ -829,7 +831,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     for (final item in savedList) {
       final map = jsonDecode(item) as Map<String, dynamic>;
       if (map['url'] == _urlController.text) {
-        updatedList.add(jsonEncode(data));
+        // 既存マップを data で置き換えると、data に含まれないフィールド
+        // (localVideoPath / localVideoSize / localVideoDownloadedAt などの
+        //  オフライン動画情報や original_image) が保存のたびに失われる。
+        // 評価タップやサムネ再取得でも _saveChanges は走るため、
+        // 既存フィールドを保持したまま data の内容だけ上書きする。
+        map.addAll(data);
+        updatedList.add(jsonEncode(map));
         found = true;
       } else {
         updatedList.add(item);
@@ -1095,6 +1103,30 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     );
   }
 
+  /// タグ名 (利用者が付け替えていればそれを使う)。
+  ///
+  /// 既定値を引数で受けるのは、同じタグでも画面ごとに別の訳語が割り当てられて
+  /// いるため。呼び出し元のキーをそのまま渡すことで、名前を変えていない
+  /// 利用者の表示は一切変わらない。
+  String _tagLabel(String category, String fallback) =>
+      tagLabelOr(ref.watch(tagLabelsProvider), category, fallback);
+
+  /// 入力欄の見出し。カスタム名があるときだけ「○○ (#で複数入力)」を組み立てる。
+  String _tagFieldLabel(String category, String fallback) {
+    final custom = ref.watch(tagLabelsProvider)[category];
+    if (custom == null) return fallback;
+    return L10n.of(context)!.detail_page_tag_multi(custom);
+  }
+
+  /// 入力欄の placeholder。
+  /// 既定文は訳ごとに語形が違う (仏語は見出し "Distribution" に対し
+  /// placeholder が "#Acteur1") ため、未設定時は既存の文言に触らない。
+  String _tagFieldHint(String category, String fallback) {
+    final custom = ref.watch(tagLabelsProvider)[category];
+    if (custom == null) return fallback;
+    return L10n.of(context)!.detail_page_tag_placeholder(custom);
+  }
+
   // 閲覧モードの情報カード (リスト / URL / 出演 / ジャンル / シリーズ / メーカー / レーベル)
   Widget _buildReadOnlyInfoCard(ColorScheme colorScheme) {
     final isDark = colorScheme.brightness == Brightness.dark;
@@ -1114,35 +1146,35 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         ),
       if (_castController.text.trim().isNotEmpty)
         _InfoRowSpec(
-          L10n.of(context)!.detail_page_cast_short,
+          _tagLabel(kTagCast, L10n.of(context)!.detail_page_cast_short),
           _castController.text.trim(),
           tags: _parseHashtags(_castController.text),
           tagCategory: 'cast',
         ),
       if (_genreController.text.trim().isNotEmpty)
         _InfoRowSpec(
-          L10n.of(context)!.detail_page_genre_short,
+          _tagLabel(kTagGenre, L10n.of(context)!.detail_page_genre_short),
           _genreController.text.trim(),
           tags: _parseHashtags(_genreController.text),
           tagCategory: 'genre',
         ),
       if (_seriesController.text.trim().isNotEmpty)
         _InfoRowSpec(
-          L10n.of(context)!.detail_page_series_short,
+          _tagLabel(kTagSeries, L10n.of(context)!.detail_page_series_short),
           _seriesController.text.trim(),
           tags: _parseHashtags(_seriesController.text),
           tagCategory: 'series',
         ),
       if (_makerController.text.trim().isNotEmpty)
         _InfoRowSpec(
-          L10n.of(context)!.detail_page_maker_short,
+          _tagLabel(kTagMaker, L10n.of(context)!.detail_page_maker_short),
           _makerController.text.trim(),
           tags: _parseHashtags(_makerController.text),
           tagCategory: 'maker',
         ),
       if (_labelController.text.trim().isNotEmpty)
         _InfoRowSpec(
-          L10n.of(context)!.detail_page_label_short,
+          _tagLabel(kTagLabel, L10n.of(context)!.detail_page_label_short),
           _labelController.text.trim(),
           tags: _parseHashtags(_labelController.text),
           tagCategory: 'label',
@@ -1490,6 +1522,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                                                 ),
                                               ),
                                               _buildOfflineSizeBadge(),
+                                              _buildAudioOnlyBadge(),
                                             ],
                                           ),
                                         ),
@@ -1841,40 +1874,50 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       //出演入力欄
                       _buildTextField(
                         _castController,
-                        L10n.of(context)!.detail_page_cast,
-                        L10n.of(context)!.detail_page_cast_placeholder,
+                        _tagFieldLabel(kTagCast,
+                            L10n.of(context)!.detail_page_cast),
+                        _tagFieldHint(kTagCast,
+                            L10n.of(context)!.detail_page_cast_placeholder),
                         autocompleteKey: 'cast',
                       ),
 
                       //ジャンル入力欄
                       _buildTextField(
                         _genreController,
-                        L10n.of(context)!.detail_page_genre,
-                        L10n.of(context)!.detail_page_genre_placeholder,
+                        _tagFieldLabel(kTagGenre,
+                            L10n.of(context)!.detail_page_genre),
+                        _tagFieldHint(kTagGenre,
+                            L10n.of(context)!.detail_page_genre_placeholder),
                         autocompleteKey: 'genre',
                       ),
 
                       //シリーズ入力欄
                       _buildTextField(
                         _seriesController,
-                        L10n.of(context)!.detail_page_series,
-                        L10n.of(context)!.detail_page_series_placeholder,
+                        _tagFieldLabel(kTagSeries,
+                            L10n.of(context)!.detail_page_series),
+                        _tagFieldHint(kTagSeries,
+                            L10n.of(context)!.detail_page_series_placeholder),
                         autocompleteKey: 'series',
                       ),
 
                       //メーカー入力欄
                       _buildTextField(
                         _makerController,
-                        L10n.of(context)!.detail_page_maker,
-                        L10n.of(context)!.detail_page_maker_placeholder,
+                        _tagFieldLabel(kTagMaker,
+                            L10n.of(context)!.detail_page_maker),
+                        _tagFieldHint(kTagMaker,
+                            L10n.of(context)!.detail_page_maker_placeholder),
                         autocompleteKey: 'maker',
                       ),
 
                       //レーベル入力欄
                       _buildTextField(
                         _labelController,
-                        L10n.of(context)!.detail_page_label,
-                        L10n.of(context)!.detail_page_label_placeholder,
+                        _tagFieldLabel(kTagLabel,
+                            L10n.of(context)!.detail_page_label),
+                        _tagFieldHint(kTagLabel,
+                            L10n.of(context)!.detail_page_label_placeholder),
                         autocompleteKey: 'label',
                       ),
 
@@ -1964,7 +2007,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
               navigator.pushAndRemoveUntil(
                 MaterialPageRoute(
-                  builder: (_) => const PostTutorialPremiumPromptPage(),
+                  // やり切った場合なので、続けて追加手段を案内する
+                  builder: (_) =>
+                      const PostTutorialPremiumPromptPage(
+                    showAddMethods: true,
+                  ),
                 ),
                 (_) => false,
               );
@@ -2515,9 +2562,15 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               fillColor: isEditing ? Colors.white : Colors.grey[300],
               border: InputBorder.none,
               contentPadding: const EdgeInsets.only(top: 12.0, left: 12.0),
-              // メモは複数行なので × を上寄せに
-              suffixIconConstraints:
-                  const BoxConstraints(minWidth: 40, minHeight: 40),
+              // メモは複数行なので × を上寄せにする。
+              // 上限 (maxWidth/maxHeight) を与えないと suffixIcon が
+              // 入力領域の幅を奪い、本文が 1 文字ずつ折り返されてしまう。
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                maxWidth: 40,
+                minHeight: 40,
+                maxHeight: 40,
+              ),
               suffixIcon: !isEditing
                   ? null
                   : ListenableBuilder(
@@ -2528,21 +2581,20 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                             _memoController.text.isEmpty) {
                           return const SizedBox.shrink();
                         }
-                        return Align(
-                          alignment: Alignment.topRight,
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
-                            ),
-                            icon: const Icon(
-                              Icons.close,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () => _clearWithUndo(_memoController),
+                        // Align で包むと自身のサイズを持たず横に広がるため、
+                        // IconButton を直接返す (共通フィールドと同じ形)
+                        return IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
                           ),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () => _clearWithUndo(_memoController),
                         );
                       },
                     ),
@@ -2674,8 +2726,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
 
   bool _hasLocalVideo() {
-    final p = _lookupLocalVideoPath();
-    return p != null && p.isNotEmpty && File(p).existsSync();
+    return OfflineVideoPaths.exists(_lookupLocalVideoPath());
   }
 
   Future<void> _confirmDeleteLocalVideo() async {
@@ -2829,6 +2880,61 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     };
   }
 
+  /// 音声アイテムとして保存されたかを saved_metadata から読む。
+  /// (ダウンロード時に download_queue_provider が isAudioOnly を立てる)
+  Future<bool> _loadIsAudioOnly(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('saved_metadata') ?? [];
+    for (final s in list) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        if (map['url'] == url) {
+          return map['isAudioOnly'] == true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+
+  /// サムネイル左下に出す「音声のみ」バッジ。
+  /// サムネイル自体は従来どおり表示し、種別だけを示す。
+  Widget _buildAudioOnlyBadge() {
+    if (!_hasLocalVideo()) return const SizedBox.shrink();
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return const SizedBox.shrink();
+    return FutureBuilder<bool>(
+      future: _loadIsAudioOnly(url),
+      builder: (_, snap) {
+        if (snap.data != true) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.music_note, size: 11, color: Colors.white),
+                const SizedBox(width: 3),
+                Text(
+                  L10n.of(context)!.offline_quality_audio_only,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<int?> _loadOfflineSize(String url) async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList('saved_metadata') ?? [];
@@ -2946,7 +3052,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     final availableHeights = await probeFuture;
 
     // 解像度選択 (初期選択なし)
-    final height = await showOfflineQualitySheet(
+    final choice = await showOfflineQualitySheet(
       context,
       initial: null,
       showNoneOption: false,
@@ -2956,7 +3062,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     // ボトムシートを閉じただけ (キャンセル) の場合は何もしない
     // 明示的に「なし」を選択した場合も何もしない (Sheet 実装上区別不可のため
     // 「開始しない」= どちらでも中止で問題ない)
-    if (height == null) return;
+    if (choice == null) return;
+
+    // 通知が拒否されているとバックグラウンドで継続できないため先に案内する
+    await warnIfNotificationsBlockBackgroundDownload(context);
+    if (!mounted) return;
 
     // キュー投入
     await ref.read(downloadQueueProvider.notifier).start(
@@ -2965,7 +3075,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ? _titleController.text.trim()
               : url,
           itemUrl: url,
-          preferredHeight: height,
+          preferredHeight: choice.height,
+          audioOnly: choice.audioOnly,
         );
     if (mounted) _showMessage(l.detail_page_offline_started);
     // 広告はダウンロードが実際に downloading 状態に遷移したタイミングで
@@ -3289,20 +3400,36 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     // カテゴリごとの提案タグとキー・コントローラのマップ
     // (AI 提案 + 既存ライブラリのタグ、重複除去)
+    // ここは await 後 (build 外) なので watch ではなく read を使う
+    final tagLabels = ref.read(tagLabelsProvider);
     final sections = <_AiTagSection>[
-      _AiTagSection(l.detail_page_cast_short, tags.cast,
+      _AiTagSection(
+          kTagCast,
+          tagLabelOr(tagLabels, kTagCast, l.detail_page_cast_short), tags.cast,
           existingByCategory['cast'] ?? {}, currentTagsByCat['cast']!,
           coOccur['cast'] ?? const {}, _castController),
-      _AiTagSection(l.detail_page_genre_short, tags.genre,
+      _AiTagSection(
+          kTagGenre,
+          tagLabelOr(tagLabels, kTagGenre, l.detail_page_genre_short),
+          tags.genre,
           existingByCategory['genre'] ?? {}, currentTagsByCat['genre']!,
           coOccur['genre'] ?? const {}, _genreController),
-      _AiTagSection(l.detail_page_series_short, tags.series,
+      _AiTagSection(
+          kTagSeries,
+          tagLabelOr(tagLabels, kTagSeries, l.detail_page_series_short),
+          tags.series,
           existingByCategory['series'] ?? {}, currentTagsByCat['series']!,
           coOccur['series'] ?? const {}, _seriesController),
-      _AiTagSection(l.detail_page_maker_short, tags.maker,
+      _AiTagSection(
+          kTagMaker,
+          tagLabelOr(tagLabels, kTagMaker, l.detail_page_maker_short),
+          tags.maker,
           existingByCategory['maker'] ?? {}, currentTagsByCat['maker']!,
           coOccur['maker'] ?? const {}, _makerController),
-      _AiTagSection(l.detail_page_label_short, tags.label,
+      _AiTagSection(
+          kTagLabel,
+          tagLabelOr(tagLabels, kTagLabel, l.detail_page_label_short),
+          tags.label,
           existingByCategory['label'] ?? {}, currentTagsByCat['label']!,
           coOccur['label'] ?? const {}, _labelController),
     ]
@@ -3312,7 +3439,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     // 初期選択: AI 提案は全部選択、既存ライブラリタグは選択しない
     final selected = <String, Set<String>>{
-      for (final s in sections) s.label: {...s.aiSuggestions},
+      for (final s in sections) s.category: {...s.aiSuggestions},
     };
 
     final applied = await showDialog<bool>(
@@ -3359,7 +3486,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           runSpacing: 6,
                           children: section.aiSuggestions.map((tag) {
                             final isOn =
-                                selected[section.label]!.contains(tag);
+                                selected[section.category]!.contains(tag);
                             return FilterChip(
                               avatar: Icon(
                                 Icons.auto_awesome,
@@ -3395,9 +3522,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                               onSelected: (v) {
                                 setDlg(() {
                                   if (v) {
-                                    selected[section.label]!.add(tag);
+                                    selected[section.category]!.add(tag);
                                   } else {
-                                    selected[section.label]!.remove(tag);
+                                    selected[section.category]!.remove(tag);
                                   }
                                 });
                               },
@@ -3435,7 +3562,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           runSpacing: 6,
                           children: section.librarySuggestions.map((tag) {
                             final isOn =
-                                selected[section.label]!.contains(tag);
+                                selected[section.category]!.contains(tag);
                             return FilterChip(
                               label: Text('#$tag'),
                               selected: isOn,
@@ -3464,9 +3591,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                               onSelected: (v) {
                                 setDlg(() {
                                   if (v) {
-                                    selected[section.label]!.add(tag);
+                                    selected[section.category]!.add(tag);
                                   } else {
-                                    selected[section.label]!.remove(tag);
+                                    selected[section.category]!.remove(tag);
                                   }
                                 });
                               },
@@ -3507,7 +3634,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     // 既存タグに採用チップを追加し、重複除去して再セット
     setState(() {
       for (final s in sections) {
-        final chosen = selected[s.label] ?? const <String>{};
+        final chosen = selected[s.category] ?? const <String>{};
         if (chosen.isEmpty) continue;
         final existing = _parseHashtags(s.controller.text);
         final merged = <String>[
@@ -3559,7 +3686,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final document = parse(response.body);
+        // charset 未宣言のサイト (141tube 等) は response.body が latin1 扱いで
+        // 文字化けするため、明示的にデコードする
+        final document = parse(decodeHttpBody(response));
         // <title> → og:title → twitter:title の順に探す
         String? found;
         final titleTag = document.getElementsByTagName('title').firstOrNull;
@@ -4523,7 +4652,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       (item) => item['url'] == url,
       orElse: () => <String, dynamic>{},
     );
-    final localPath = currentItem['localVideoPath'] as String?;
+    final localPath = OfflineVideoPaths.resolve(currentItem['localVideoPath']);
     if (localPath != null &&
         localPath.isNotEmpty &&
         File(localPath).existsSync()) {
@@ -4533,6 +4662,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             filePath: localPath,
             title: currentItem['title']?.toString() ?? '',
             itemUrl: url,
+            // 音声のみアイテムは映像が無いので、サムネイルをアートワークとして渡す
+            isAudioOnly: currentItem['isAudioOnly'] == true,
+            artworkUrl: currentItem['image']?.toString(),
           );
       return;
     }
@@ -4664,6 +4796,10 @@ class _InfoTagChip extends StatelessWidget {
 }
 
 class _AiTagSection {
+  /// 選択状態の一意キー。
+  /// 表示名 (label) は利用者が付け替えられ、2 つのタグに同じ名前を
+  /// 付けることもできるため、キーには使えない。
+  final String category;
   final String label;
   /// AI が提案したタグ (現在の作品に無いもの)
   final List<String> aiSuggestions;
@@ -4678,6 +4814,7 @@ class _AiTagSection {
   static const int _maxLibrarySuggestions = 15;
 
   _AiTagSection(
+    this.category,
     this.label,
     List<String> ai,
     Set<String> librarySet,

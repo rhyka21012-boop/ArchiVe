@@ -178,6 +178,48 @@ class L10nPt extends L10n {
   String get list_page_reorder => 'Reordenar';
 
   @override
+  String get list_page_customize => 'Personalizar início';
+
+  @override
+  String get home_widget_add_title => 'Adicionar widget';
+
+  @override
+  String get home_widget_open_tabs => 'Sites que você está vendo';
+
+  @override
+  String get home_widget_open_tabs_desc =>
+      'Mostra uma das páginas abertas no navegador';
+
+  @override
+  String get home_widget_open_tabs_empty => 'Nenhum site aberto';
+
+  @override
+  String get home_widget_continue => 'Continuar assistindo';
+
+  @override
+  String get home_widget_continue_desc =>
+      'Retome um vídeo que você viu em parte';
+
+  @override
+  String get home_widget_continue_empty => 'Nada para continuar assistindo';
+
+  @override
+  String get home_widget_random => 'Escolha aleatória';
+
+  @override
+  String get home_widget_random_desc => 'Mostra um item salvo aleatório';
+
+  @override
+  String get home_widget_random_empty => 'Nenhum item salvo ainda';
+
+  @override
+  String get home_widget_download => 'Transferências';
+
+  @override
+  String get home_widget_download_desc =>
+      'Mostra o progresso dos downloads em andamento';
+
+  @override
   String get list_page_reorder_done => 'Concluído';
 
   @override
@@ -237,7 +279,7 @@ class L10nPt extends L10n {
   String get grid_page_by_web => 'Adicionar via pesquisa web';
 
   @override
-  String get grid_page_by_manual => 'Adicionar manualmente';
+  String get grid_page_by_manual => 'Adicionar por URL';
 
   @override
   String get grid_page_cant_load_image => 'Não foi possível carregar a imagem';
@@ -827,6 +869,29 @@ class L10nPt extends L10n {
 
   @override
   String get offline_quality_none => 'Sem transferência offline';
+
+  @override
+  String get offline_quality_audio_only => 'Somente áudio';
+
+  @override
+  String get download_notification_running => 'Transferindo';
+
+  @override
+  String get download_notification_complete => 'Transferência concluída';
+
+  @override
+  String get download_notification_error => 'Falha na transferência';
+
+  @override
+  String get download_notification_paused => 'Pausado';
+
+  @override
+  String get download_notification_permission_title =>
+      'As notificações são necessárias para baixar em segundo plano';
+
+  @override
+  String get download_notification_permission_body =>
+      'Sem permissão de notificação, os downloads param ao sair do app, especialmente em dados móveis. Ative as notificações nas Configurações.';
 
   @override
   String get search_result_page_has_saved => 'O item foi guardado';
@@ -1737,4 +1802,59 @@ class L10nPt extends L10n {
   @override
   String get search_page_ai_recommend_intro =>
       'Toque no botão para a IA sugerir palavras-chave relacionadas com a sua biblioteca.';
+
+  @override
+  String get tutorial_tips_title => 'Há mais formas de adicionar itens';
+
+  @override
+  String get tutorial_tips_share_title => 'Adicionar pelo menu de partilha';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      'Escolha o ArchiVe no menu de partilha de outra app para guardar logo a página que está a ver. (Indisponível em alguns dispositivos.)';
+
+  @override
+  String get tutorial_tips_browser_title =>
+      'Adicionar com o botão de guardar do navegador';
+
+  @override
+  String get tutorial_tips_browser_desc =>
+      'Os vídeos que encontrar no navegador da app juntam-se à sua lista com um só toque.';
+
+  @override
+  String get tutorial_tips_footer => 'Experimente!';
+
+  @override
+  String get tutorial_tips_start => 'Começar';
+
+  @override
+  String get settings_page_display_names =>
+      'Alterar nomes de avaliações e etiquetas';
+
+  @override
+  String get settings_page_display_names_desc =>
+      'Deixe um campo vazio para repor o nome predefinido.';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return 'Avaliação $n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return 'Etiqueta $n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => 'Nomes guardados';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (# vários)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }

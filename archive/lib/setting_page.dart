@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'auth_service.dart';
 import 'login_page.dart';
 import 'purchase_page.dart';
+import 'offline_video_path.dart';
 import 'sync_service.dart';
 import 'thumbnail_setting_provider.dart';
 import 'premium_detail.dart';
@@ -27,6 +28,7 @@ import 'package:in_app_review/in_app_review.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'display_names_page.dart';
 import 'tutorial_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -820,6 +822,19 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     ref.read(showThumbnailProvider.notifier).set(value);
                   },
                 ),
+                // 評価名 (3 つ) とタグ名 (5 つ) の付け替え
+                ListTile(
+                  title: Text(
+                    L10n.of(context)!.settings_page_display_names,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DisplayNamesPage(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1401,9 +1416,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     for (final s in list) {
       try {
         final map = jsonDecode(s) as Map<String, dynamic>;
-        final path = map['localVideoPath'] as String?;
-        if (path == null || path.isEmpty) continue;
-        if (!File(path).existsSync()) continue;
+        if (!OfflineVideoPaths.exists(map['localVideoPath'])) continue;
         offlineCount++;
         final size = map['localVideoSize'];
         if (size is int) offlineTotalBytes += size;

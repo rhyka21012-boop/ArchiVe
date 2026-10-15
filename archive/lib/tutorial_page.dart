@@ -50,7 +50,13 @@ class TutorialPage extends ConsumerStatefulWidget {
 }
 
 class PostTutorialPremiumPromptPage extends StatefulWidget {
-  const PostTutorialPremiumPromptPage({super.key});
+  /// 追加手段の案内 ([TutorialAddMethodsPage]) を挟むかどうか。
+  ///
+  /// チュートリアルを最後までやり切った場合だけ true。
+  /// スキップした利用者は読み飛ばしたい意思を示しているので出さない。
+  final bool showAddMethods;
+
+  const PostTutorialPremiumPromptPage({super.key, this.showAddMethods = false});
 
   @override
   State<PostTutorialPremiumPromptPage> createState() =>
@@ -65,12 +71,25 @@ class _PostTutorialPremiumPromptPageState
   void initState() {
     super.initState();
 
-    // チュートリアル後の課金導線は廃止。そのまま MainPage に遷移するだけにする。
+    // チュートリアル後の課金導線は廃止。MainPage に遷移するだけにする。
+    //
+    // 完了直後だけは、その前に作品の追加手段をまとめて案内する。
+    // ここを合流点にしているのは、完了の契機が detail_page と
+    // launch_gate の 2 か所にあり、どちらも最後にこの画面へ来るため。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _didShowPremium) return;
       _didShowPremium = true;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainPage()),
+      final navigator = Navigator.of(context);
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => widget.showAddMethods
+              ? TutorialAddMethodsPage(
+                  onFinished: () => navigator.pushReplacement(
+                    MaterialPageRoute(builder: (_) => const MainPage()),
+                  ),
+                )
+              : const MainPage(),
+        ),
       );
     });
   }
@@ -295,6 +314,150 @@ class _TutorialCompleteOverlayState extends State<TutorialCompleteOverlay>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// チュートリアルを終えた直後に、作品の追加手段をまとめて案内する画面。
+///
+/// 対話形式のチュートリアルで通るのは「リストを作って URL から追加」の
+/// 一本道だけなので、共有メニューやブラウザからの追加は知られないまま
+/// 終わってしまう。最後にここで伝える。
+class TutorialAddMethodsPage extends StatelessWidget {
+  final VoidCallback onFinished;
+
+  const TutorialAddMethodsPage({super.key, required this.onFinished});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L10n.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              // 端末が小さい / 文字サイズが大きい場合でも読めるようにする
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      Icon(Icons.auto_awesome, size: 52, color: cs.primary),
+                      const SizedBox(height: 20),
+                      Text(
+                        l.tutorial_tips_title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurface,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _tip(
+                        cs,
+                        Icons.share_outlined,
+                        l.tutorial_tips_share_title,
+                        l.tutorial_tips_share_desc,
+                      ),
+                      const SizedBox(height: 14),
+                      _tip(
+                        cs,
+                        Icons.bookmark_add_outlined,
+                        l.tutorial_tips_browser_title,
+                        l.tutorial_tips_browser_desc,
+                      ),
+                      const SizedBox(height: 28),
+                      Text(
+                        l.tutorial_tips_footer,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: cs.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: cs.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: onFinished,
+                  child: Text(
+                    l.tutorial_tips_start,
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 追加手段 1 件分のカード
+  Widget _tip(ColorScheme cs, IconData icon, String title, String desc) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Center(child: Icon(icon, size: 22, color: cs.primary)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  desc,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

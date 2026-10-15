@@ -177,6 +177,45 @@ class L10nZh extends L10n {
   String get list_page_reorder => '排序';
 
   @override
+  String get list_page_customize => '自定义主页';
+
+  @override
+  String get home_widget_add_title => '添加小组件';
+
+  @override
+  String get home_widget_open_tabs => '正在浏览的网站';
+
+  @override
+  String get home_widget_open_tabs_desc => '显示浏览器中已打开的某个页面';
+
+  @override
+  String get home_widget_open_tabs_empty => '没有已打开的网站';
+
+  @override
+  String get home_widget_continue => '继续观看';
+
+  @override
+  String get home_widget_continue_desc => '继续播放看到一半的视频';
+
+  @override
+  String get home_widget_continue_empty => '没有可继续观看的内容';
+
+  @override
+  String get home_widget_random => '随机一个';
+
+  @override
+  String get home_widget_random_desc => '随机显示一个已保存的项目';
+
+  @override
+  String get home_widget_random_empty => '还没有已保存的项目';
+
+  @override
+  String get home_widget_download => '下载状态';
+
+  @override
+  String get home_widget_download_desc => '显示正在进行的下载进度';
+
+  @override
   String get list_page_reorder_done => '完成';
 
   @override
@@ -234,7 +273,7 @@ class L10nZh extends L10n {
   String get grid_page_by_web => '通过网页搜索添加';
 
   @override
-  String get grid_page_by_manual => '手动添加';
+  String get grid_page_by_manual => '通过网址添加';
 
   @override
   String get grid_page_cant_load_image => '无法加载图片';
@@ -802,6 +841,28 @@ class L10nZh extends L10n {
 
   @override
   String get offline_quality_none => '不下载离线';
+
+  @override
+  String get offline_quality_audio_only => '仅音频';
+
+  @override
+  String get download_notification_running => '下载中';
+
+  @override
+  String get download_notification_complete => '下载完成';
+
+  @override
+  String get download_notification_error => '下载失败';
+
+  @override
+  String get download_notification_paused => '已暂停';
+
+  @override
+  String get download_notification_permission_title => '后台下载需要通知权限';
+
+  @override
+  String get download_notification_permission_body =>
+      '未允许通知时，离开应用后下载会被中断，使用移动数据时尤其明显。请在设置中开启通知。';
 
   @override
   String get search_result_page_has_saved => '作品已保存';
@@ -1660,6 +1721,57 @@ class L10nZh extends L10n {
 
   @override
   String get search_page_ai_recommend_intro => '点击按钮，让 AI 根据已保存的库推荐相关搜索关键词。';
+
+  @override
+  String get tutorial_tips_title => '添加作品的方式还有更多';
+
+  @override
+  String get tutorial_tips_share_title => '通过设备的分享功能添加';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      '在其他应用的分享菜单中选择 ArchiVe，即可直接保存正在浏览的页面。（部分设备可能无法使用。）';
+
+  @override
+  String get tutorial_tips_browser_title => '通过浏览器的保存按钮添加';
+
+  @override
+  String get tutorial_tips_browser_desc => '在应用内浏览器找到的视频，只需点击保存按钮即可收入列表。';
+
+  @override
+  String get tutorial_tips_footer => '欢迎多多使用！';
+
+  @override
+  String get tutorial_tips_start => '开始使用';
+
+  @override
+  String get settings_page_display_names => '修改评价名称和标签名称';
+
+  @override
+  String get settings_page_display_names_desc => '留空即恢复为默认名称。';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return '评价$n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return '标签$n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => '已保存显示名称';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (# 多个)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1835,6 +1947,45 @@ class L10nZhHans extends L10nZh {
   String get list_page_reorder => '排序';
 
   @override
+  String get list_page_customize => '自定义主页';
+
+  @override
+  String get home_widget_add_title => '添加小组件';
+
+  @override
+  String get home_widget_open_tabs => '正在浏览的网站';
+
+  @override
+  String get home_widget_open_tabs_desc => '显示浏览器中已打开的某个页面';
+
+  @override
+  String get home_widget_open_tabs_empty => '没有已打开的网站';
+
+  @override
+  String get home_widget_continue => '继续观看';
+
+  @override
+  String get home_widget_continue_desc => '继续播放看到一半的视频';
+
+  @override
+  String get home_widget_continue_empty => '没有可继续观看的内容';
+
+  @override
+  String get home_widget_random => '随机一个';
+
+  @override
+  String get home_widget_random_desc => '随机显示一个已保存的项目';
+
+  @override
+  String get home_widget_random_empty => '还没有已保存的项目';
+
+  @override
+  String get home_widget_download => '下载状态';
+
+  @override
+  String get home_widget_download_desc => '显示正在进行的下载进度';
+
+  @override
   String get list_page_reorder_done => '完成';
 
   @override
@@ -1892,7 +2043,7 @@ class L10nZhHans extends L10nZh {
   String get grid_page_by_web => '通过网页搜索添加';
 
   @override
-  String get grid_page_by_manual => '手动添加';
+  String get grid_page_by_manual => '通过网址添加';
 
   @override
   String get grid_page_cant_load_image => '无法加载图片';
@@ -2460,6 +2611,28 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get offline_quality_none => '不下载离线';
+
+  @override
+  String get offline_quality_audio_only => '仅音频';
+
+  @override
+  String get download_notification_running => '下载中';
+
+  @override
+  String get download_notification_complete => '下载完成';
+
+  @override
+  String get download_notification_error => '下载失败';
+
+  @override
+  String get download_notification_paused => '已暂停';
+
+  @override
+  String get download_notification_permission_title => '后台下载需要通知权限';
+
+  @override
+  String get download_notification_permission_body =>
+      '未允许通知时，离开应用后下载会被中断，使用移动数据时尤其明显。请在设置中开启通知。';
 
   @override
   String get search_result_page_has_saved => '作品已保存';
@@ -3318,4 +3491,55 @@ class L10nZhHans extends L10nZh {
 
   @override
   String get search_page_ai_recommend_intro => '点击按钮，让 AI 根据已保存的库推荐相关搜索关键词。';
+
+  @override
+  String get tutorial_tips_title => '添加作品的方式还有更多';
+
+  @override
+  String get tutorial_tips_share_title => '通过设备的分享功能添加';
+
+  @override
+  String get tutorial_tips_share_desc =>
+      '在其他应用的分享菜单中选择 ArchiVe，即可直接保存正在浏览的页面。（部分设备可能无法使用。）';
+
+  @override
+  String get tutorial_tips_browser_title => '通过浏览器的保存按钮添加';
+
+  @override
+  String get tutorial_tips_browser_desc => '在应用内浏览器找到的视频，只需点击保存按钮即可收入列表。';
+
+  @override
+  String get tutorial_tips_footer => '欢迎多多使用！';
+
+  @override
+  String get tutorial_tips_start => '开始使用';
+
+  @override
+  String get settings_page_display_names => '修改评价名称和标签名称';
+
+  @override
+  String get settings_page_display_names_desc => '留空即恢复为默认名称。';
+
+  @override
+  String settings_page_rating_name_n(int n) {
+    return '评价$n';
+  }
+
+  @override
+  String settings_page_tag_name_n(int n) {
+    return '标签$n';
+  }
+
+  @override
+  String get settings_page_display_names_saved => '已保存显示名称';
+
+  @override
+  String detail_page_tag_multi(String name) {
+    return '$name (# 多个)';
+  }
+
+  @override
+  String detail_page_tag_placeholder(String name) {
+    return '#${name}1 #${name}2 ...';
+  }
 }

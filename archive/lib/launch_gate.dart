@@ -71,7 +71,11 @@ class _LaunchGateState extends State<LaunchGate> {
     await prefs.setBool('isFirstLaunch', false);
 
     navigator.pushReplacement(
-      MaterialPageRoute(builder: (_) => const PostTutorialPremiumPromptPage()),
+      MaterialPageRoute(
+        // やり切った場合なので、続けて追加手段を案内する
+        builder: (_) =>
+            const PostTutorialPremiumPromptPage(showAddMethods: true),
+      ),
     );
   }
 }

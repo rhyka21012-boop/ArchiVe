@@ -9,6 +9,7 @@ import 'browser_scroll_top_provider.dart';
 import 'favorite_site_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'search_result_page.dart';
+import 'site_tile.dart';
 
 /// ブラウザタブのホーム画面。
 /// - AppBar: URL / 検索バー (submit で SearchResultPage へ push)
@@ -102,16 +103,6 @@ class _BrowserHomePageState extends ConsumerState<BrowserHomePage> {
     if (mounted) _loadHistory();
   }
 
-  String _faviconUrl(String siteUrl) {
-    try {
-      final uri = Uri.parse(siteUrl.startsWith('http')
-          ? siteUrl
-          : 'https://$siteUrl');
-      return 'https://www.google.com/s2/favicons?domain=${uri.host}&sz=64';
-    } catch (_) {
-      return '';
-    }
-  }
 
   void _scrollToTop() {
     if (!_scrollController.hasClients) return;
@@ -241,12 +232,12 @@ class _BrowserHomePageState extends ConsumerState<BrowserHomePage> {
                   separatorBuilder: (_, __) => const SizedBox(width: 4),
                   itemBuilder: (_, i) {
                     final h = _history[i];
-                    return _SiteTile(
+                    return SiteTile(
                       title: h.title.isNotEmpty
                           ? h.title
                           : Uri.tryParse(h.url)?.host ?? h.url,
                       url: h.url,
-                      faviconUrl: _faviconUrl(h.url),
+                      faviconUrl: faviconUrlFor(h.url),
                       onTap: () => _openUrl(h.url),
                     );
                   },
@@ -259,12 +250,11 @@ class _BrowserHomePageState extends ConsumerState<BrowserHomePage> {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            _SiteGrid(
+            SiteGrid(
               items: [
                 for (final f in favorites)
-                  _GridEntry(title: f['title'] ?? '', url: f['url'] ?? ''),
+                  SiteGridEntry(title: f['title'] ?? '', url: f['url'] ?? ''),
               ],
-              faviconOf: _faviconUrl,
               onTap: (e) => _openUrl(e.url),
               onLongPress: (e, i) => _showFavoriteActionSheet(favorites[i], i),
               trailing: _AddFavoriteTile(onTap: _showAddFavoriteDialog),
@@ -430,143 +420,9 @@ class _HistoryItem {
   const _HistoryItem({required this.url, required this.title});
 }
 
-class _GridEntry {
-  final String title;
-  final String url;
-  const _GridEntry({required this.title, required this.url});
-}
-
-class _SiteGrid extends StatelessWidget {
-  final List<_GridEntry> items;
-  final String Function(String url) faviconOf;
-  final ValueChanged<_GridEntry> onTap;
-  final void Function(_GridEntry entry, int index)? onLongPress;
-  final Widget? trailing;
-
-  const _SiteGrid({
-    required this.items,
-    required this.faviconOf,
-    required this.onTap,
-    this.onLongPress,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isTablet = constraints.maxWidth >= 600;
-        final crossCount = isTablet ? 7 : 5;
-        final itemCount = items.length + (trailing != null ? 1 : 0);
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossCount,
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4,
-            childAspectRatio: 0.82,
-          ),
-          itemCount: itemCount,
-          itemBuilder: (_, i) {
-            if (trailing != null && i == items.length) return trailing!;
-            final e = items[i];
-            return _SiteTile(
-              title: e.title,
-              url: e.url,
-              faviconUrl: faviconOf(e.url),
-              onTap: () => onTap(e),
-              onLongPress:
-                  onLongPress == null ? null : () => onLongPress!(e, i),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-/// お気に入り / 履歴共通のサイトタイル (favicon + タイトル)
-class _SiteTile extends StatelessWidget {
-  final String title;
-  final String url;
-  final String faviconUrl;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  const _SiteTile({
-    required this.title,
-    required this.url,
-    required this.faviconUrl,
-    required this.onTap,
-    this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = cs.brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2E2E2E) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.15),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: isDark ? 0.25 : 0.07),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Center(
-              child: faviconUrl.isEmpty
-                  ? Icon(Icons.public,
-                      size: 34,
-                      color: isDark ? Colors.white54 : Colors.grey.shade500)
-                  : Image.network(
-                      faviconUrl,
-                      width: 36,
-                      height: 36,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.public,
-                        size: 34,
-                        color:
-                            isDark ? Colors.white54 : Colors.grey.shade500,
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: 68,
-            child: Text(
-              title.isEmpty ? (Uri.tryParse(url)?.host ?? url) : title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? Colors.white70 : Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// サイトタイル / グリッドは site_tile.dart の公開版 (SiteTile / SiteGrid /
+// SiteGridEntry / faviconUrlFor) に一本化した。
+// ホーム画面のウィジェットと見た目を共有するため、ここでは定義しない。
 
 class _AddFavoriteTile extends StatelessWidget {
   final VoidCallback onTap;
@@ -667,15 +523,6 @@ class _BrowserHomeBodyState extends ConsumerState<BrowserHomeBody> {
     setState(() => _history = []);
   }
 
-  String _faviconUrl(String siteUrl) {
-    try {
-      final uri = Uri.parse(
-          siteUrl.startsWith('http') ? siteUrl : 'https://$siteUrl');
-      return 'https://www.google.com/s2/favicons?domain=${uri.host}&sz=64';
-    } catch (_) {
-      return '';
-    }
-  }
 
   Future<void> _confirmClearHistory() async {
     final l = L10n.of(context)!;
@@ -749,12 +596,12 @@ class _BrowserHomeBodyState extends ConsumerState<BrowserHomeBody> {
                 separatorBuilder: (_, __) => const SizedBox(width: 4),
                 itemBuilder: (_, i) {
                   final h = _history[i];
-                  return _SiteTile(
+                  return SiteTile(
                     title: h.title.isNotEmpty
                         ? h.title
                         : Uri.tryParse(h.url)?.host ?? h.url,
                     url: h.url,
-                    faviconUrl: _faviconUrl(h.url),
+                    faviconUrl: faviconUrlFor(h.url),
                     onTap: () => widget.onOpenUrl(h.url),
                   );
                 },
@@ -766,12 +613,11 @@ class _BrowserHomeBodyState extends ConsumerState<BrowserHomeBody> {
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          _SiteGrid(
+          SiteGrid(
             items: [
               for (final f in favorites)
-                _GridEntry(title: f['title'] ?? '', url: f['url'] ?? ''),
+                SiteGridEntry(title: f['title'] ?? '', url: f['url'] ?? ''),
             ],
-            faviconOf: _faviconUrl,
             onTap: (e) => widget.onOpenUrl(e.url),
             onLongPress: (e, i) =>
                 _showFavoriteActionSheet(favorites[i], i),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import 'l10n/app_localizations.dart';
 import 'mini_player_provider.dart';
 import 'pip_helper.dart';
 import 'premium_detail.dart';
+import 'watch_progress.dart';
 
 /// アプリのルート Stack に常駐する、
 /// **単一 VideoPlayer widget** をミニ / フルスクリーンで使い回すレイヤー。
@@ -572,10 +574,18 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
       final pos = c.value.position.inSeconds;
       final dur = c.value.duration.inSeconds;
       if (dur > 0) await prefs.setInt('offline_dur_$itemUrl', dur);
-      if (dur > 0 && dur - pos < 10) {
+      if (isNearEnd(dur, pos)) {
+        // ほぼ見終わったら「続きから見る」の対象外にする
         await prefs.remove('offline_pos_$itemUrl');
+        await prefs.remove('offline_watched_at_$itemUrl');
       } else if (pos > 3) {
         await prefs.setInt('offline_pos_$itemUrl', pos);
+        // 「続きから見る」を最近見た順に並べるための時刻。
+        // 位置と長さだけでは並び順が決められないため別に持つ。
+        await prefs.setInt(
+          'offline_watched_at_$itemUrl',
+          DateTime.now().millisecondsSinceEpoch,
+        );
       }
     } catch (_) {}
   }
@@ -592,7 +602,8 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
       final sec = prefs.getInt('offline_pos_$itemUrl');
       if (sec == null || sec <= 3) return;
       final dur = c.value.duration;
-      if (dur.inSeconds > 0 && dur.inSeconds - sec < 10) return;
+      // 終端付近なら復元せず先頭から (保存側と同じしきい値で判定する)
+      if (isNearEnd(dur.inSeconds, sec)) return;
       await c.seekTo(Duration(seconds: sec));
     } catch (_) {}
   }
@@ -756,9 +767,15 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: _toggleFullControls,
-                    child: _audioOnly
-                        // 音声のみ: 動画描画をスキップして黒背景に置換
-                        ? const _AudioOnlyPlaceholder()
+                    // 保存時に音声のみと確定しているアイテムは、映像が存在せず
+                    // VideoPlayer を描画しても黒い矩形になるだけなので常に置換する。
+                    // (_audioOnly はプレイヤー側の任意トグルで Premium 判定を伴うが、
+                    //  こちらは保存済みデータの正しい表示なので判定を通さない)
+                    child: _audioOnly || state.isAudioOnly
+                        ? _AudioOnlyPlaceholder(
+                            artworkUrl: state.artworkUrl,
+                            title: state.title,
+                          )
                         : Center(
                             child: InteractiveViewer(
                               transformationController: _videoTransform,
@@ -1061,6 +1078,8 @@ class _GlobalPlayerLayerState extends ConsumerState<GlobalPlayerLayer>
         title: state.title,
         width: effectiveWidth,
         height: effectiveHeight,
+        isAudioOnly: _audioOnly || state.isAudioOnly,
+        artworkUrl: state.artworkUrl,
         onScaleStart: (_) {
           _scaleStart = _miniScale;
         },
@@ -1115,6 +1134,8 @@ class _MiniCard extends StatefulWidget {
   final ValueChanged<ScaleUpdateDetails> onScaleUpdate;
   final VoidCallback onExpand;
   final VoidCallback onClose;
+  final bool isAudioOnly;
+  final String? artworkUrl;
 
   const _MiniCard({
     required this.controller,
@@ -1125,6 +1146,8 @@ class _MiniCard extends StatefulWidget {
     required this.onScaleUpdate,
     required this.onExpand,
     required this.onClose,
+    this.isAudioOnly = false,
+    this.artworkUrl,
   });
 
   @override
@@ -1178,13 +1201,19 @@ class _MiniCardState extends State<_MiniCard> {
           child: Stack(
             children: [
               Positioned.fill(
-                child: AspectRatio(
-                  aspectRatio: widget.controller.value.aspectRatio > 0
-                      ? widget.controller.value.aspectRatio
-                      : 16 / 9,
-                  child: VideoPlayer(widget.controller,
-                      key: const ValueKey('global-video')),
-                ),
+                // 音声のみは映像が無いため、ここでも VideoPlayer を描画しない
+                child: widget.isAudioOnly
+                    ? _AudioOnlyPlaceholder(
+                        artworkUrl: widget.artworkUrl,
+                        compact: true,
+                      )
+                    : AspectRatio(
+                        aspectRatio: widget.controller.value.aspectRatio > 0
+                            ? widget.controller.value.aspectRatio
+                            : 16 / 9,
+                        child: VideoPlayer(widget.controller,
+                            key: const ValueKey('global-video')),
+                      ),
               ),
               AnimatedOpacity(
                 opacity: _showControls ? 1 : 0,
@@ -1735,38 +1764,122 @@ class _BookmarksSheetOverlay extends StatelessWidget {
 }
 
 /// 音声のみモード時の中央プレースホルダー (Premium+)
+/// 音声のみ再生時に映像の代わりに出す表示。
+///
+/// アートワーク (作品サムネイル) があればそれを主役にする。
+/// [compact] はミニプレイヤー用で、文字を出さずアートワークを敷くだけにする
+/// (小さなカードに見出しを詰めると溢れるため)。
 class _AudioOnlyPlaceholder extends StatelessWidget {
-  const _AudioOnlyPlaceholder();
+  final String? artworkUrl;
+  final String title;
+  final bool compact;
+
+  const _AudioOnlyPlaceholder({
+    this.artworkUrl,
+    this.title = '',
+    this.compact = false,
+  });
+
+  Widget _fallbackIcon(double box, double icon) => Container(
+        width: box,
+        height: box,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+        child: Icon(
+          Icons.headset_rounded,
+          color: Colors.white70,
+          size: icon,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
+    final url = artworkUrl;
+    final hasArtwork = url != null && url.isNotEmpty;
+
+    if (compact) {
+      // ミニプレイヤー: アートワークを敷き、音声であることだけバッジで示す
+      return Container(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (hasArtwork)
+              CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) =>
+                    Center(child: _fallbackIcon(40, 20)),
+              )
+            else
+              Center(child: _fallbackIcon(40, 20)),
+            const Positioned(
+              left: 6,
+              bottom: 6,
+              child: Icon(Icons.headset_rounded,
+                  color: Colors.white70, size: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final l = L10n.of(context)!;
     return Container(
       color: Colors.black,
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.08),
+          if (hasArtwork)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: CachedNetworkImage(
+                imageUrl: url,
+                width: 220,
+                height: 220,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => _fallbackIcon(96, 44),
+              ),
+            )
+          else
+            _fallbackIcon(96, 44),
+          if (title.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.headset_rounded,
-              color: Colors.white70,
-              size: 44,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Audio only',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.headset_rounded,
+                  color: Colors.white54, size: 16),
+              const SizedBox(width: 6),
+              // 既存の「音声のみ」文言を流用する (9 言語に揃っている)
+              Text(
+                l.offline_quality_audio_only,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),

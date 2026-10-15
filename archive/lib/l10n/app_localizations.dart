@@ -446,6 +446,84 @@ abstract class L10n {
   /// **'並べ替え'**
   String get list_page_reorder;
 
+  /// No description provided for @list_page_customize.
+  ///
+  /// In ja, this message translates to:
+  /// **'ホームをカスタマイズ'**
+  String get list_page_customize;
+
+  /// No description provided for @home_widget_add_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ウィジェットを追加'**
+  String get home_widget_add_title;
+
+  /// No description provided for @home_widget_open_tabs.
+  ///
+  /// In ja, this message translates to:
+  /// **'閲覧中のサイト'**
+  String get home_widget_open_tabs;
+
+  /// No description provided for @home_widget_open_tabs_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'ブラウザで開いているページから1件を表示します'**
+  String get home_widget_open_tabs_desc;
+
+  /// No description provided for @home_widget_open_tabs_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'開いているサイトはありません'**
+  String get home_widget_open_tabs_empty;
+
+  /// No description provided for @home_widget_continue.
+  ///
+  /// In ja, this message translates to:
+  /// **'続きから見る'**
+  String get home_widget_continue;
+
+  /// No description provided for @home_widget_continue_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'途中まで見た動画を続きから再生します'**
+  String get home_widget_continue_desc;
+
+  /// No description provided for @home_widget_continue_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'続きから見られる作品はありません'**
+  String get home_widget_continue_empty;
+
+  /// No description provided for @home_widget_random.
+  ///
+  /// In ja, this message translates to:
+  /// **'ランダム1件'**
+  String get home_widget_random;
+
+  /// No description provided for @home_widget_random_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存済みアイテムから無作為に1件を表示します'**
+  String get home_widget_random_desc;
+
+  /// No description provided for @home_widget_random_empty.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存済みのアイテムがありません'**
+  String get home_widget_random_empty;
+
+  /// No description provided for @home_widget_download.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロード状況'**
+  String get home_widget_download;
+
+  /// No description provided for @home_widget_download_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'進行中のダウンロードの進捗を表示します'**
+  String get home_widget_download_desc;
+
   /// No description provided for @list_page_reorder_done.
   ///
   /// In ja, this message translates to:
@@ -551,7 +629,7 @@ abstract class L10n {
   /// No description provided for @grid_page_by_manual.
   ///
   /// In ja, this message translates to:
-  /// **'手動で追加'**
+  /// **'URLから追加'**
   String get grid_page_by_manual;
 
   /// No description provided for @grid_page_cant_load_image.
@@ -1651,6 +1729,48 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'オフラインダウンロードなし'**
   String get offline_quality_none;
+
+  /// No description provided for @offline_quality_audio_only.
+  ///
+  /// In ja, this message translates to:
+  /// **'音声のみ'**
+  String get offline_quality_audio_only;
+
+  /// No description provided for @download_notification_running.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロード中'**
+  String get download_notification_running;
+
+  /// No description provided for @download_notification_complete.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロード完了'**
+  String get download_notification_complete;
+
+  /// No description provided for @download_notification_error.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダウンロードに失敗しました'**
+  String get download_notification_error;
+
+  /// No description provided for @download_notification_paused.
+  ///
+  /// In ja, this message translates to:
+  /// **'一時停止中'**
+  String get download_notification_paused;
+
+  /// No description provided for @download_notification_permission_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'バックグラウンド継続に通知が必要です'**
+  String get download_notification_permission_title;
+
+  /// No description provided for @download_notification_permission_body.
+  ///
+  /// In ja, this message translates to:
+  /// **'通知が許可されていないため、アプリを離れるとダウンロードが中断されます（特にモバイル通信時）。設定で通知を有効にしてください。'**
+  String get download_notification_permission_body;
 
   /// No description provided for @search_result_page_has_saved.
   ///
@@ -3259,6 +3379,90 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'ボタンを押すと、保存ライブラリの傾向から関連キーワードをAIが提案します。'**
   String get search_page_ai_recommend_intro;
+
+  /// No description provided for @tutorial_tips_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'作品を追加する方法は他にもあります'**
+  String get tutorial_tips_title;
+
+  /// No description provided for @tutorial_tips_share_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末の共有機能から追加'**
+  String get tutorial_tips_share_title;
+
+  /// No description provided for @tutorial_tips_share_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'他のアプリの共有メニューから ArchiVe を選ぶと、見ているページをそのまま保存できます。（端末により使用できない場合があります）'**
+  String get tutorial_tips_share_desc;
+
+  /// No description provided for @tutorial_tips_browser_title.
+  ///
+  /// In ja, this message translates to:
+  /// **'ブラウザの保存ボタンから追加'**
+  String get tutorial_tips_browser_title;
+
+  /// No description provided for @tutorial_tips_browser_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ内のブラウザで見つけた動画は、保存ボタンを押すだけでリストに集められます。'**
+  String get tutorial_tips_browser_desc;
+
+  /// No description provided for @tutorial_tips_footer.
+  ///
+  /// In ja, this message translates to:
+  /// **'ぜひ活用してみてください！'**
+  String get tutorial_tips_footer;
+
+  /// No description provided for @tutorial_tips_start.
+  ///
+  /// In ja, this message translates to:
+  /// **'はじめる'**
+  String get tutorial_tips_start;
+
+  /// No description provided for @settings_page_display_names.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価名・タグ名の変更'**
+  String get settings_page_display_names;
+
+  /// No description provided for @settings_page_display_names_desc.
+  ///
+  /// In ja, this message translates to:
+  /// **'空欄にすると既定の名前に戻ります。'**
+  String get settings_page_display_names_desc;
+
+  /// No description provided for @settings_page_rating_name_n.
+  ///
+  /// In ja, this message translates to:
+  /// **'評価{n}'**
+  String settings_page_rating_name_n(int n);
+
+  /// No description provided for @settings_page_tag_name_n.
+  ///
+  /// In ja, this message translates to:
+  /// **'タグ{n}'**
+  String settings_page_tag_name_n(int n);
+
+  /// No description provided for @settings_page_display_names_saved.
+  ///
+  /// In ja, this message translates to:
+  /// **'表示名を保存しました'**
+  String get settings_page_display_names_saved;
+
+  /// No description provided for @detail_page_tag_multi.
+  ///
+  /// In ja, this message translates to:
+  /// **'{name} (#で複数入力)'**
+  String detail_page_tag_multi(String name);
+
+  /// No description provided for @detail_page_tag_placeholder.
+  ///
+  /// In ja, this message translates to:
+  /// **'#{name}1 #{name}2 ...'**
+  String detail_page_tag_placeholder(String name);
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

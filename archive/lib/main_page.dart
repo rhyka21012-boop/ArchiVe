@@ -638,6 +638,10 @@ class _MainPageState extends ConsumerState<MainPage>
     }
     setState(() => _selectedIndex = index);
     ref.read(homeTabIndexProvider.notifier).state = _selectedIndex;
+    // ホームに来たらランダム表示を引き直す
+    if (index == 0) {
+      ref.read(homeVisitCounterProvider.notifier).state++;
+    }
   }
 
   @override
@@ -647,6 +651,12 @@ class _MainPageState extends ConsumerState<MainPage>
         setState(() {
           _selectedIndex = next;
         });
+        // 設定画面など、タップ以外の経路でホームへ戻った場合も引き直す。
+        // (タップ経路は _onItemTapped 側で数えており、そちらは先に
+        //  _selectedIndex を更新するのでこの分岐に入らない = 二重に数えない)
+        if (next == 0) {
+          ref.read(homeVisitCounterProvider.notifier).state++;
+        }
       }
     });
 

@@ -25,6 +25,7 @@ import 'list_reload_provider.dart';
 import 'theme_provider.dart';
 import 'rating_label_provider.dart';
 import 'circle_app_bar_icon.dart';
+import 'offline_video_path.dart';
 import 'local_video_player_page.dart';
 import 'smart_thumbnail.dart';
 import 'subscription_prompt_dialog.dart';
@@ -396,13 +397,13 @@ class GridPageState extends ConsumerState<GridPage> {
                                       ),
                                     ),
                                     onPressed: () {
+                                      // アプリ内ブラウザのホーム画面を開く。
+                                      // root までの pop とタブ切替は
+                                      // MainPage 側の listener が行うので、
+                                      // ここでは合図を出すだけでよい。
                                       ref
-                                          .read(homeTabIndexProvider.notifier)
-                                          .state = 1;
-                                      ref
-                                          .read(searchTabIndexProvider.notifier)
-                                          .state = 0;
-                                      Navigator.pop(context);
+                                          .read(browserSessionProvider.notifier)
+                                          .requestOpenHome();
                                     },
                                   ),
 
@@ -1226,13 +1227,7 @@ class GridPageState extends ConsumerState<GridPage> {
 
   // ダウンロード済みかどうか (アイテムのマップから判定)
   bool _hasLocalVideo(Map<String, dynamic> item) {
-    final p = item['localVideoPath'] as String?;
-    if (p == null || p.isEmpty) return false;
-    try {
-      return File(p).existsSync();
-    } catch (_) {
-      return false;
-    }
+    return OfflineVideoPaths.exists(item['localVideoPath']);
   }
 
   // オフライン動画のファイルサイズ (URL 単位で結果をキャッシュ)
@@ -1241,13 +1236,12 @@ class GridPageState extends ConsumerState<GridPage> {
     final url = item['url']?.toString();
     if (url == null || url.isEmpty) return null;
     if (_offlineSizeCache.containsKey(url)) return _offlineSizeCache[url];
-    final p = item['localVideoPath'] as String?;
-    if (p == null || p.isEmpty) {
+    final f = OfflineVideoPaths.fileFor(item['localVideoPath']);
+    if (f == null) {
       _offlineSizeCache[url] = null;
       return null;
     }
     try {
-      final f = File(p);
       if (!await f.exists()) {
         _offlineSizeCache[url] = null;
         return null;
@@ -1654,12 +1648,15 @@ class GridPageState extends ConsumerState<GridPage> {
     // ローカル動画があれば内蔵プレイヤーで再生
     final item = queue[safeIndex];
     if (_hasLocalVideo(item)) {
-      final path = item['localVideoPath'] as String;
+      final path = OfflineVideoPaths.resolve(item['localVideoPath'])!;
       // GlobalPlayerLayer で再生開始 (Navigator.push 不使用)
       ref.read(miniPlayerProvider.notifier).start(
             filePath: path,
             title: item['title']?.toString() ?? '',
             itemUrl: item['url']?.toString(),
+            // 音声のみアイテムは映像が無いので、サムネイルをアートワークとして渡す
+            isAudioOnly: isAudioOnlyItem(item),
+            artworkUrl: item['image']?.toString(),
           );
       return;
     }

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  /* ============================================================
+     ストア掲載用スクリーンショット テンプレート
+     render.mjs が {{...}} を置換して headless Chrome でレンダリングする。
+     デバイスフレームは CSS で描いたオリジナル形状。
+     ============================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --accent:     {{ACCENT}};
+    --accent-2:   {{ACCENT2}};
+    --bg-top:     {{BG_TOP}};
+    --bg-bottom:  {{BG_BOTTOM}};
+    --text:       {{TEXT_COLOR}};
+    --text-sub:   {{TEXT_SUB_COLOR}};
+    --frame-w:    {{FRAME_W}}px;
+    --cap-size:   {{CAPTION_SIZE}}px;
+    --sub-size:   {{SUBCAPTION_SIZE}}px;
+  }
+
+  html, body {
+    width: {{W}}px;
+    height: {{H}}px;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                 "Noto Sans JP", "Yu Gothic", system-ui, sans-serif;
+    background: linear-gradient(165deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  /* 背景の装飾: ブランド色のぼかし円で奥行きを出す */
+  .glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur({{GLOW_BLUR}}px);
+    pointer-events: none;
+  }
+  .glow-a {
+    width: {{GLOW_A}}px; height: {{GLOW_A}}px;
+    background: var(--accent);
+    opacity: .26;
+    top: {{GLOW_A_TOP}}px; left: {{GLOW_A_LEFT}}px;
+  }
+  .glow-b {
+    width: {{GLOW_B}}px; height: {{GLOW_B}}px;
+    background: var(--accent-2);
+    opacity: .18;
+    bottom: {{GLOW_B_BOTTOM}}px; right: {{GLOW_B_RIGHT}}px;
+  }
+
+  /* ---------- キャプション ---------- */
+  .caption-area {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: {{CAP_PAD_TOP}}px {{CAP_PAD_X}}px 0;
+    text-align: center;
+    flex: none;
+  }
+  .caption {
+    font-size: var(--cap-size);
+    font-weight: 800;
+    line-height: 1.28;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .caption .hl { color: var(--accent); }
+  .subcaption {
+    margin-top: {{SUB_MARGIN}}px;
+    font-size: var(--sub-size);
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-sub);
+  }
+
+  /* ---------- デバイスフレーム (オリジナル形状) ----------
+     下端は画面外にはみ出させて「下まで使い切る」構図にする。
+     overflow:hidden で body 外にはみ出した分を切る。 */
+  .device-area {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: {{DEVICE_PAD_TOP}}px;
+    overflow: hidden;
+  }
+  .device {
+    position: relative;
+    flex: none;
+    width: var(--frame-w);
+    height: {{FRAME_H}}px;
+    background: #0d0d0f;
+    border-radius: {{FRAME_RADIUS}}px;
+    padding: {{BEZEL}}px;
+    box-shadow:
+      0 {{SHADOW_Y}}px {{SHADOW_BLUR}}px rgba(0,0,0,.30),
+      0 0 0 1px rgba(255,255,255,.10) inset;
+  }
+  .screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: {{SCREEN_RADIUS}}px;
+    overflow: hidden;
+    background: #16161a;
+  }
+  .screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+  /* 画面上端の島状インジケータ (オリジナル形状)。
+     実キャプチャにはステータスバーが写り込むため、
+     プレースホルダ描画時のみ表示する。 */
+  .island {
+    display: {{ISLAND_DISPLAY}};
+    position: absolute;
+    top: {{ISLAND_TOP}}px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: {{ISLAND_W}}px;
+    height: {{ISLAND_H}}px;
+    background: #000;
+    border-radius: {{ISLAND_H}}px;
+    z-index: 3;
+  }
+
+  /* ---------- 実キャプチャが無い場合のプレースホルダ ---------- */
+  .placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, #1c1c20 0%, #121216 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: {{PH_GAP}}px;
+    color: #55555f;
+    font-size: {{PH_FONT}}px;
+    font-weight: 700;
+    text-align: center;
+    padding: {{PH_PAD}}px;
+  }
+  .placeholder .ph-icon {
+    width: {{PH_ICON}}px; height: {{PH_ICON}}px;
+    border-radius: {{PH_ICON_R}}px;
+    border: {{PH_BORDER}}px dashed #3a3a44;
+    display: flex; align-items: center; justify-content: center;
+    font-size: {{PH_ICON_FONT}}px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+
+  <div class="caption-area">
+    <div class="caption">{{CAPTION}}</div>
+    <div class="subcaption">{{SUBCAPTION}}</div>
+  </div>
+
+  <div class="device-area">
+    <div class="device">
+      <div class="screen">
+        <div class="island"></div>
+        {{SCREEN_CONTENT}}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

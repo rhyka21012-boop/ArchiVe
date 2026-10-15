@@ -39,6 +39,22 @@ class SyncService {
   // ============================================================
   // ID 生成（URL ハッシュ）
   // ============================================================
+  /// 端末ローカルにのみ意味を持つフィールド。
+  /// オフライン動画の実体は端末内にしか無いため、クラウドへ持ち出すと
+  /// 別端末に「ダウンロード済み」の誤った状態が復元されてしまう。
+  static const _localOnlyKeys = {
+    'localVideoPath',
+    'localVideoSize',
+    'localVideoDownloadedAt',
+  };
+
+  /// クラウドへ送る前にローカル専用フィールドを取り除く
+  static Map<String, dynamic> _stripLocalOnly(Map<String, dynamic> item) {
+    final copy = Map<String, dynamic>.from(item);
+    copy.removeWhere((k, _) => _localOnlyKeys.contains(k));
+    return copy;
+  }
+
   /// URL から決定的なドキュメントIDを生成（重複防止）
   static String itemIdFromUrl(String url) {
     final bytes = utf8.encode(url);
@@ -56,7 +72,7 @@ class SyncService {
     if (url.isEmpty) return;
     try {
       await col.doc(itemIdFromUrl(url)).set({
-        ...item,
+        ..._stripLocalOnly(item),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -96,7 +112,7 @@ class SyncService {
           final url = (item['url'] as String?)?.trim() ?? '';
           if (url.isEmpty) continue;
           batch.set(col.doc(itemIdFromUrl(url)), {
-            ...item,
+            ..._stripLocalOnly(item),
             'updatedAt': FieldValue.serverTimestamp(),
           });
           total++;
@@ -115,14 +131,36 @@ class SyncService {
     final col = _itemsCol();
     if (col == null) return 0;
 
+    final prefs = await SharedPreferences.getInstance();
+
+    // 既存ローカルのオフライン動画情報を URL 単位で退避しておく。
+    // クラウド側はこれらを保持しないため、単純に上書きすると
+    // ダウンロード済みの参照が全て失われる (ファイルは端末に残ったまま)。
+    final localOnlyByUrl = <String, Map<String, dynamic>>{};
+    for (final s in prefs.getStringList('saved_metadata') ?? <String>[]) {
+      try {
+        final map = jsonDecode(s) as Map<String, dynamic>;
+        final url = (map['url'] as String?)?.trim();
+        if (url == null || url.isEmpty) continue;
+        final kept = <String, dynamic>{};
+        for (final k in _localOnlyKeys) {
+          if (map.containsKey(k)) kept[k] = map[k];
+        }
+        if (kept.isNotEmpty) localOnlyByUrl[url] = kept;
+      } catch (_) {}
+    }
+
     final snapshot = await col.get();
     final items = <String>[];
     for (final doc in snapshot.docs) {
       final data = Map<String, dynamic>.from(doc.data());
       data.remove('updatedAt'); // ローカル形式に戻すため除外
+      final url = (data['url'] as String?)?.trim();
+      if (url != null && localOnlyByUrl.containsKey(url)) {
+        data.addAll(localOnlyByUrl[url]!);
+      }
       items.add(jsonEncode(data));
     }
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('saved_metadata', items);
     return items.length;
   }

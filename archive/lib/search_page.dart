@@ -16,6 +16,7 @@ import 'smart_thumbnail.dart';
 import 'subscription_prompt_dialog.dart';
 import 'detail_page.dart';
 import 'l10n/app_localizations.dart';
+import 'rating_label_provider.dart';
 import 'favorite_site_provider.dart';
 import 'search_tab_index_provider.dart';
 import 'list_reload_provider.dart';
@@ -963,13 +964,20 @@ class SearchPageState extends ConsumerState<SearchPage> {
       final index = entry.key;
       final key = entry.value;
 
+      // 既定値は画面ごとに訳語が異なるため、この画面のキーを渡す
+      final tagLabels = ref.watch(tagLabelsProvider);
       final label =
           [
-            L10n.of(context)!.search_page_cast,
-            L10n.of(context)!.search_page_genre,
-            L10n.of(context)!.search_page_series,
-            L10n.of(context)!.search_page_maker,
-            L10n.of(context)!.search_page_label,
+            tagLabelOr(
+                tagLabels, kTagCast, L10n.of(context)!.search_page_cast),
+            tagLabelOr(
+                tagLabels, kTagGenre, L10n.of(context)!.search_page_genre),
+            tagLabelOr(
+                tagLabels, kTagSeries, L10n.of(context)!.search_page_series),
+            tagLabelOr(
+                tagLabels, kTagMaker, L10n.of(context)!.search_page_maker),
+            tagLabelOr(
+                tagLabels, kTagLabel, L10n.of(context)!.search_page_label),
           ][index];
 
       final options = _optionsByKey[key] ?? [];

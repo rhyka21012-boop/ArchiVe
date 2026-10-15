@@ -456,17 +456,26 @@ class _RankingPageState extends State<RankingPage> {
               ),
             ),
             // ─── 展開コンテンツ ───────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildSearchField(),
-                  const SizedBox(height: 12),
-                  _buildPickerGrid(),
-                ],
+            // 折りたたみ中は組み立てない。常時生成すると Column の要求高さが
+            // AnimatedContainer の固定高さ (44px) を超えて overflow する。
+            // 開閉アニメーション中は高さが途中値になるため、Flexible +
+            // スクロールで受けて一時的な overflow も防ぐ。
+            if (_panelExpanded)
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildSearchField(),
+                        const SizedBox(height: 12),
+                        _buildPickerGrid(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),

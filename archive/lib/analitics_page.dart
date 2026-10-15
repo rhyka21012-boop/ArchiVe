@@ -605,6 +605,8 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
     final pageBg = isDark ? colorScheme.surface : kHomeSurfaceLight;
+    // 利用者が付け替えたタグ名 (未設定なら各既定値のまま)
+    final tagLabels = ref.watch(tagLabelsProvider);
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -659,31 +661,36 @@ class AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               _buildRatingSection(),
               if (listCounts.isNotEmpty) _buildListCountSection(),
               _buildTagSection(
-                title: L10n.of(context)!.analytics_page_cast,
+                title: tagLabelOr(tagLabels, kTagCast,
+                    L10n.of(context)!.analytics_page_cast),
                 icon: Icons.person,
                 data: castCounts,
                 accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
-                title: L10n.of(context)!.analytics_page_genre,
+                title: tagLabelOr(tagLabels, kTagGenre,
+                    L10n.of(context)!.analytics_page_genre),
                 icon: Icons.category,
                 data: genreCounts,
                 accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
-                title: L10n.of(context)!.analytics_page_series,
+                title: tagLabelOr(tagLabels, kTagSeries,
+                    L10n.of(context)!.analytics_page_series),
                 icon: Icons.movie_filter,
                 data: seriesCounts,
                 accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
-                title: L10n.of(context)!.analytics_page_maker,
+                title: tagLabelOr(tagLabels, kTagMaker,
+                    L10n.of(context)!.analytics_page_maker),
                 icon: Icons.business,
                 data: makerCounts,
                 accentColor: Theme.of(context).colorScheme.primary,
               ),
               _buildTagSection(
-                title: L10n.of(context)!.analytics_page_label,
+                title: tagLabelOr(tagLabels, kTagLabel,
+                    L10n.of(context)!.analytics_page_label),
                 icon: Icons.label,
                 data: labelCounts,
                 accentColor: Theme.of(context).colorScheme.primary,

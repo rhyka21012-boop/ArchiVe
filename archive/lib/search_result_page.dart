@@ -26,7 +26,9 @@ import 'browser_home_page.dart';
 import 'browser_session_provider.dart';
 import 'browser_scroll_top_provider.dart';
 import 'download_queue_provider.dart';
+import 'offline_video_path.dart';
 import 'remove_ads_promo.dart';
+import 'video_url_resolver.dart';
 
 class SearchResultPage extends ConsumerStatefulWidget {
   final String initialUrl;
@@ -58,6 +60,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
   // 空文字列 = ホームタブ、それ以外 = 開いていた URL
   static const _kPrefBrowserTabUrls = 'browser_tab_urls_v1';
   static const _kPrefBrowserActiveIndex = 'browser_active_tab_v1';
+  // ホーム画面の「開いているサイト」ウィジェット用。
+  // URL だけではページ名が出せないため、同じ順序でタイトルも保存する。
+  // 既存の復元処理に影響しないよう、URL とは別キーに分ける。
+  static const _kPrefBrowserTabTitles = 'browser_tab_titles_v1';
+  // ページの代表画像。URL / タイトルと同じ順序で並べる。
+  static const _kPrefBrowserTabImages = 'browser_tab_images_v1';
 
   _BrowserTab get _activeTab => _tabs[_activeTabIndex];
 
@@ -71,6 +79,9 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
   set _pageTitle(String v) => _activeTab.pageTitle = v;
   int get _progress => _activeTab.progress;
   set _progress(int v) => _activeTab.progress = v;
+
+  /// 現在のタブで「保存可能な動画」を検出できたか
+  _VideoDetectState get _videoDetect => _activeTab.videoDetect;
   List<WebHistoryItem> get _history => _activeTab.history;
 
   //プレミアム判定
@@ -209,13 +220,27 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
         (prev, next) {
       if (next == null) return;
       if (prev?.seq == next.seq) return;
+      // url が空 = ブラウザのホーム画面を開く合図。
+      // 既にホームタブを見ているなら何もしない (MainPage がタブ切替済み)。
+      // 既存ページを見ている場合は、そのタブを潰さずホームタブを足す。
+      if (next.url.isEmpty) {
+        if (!_activeTab.isHome) _addNewTab();
+        return;
+      }
       // 唯一のタブがホームタブの場合、新規タブは作らずそのホームタブを WebView 化
       if (_tabs.length == 1 && _tabs.first.isHome) {
         _handleHomeOpen(next.url);
         return;
       }
-      // 既に同じ URL が開かれている場合はスキップ
-      if (_tabs.length == 1 && _tabs.first.currentUrl == next.url) return;
+      // 既に同じ URL のタブがあれば、新規に増やさずそのタブへ切り替える。
+      // ホーム画面の「閲覧中のサイト」ウィジェットから既存タブを叩いたときに
+      // 重複タブが増えるのを防ぐ (grid / detail からの遷移にも効く)。
+      final existing =
+          _tabs.indexWhere((t) => !t.isHome && t.currentUrl == next.url);
+      if (existing >= 0) {
+        _switchToTab(existing);
+        return;
+      }
       _addNewTab(url: next.url);
     });
 
@@ -315,6 +340,10 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
             });
             // タスクキル後の復元に備えて開いている URL を永続化
             unawaited(_saveTabsState());
+            // 保存可能な動画があるかを判定 (FAB の表示に反映)
+            unawaited(_detectSavableVideo(tab, url));
+            // ホーム画面のウィジェット用にページの代表画像を取得
+            unawaited(_captureTabThumbnail(tab, url));
           },
         ),
       );
@@ -1222,6 +1251,91 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
     }
   }
 
+  /// URL 単位の検出結果キャッシュ。同じページを再訪したときに再通信しない。
+  final Map<String, _VideoDetectState> _videoDetectCache = {};
+  static const _videoDetectCacheMax = 50;
+
+  /// 表示中のページに保存可能な動画があるかを判定する。
+  ///
+  /// - 直リンク (.mp4 等) は通信せずに即確定させる
+  /// - それ以外は [VideoUrlResolver.resolve] を使うが、HTML の取得を伴い
+  ///   最大 15 秒かかるため、判定中は checking 状態にして UI をブロックしない
+  /// - 結果が返った時点で別ページへ遷移していた場合は破棄する
+  Future<void> _detectSavableVideo(_BrowserTab tab, String url) async {
+    void apply(_VideoDetectState s) {
+      if (!mounted) return;
+      setState(() {
+        tab.videoDetect = s;
+        tab.videoDetectFor = url;
+      });
+    }
+
+    if (url.isEmpty || !url.startsWith('http')) {
+      apply(_VideoDetectState.none);
+      return;
+    }
+
+    // 拡張子から判る直リンクは通信不要
+    if (VideoUrlResolver.looksLikeDirectVideo(url)) {
+      apply(_VideoDetectState.found);
+      return;
+    }
+
+    final cached = _videoDetectCache[url];
+    if (cached != null) {
+      apply(cached);
+      return;
+    }
+
+    apply(_VideoDetectState.checking);
+
+    _VideoDetectState result;
+    try {
+      final resolved = await VideoUrlResolver.resolve(url);
+      result =
+          resolved != null ? _VideoDetectState.found : _VideoDetectState.none;
+    } catch (_) {
+      result = _VideoDetectState.none;
+    }
+
+    if (_videoDetectCache.length >= _videoDetectCacheMax) {
+      _videoDetectCache.remove(_videoDetectCache.keys.first);
+    }
+    _videoDetectCache[url] = result;
+
+    if (!mounted) return;
+    // 判定中に別ページへ遷移していたら、古い結果は反映しない
+    if (tab.currentUrl != url) return;
+    setState(() => tab.videoDetect = result);
+  }
+
+  /// FAB の「＋保存」の右に添える検出インジケータ。
+  /// 保存自体は常に可能なので、ここでは状態を示すだけで活性制御はしない。
+  List<Widget> _buildVideoDetectBadge() {
+    switch (_videoDetect) {
+      case _VideoDetectState.found:
+        return const [
+          SizedBox(width: 8),
+          Icon(Icons.download_for_offline, color: Colors.white, size: 20),
+        ];
+      case _VideoDetectState.checking:
+        return const [
+          SizedBox(width: 8),
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation(Colors.white70),
+            ),
+          ),
+        ];
+      case _VideoDetectState.none:
+      case _VideoDetectState.unknown:
+        return const [];
+    }
+  }
+
   Widget _buildSaveFab(ColorScheme colorScheme) {
     final isLoaded = _progress >= 100;
     final l = L10n.of(context)!;
@@ -1263,6 +1377,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    // 動画を検出できたらアイコン、判定中はスピナーを添える
+                    ..._buildVideoDetectBadge(),
                   ]
                 : [
                     const SizedBox(
@@ -1501,14 +1617,53 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
   /// 最新順、重複 URL は詰めて先頭に、最大 20 件。
   /// 開いているタブ一覧 (URL + active index) を prefs に保存。
   /// タスクキル後の再起動で復元される。
+  /// ホーム画面のウィジェット用に、ページの代表画像を取得して保持する。
+  ///
+  /// [_getThumbnailFromPage] は `_controller` (= アクティブタブ) を読むため、
+  /// 背面タブに対して呼ぶと別ページの画像を取ってしまう。
+  /// よってアクティブタブのときだけ実行する (ウィジェットが表示するのは
+  /// 直近 = アクティブタブの 1 件なので、これで足りる)。
+  Future<void> _captureTabThumbnail(_BrowserTab tab, String url) async {
+    if (!identical(tab, _activeTab)) return;
+    try {
+      final thumb = await _getThumbnailFromPage();
+      if (!mounted) return;
+      // 取得中に別ページへ遷移していたら破棄する
+      if (tab.currentUrl != url) return;
+      if (thumb == null || thumb.isEmpty) return;
+      tab.thumbnailUrl = thumb;
+      unawaited(_saveTabsState());
+    } catch (_) {}
+  }
+
   Future<void> _saveTabsState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final urls = _tabs
           .map((t) => t.isHome ? '' : (t.currentUrl ?? ''))
           .toList(growable: false);
+      final titles =
+          _tabs.map((t) => t.isHome ? '' : t.pageTitle).toList(growable: false);
+      final images = _tabs
+          .map((t) => t.isHome ? '' : t.thumbnailUrl)
+          .toList(growable: false);
       await prefs.setStringList(_kPrefBrowserTabUrls, urls);
+      await prefs.setStringList(_kPrefBrowserTabTitles, titles);
+      await prefs.setStringList(_kPrefBrowserTabImages, images);
       await prefs.setInt(_kPrefBrowserActiveIndex, _activeTabIndex);
+
+      // ホーム画面の「開いているサイト」ウィジェットへ即時反映する。
+      // MainPage が IndexedStack で全ページを常時マウントするため、
+      // ホーム側には再構築の契機が無く、prefs を読み直す方式では
+      // 起動直後の内容が残ってしまう。
+      if (!mounted) return;
+      ref.read(openBrowserTabsProvider.notifier).publish(
+            urls: urls,
+            titles: titles,
+            images: images,
+            // 直近に見ていたページを先頭にするため、アクティブ位置も渡す
+            activeIndex: _activeTabIndex,
+          );
     } catch (_) {}
   }
 
@@ -1611,15 +1766,11 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
     final allLists = prefs.getStringList('all_lists') ?? [];
 
     String selectedList = 'none';
-    // 前回の解像度選択を復元 (null = 「ダウンロードなし」も記憶)
-    // prefs には int を保存、キー未設定 = 未選択、値 -1 = 「なし」を明示
-    int? offlineHeight;
-    final storedH = prefs.getInt('last_offline_height');
-    if (storedH != null && storedH > 0) {
-      offlineHeight = storedH;
-    } else {
-      offlineHeight = null; // 「ダウンロードなし」または未設定
-    }
+    // 前回の選択を復元 (「ダウンロードなし」も記憶)
+    // prefs には int を保存する。正値 = 解像度、
+    // kOfflinePrefNone(0) = なし、kOfflinePrefAudioOnly(-2) = 音声のみ。
+    OfflineChoice? offlineChoice =
+        OfflineChoice.fromPrefValue(prefs.getInt('last_offline_height'));
     final titleController = TextEditingController(text: title);
     final urlController = TextEditingController(text: url);
     final colorScheme = Theme.of(context).colorScheme;
@@ -1999,10 +2150,10 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                     ),
                     const SizedBox(height: 8),
                     OfflineQualityChips(
-                      selected: offlineHeight,
-                      onChanged: (h) {
+                      selected: offlineChoice,
+                      onChanged: (c) {
                         // 動画ダウンロードは無料化 (Premium ゲート撤去)
-                        setState(() => offlineHeight = h);
+                        setState(() => offlineChoice = c);
                       },
                     ),
                   ],
@@ -2048,13 +2199,15 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                       timeout: const Duration(seconds: 2),
                     );
 
-                    // 選択した解像度を次回用に保存
-                    // (null = ダウンロードなしも記憶したいので 0 で表現)
+                    // 選択内容を次回用に保存
+                    // (「なし」も記憶したいので 0 で表現)
                     final savePrefs = await SharedPreferences.getInstance();
                     await savePrefs.setInt(
-                        'last_offline_height', offlineHeight ?? 0);
+                      'last_offline_height',
+                      offlineChoice?.toPrefValue() ?? kOfflinePrefNone,
+                    );
 
-                    final startingDl = offlineHeight != null &&
+                    final startingDl = offlineChoice != null &&
                         urlController.text.trim().isNotEmpty;
                     await _saveWorkFromWebView(
                       url: urlController.text,
@@ -2067,6 +2220,12 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                     );
                     // オフライン解像度が選択されている場合はダウンロード開始
                     if (startingDl) {
+                      // 通知が拒否されているとバックグラウンドで継続できない
+                      await warnIfNotificationsBlockBackgroundDownload(
+                        context,
+                      );
+                      // 案内ダイアログ表示中に画面が閉じられている可能性がある
+                      if (!context.mounted) return;
                       await ref
                           .read(downloadQueueProvider.notifier)
                           .start(
@@ -2075,7 +2234,8 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
                                 ? titleController.text.trim()
                                 : urlController.text.trim(),
                             itemUrl: urlController.text.trim(),
-                            preferredHeight: offlineHeight,
+                            preferredHeight: offlineChoice?.height,
+                            audioOnly: offlineChoice?.audioOnly ?? false,
                             wasFromNewSave: true,
                           );
                       if (context.mounted) {
@@ -2278,7 +2438,7 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
         }
       } catch (_) {}
     }
-    if (localPath != null && localPath.isNotEmpty) {
+    if (OfflineVideoPaths.exists(localPath)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(l.search_result_page_url_already_saved_and_downloaded),
@@ -2305,6 +2465,10 @@ class _SearchResultPageState extends ConsumerState<SearchResultPage>
       ),
     );
     if (ok != true) return;
+    // 通知が拒否されているとバックグラウンドで継続できないため先に案内する
+    await warnIfNotificationsBlockBackgroundDownload(context);
+    if (!mounted) return;
+
     // 動画ダウンロードは無料機能なので Premium ゲート撤去
     await ref.read(downloadQueueProvider.notifier).start(
           url: url,
@@ -2632,16 +2796,43 @@ class WebHistoryItem {
   WebHistoryItem(this.url, this.title);
 }
 
+/// 表示中のページから「保存可能な動画」を検出できたかの状態。
+enum _VideoDetectState {
+  /// 未判定 (ページ読み込み前など)
+  unknown,
+
+  /// 判定中 (HTML を取得して解析している)
+  checking,
+
+  /// 検出できた
+  found,
+
+  /// 検出できなかった
+  none,
+}
+
 /// アプリ内ブラウザの 1 タブ分の状態。
 class _BrowserTab {
   final WebViewController controller;
   bool canGoBack = false;
   String? currentUrl;
   String pageTitle = '';
+
+  /// ページの代表画像 (og:image 等)。ホーム画面のウィジェット表示に使う。
+  /// 取得前は空文字列。
+  String thumbnailUrl = '';
   int progress = 0;
   final List<WebHistoryItem> history = [];
   /// ホームタブ (URL 未入力状態) — WebView は描画せずホームコンテンツを表示
   bool isHome;
+
+  /// 保存可能な動画を検出できたか
+  _VideoDetectState videoDetect = _VideoDetectState.unknown;
+
+  /// [videoDetect] がどの URL に対する判定かを保持する。
+  /// 非同期判定の結果が返った時点で別ページへ遷移していたら破棄するために使う。
+  String? videoDetectFor;
+
   _BrowserTab(this.controller, {this.isHome = false});
 }
 

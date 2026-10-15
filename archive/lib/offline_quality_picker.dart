@@ -1,15 +1,97 @@
 import 'package:flutter/material.dart';
 
 import 'l10n/app_localizations.dart';
+import 'notification_settings_service.dart';
+
+/// 通知が拒否されている場合に、理由を説明して設定画面へ誘導する。
+///
+/// Android では通知を掲示できないと前景サービスが成立せず、OS から背景アプリ
+/// 扱いのままになるため、従量制 (モバイル) 回線でダウンロード中のソケットが
+/// 遮断される。Android は一度拒否された権限を再要求しても再表示しないので、
+/// 設定画面へ送るしか手がない。
+///
+/// ダウンロード自体は妨げない。開始前に案内し、「あとで」を選んでも続行する。
+/// iOS は通知が無くてもバックグラウンド転送が継続するため何もしない
+/// (サービス側の [NotificationSettingsService.isNotificationDenied] で判定)。
+Future<void> warnIfNotificationsBlockBackgroundDownload(
+  BuildContext context,
+) async {
+  if (!await NotificationSettingsService.isNotificationDenied()) return;
+  if (!context.mounted) return;
+  final l = L10n.of(context)!;
+  final openSettings = await showDialog<bool>(
+    context: context,
+    builder: (dctx) => AlertDialog(
+      title: Text(l.download_notification_permission_title),
+      content: Text(l.download_notification_permission_body),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dctx, false),
+          child: Text(l.main_page_update_later),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dctx, true),
+          child: Text(l.main_page_settings),
+        ),
+      ],
+    ),
+  );
+  if (openSettings == true) {
+    await NotificationSettingsService.openNotificationSettings();
+  }
+}
 
 /// オフラインダウンロードの解像度選択肢。null = ダウンロードしない
 const List<int> kOfflineQualityHeights = [1080, 720, 480, 360, 240];
 
+/// 「前回の選択」を prefs に int で保存する際の特別な値。
+/// 解像度は正の値なので、負値・0 を状態の表現に使う。
+const int kOfflinePrefNone = 0; // ダウンロードしない
+const int kOfflinePrefAudioOnly = -2; // 音声のみ
+
+/// オフライン保存の選択結果。
+///
+/// 解像度と「音声のみ」は排他なので、int? では表現できない。
+/// 「キャンセル」と「ダウンロードしない」は既存実装と同様に区別しない
+/// (どちらも呼び出し側では null として扱う)。
+class OfflineChoice {
+  /// 希望解像度。[audioOnly] が true の場合は null。
+  final int? height;
+
+  /// 音声のみとして保存するか。
+  final bool audioOnly;
+
+  const OfflineChoice.height(int this.height) : audioOnly = false;
+  const OfflineChoice.audio()
+      : height = null,
+        audioOnly = true;
+
+  /// prefs 保存用の int 表現
+  int toPrefValue() => audioOnly ? kOfflinePrefAudioOnly : (height ?? kOfflinePrefNone);
+
+  /// prefs の int 表現から復元する。該当しなければ null (= 未選択/なし)。
+  static OfflineChoice? fromPrefValue(int? v) {
+    if (v == null) return null;
+    if (v == kOfflinePrefAudioOnly) return const OfflineChoice.audio();
+    if (v > 0) return OfflineChoice.height(v);
+    return null;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is OfflineChoice &&
+      other.height == height &&
+      other.audioOnly == audioOnly;
+
+  @override
+  int get hashCode => Object.hash(height, audioOnly);
+}
+
 /// 横スクロール型の解像度選択チップ列。
 /// [selected] が null の場合は「オフラインダウンロードなし」。
 class OfflineQualityChips extends StatelessWidget {
-  final int? selected;
-  final ValueChanged<int?> onChanged;
+  final OfflineChoice? selected;
+  final ValueChanged<OfflineChoice?> onChanged;
 
   const OfflineQualityChips({
     super.key,
@@ -28,9 +110,15 @@ class OfflineQualityChips extends StatelessWidget {
           _PickerChip(
             label: '${h}p',
             icon: Icons.high_quality,
-            isSelected: selected == h,
-            onTap: () => onChanged(h),
+            isSelected: selected?.height == h,
+            onTap: () => onChanged(OfflineChoice.height(h)),
           ),
+        _PickerChip(
+          label: l.offline_quality_audio_only,
+          icon: Icons.music_note,
+          isSelected: selected?.audioOnly ?? false,
+          onTap: () => onChanged(const OfflineChoice.audio()),
+        ),
         _PickerChip(
           label: l.offline_quality_none,
           icon: Icons.cloud_off_outlined,
@@ -48,14 +136,14 @@ class OfflineQualityChips extends StatelessWidget {
 /// キャンセル (バリア外タップ等) 時は "canceled" を意味する Result を返す。
 enum QualitySheetResult { picked1080, picked720, picked480, picked360, picked240, none, canceled }
 
-Future<int?> showOfflineQualitySheet(
+Future<OfflineChoice?> showOfflineQualitySheet(
   BuildContext context, {
-  int? initial,
+  OfflineChoice? initial,
   bool showNoneOption = true,
   Set<int>? availableHeights,
 }) async {
   final l = L10n.of(context)!;
-  return await showModalBottomSheet<int?>(
+  return await showModalBottomSheet<OfflineChoice?>(
     context: context,
     showDragHandle: true,
     builder: (bctx) {
@@ -86,11 +174,19 @@ Future<int?> showOfflineQualitySheet(
                     _PickerChip(
                       label: '${h}p',
                       icon: Icons.high_quality,
-                      isSelected: initial == h,
+                      isSelected: initial?.height == h,
                       enabled: availableHeights == null ||
                           availableHeights.contains(h),
-                      onTap: () => Navigator.pop(bctx, h),
+                      onTap: () =>
+                          Navigator.pop(bctx, OfflineChoice.height(h)),
                     ),
+                  _PickerChip(
+                    label: l.offline_quality_audio_only,
+                    icon: Icons.music_note,
+                    isSelected: initial?.audioOnly ?? false,
+                    onTap: () =>
+                        Navigator.pop(bctx, const OfflineChoice.audio()),
+                  ),
                   if (showNoneOption)
                     _PickerChip(
                       label: l.offline_quality_none,

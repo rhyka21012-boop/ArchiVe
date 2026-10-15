@@ -50,9 +50,14 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
+            // ffmpeg のネイティブライブラリが ABI ごとに 40〜55MB あり、
+            // 全 ABI を同梱すると配信物が無駄に大きくなる。
+            // x86 系は実機にはほぼ配信されない (エミュレータと一部 Chromebook) ため
+            // release からは外す。debug は全 ABI のままなので開発に影響しない。
+            ndk {
+                abiFilters += setOf("armeabi-v7a", "arm64-v8a")
+            }
         }
     }
 }

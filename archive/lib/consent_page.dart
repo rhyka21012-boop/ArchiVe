@@ -173,6 +173,15 @@ class _ConsentPageState extends State<ConsentPage> {
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
+                    // 他のダイアログの確定ボタンと配色を揃える
+                    // (背景 primary / 前景 白 / elevation 0 / 角丸 12)
+                    backgroundColor: cs.primary,
+                    foregroundColor: Colors.white,
+                    // 未チェック時は無効状態になるため、その配色も明示する
+                    disabledBackgroundColor: cs.primary.withValues(alpha: 0.3),
+                    disabledForegroundColor:
+                        Colors.white.withValues(alpha: 0.7),
+                    elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

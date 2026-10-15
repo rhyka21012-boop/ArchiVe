@@ -64,6 +64,27 @@ import google_mobile_ads
                     result(FlutterMethodNotImplemented)
                 }
             }
+
+            // 通知設定画面を開く導線 (Android と同じチャネル名・メソッド名)。
+            // iOS では個別の通知設定へ直接遷移できないため、アプリの設定画面を開く。
+            let appSettingsChannel = FlutterMethodChannel(
+                name: "com.walkinggoblins.archive/app_settings",
+                binaryMessenger: controller.binaryMessenger
+            )
+            appSettingsChannel.setMethodCallHandler { call, result in
+                if call.method == "openNotificationSettings" {
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                        result(false)
+                        return
+                    }
+                    UIApplication.shared.open(url, options: [:]) { opened in
+                        result(opened)
+                    }
+                } else {
+                    result(FlutterMethodNotImplemented)
+                }
+            }
+
         }
 
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)

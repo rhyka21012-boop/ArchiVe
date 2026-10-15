@@ -1,12 +1,54 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import 'l10n/app_localizations.dart';
+import 'offline_video_path.dart';
+
 /// アイテムがローカル動画を持つか判定
 bool hasLocalVideoFor(Map<String, dynamic> item) {
-  final p = item['localVideoPath'] as String?;
-  return p != null && p.isNotEmpty && File(p).existsSync();
+  return OfflineVideoPaths.exists(item['localVideoPath']);
+}
+
+/// 音声アイテムとして保存されたか判定
+bool isAudioOnlyItem(Map<String, dynamic> item) => item['isAudioOnly'] == true;
+
+/// サムネイル上などに重ねる「音声のみ」バッジ。
+/// サムネイル自体は従来どおり表示したうえで、種別だけを示す。
+class AudioOnlyBadge extends StatelessWidget {
+  const AudioOnlyBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) => const _AudioOnlyBadge();
+}
+
+class _AudioOnlyBadge extends StatelessWidget {
+  const _AudioOnlyBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.music_note, size: 11, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            L10n.of(context)!.offline_quality_audio_only,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// サムネ上端に表示する「前回中断位置」のシークバー。
@@ -61,6 +103,7 @@ class OfflineInlineChips extends StatelessWidget {
     final size = item['localVideoSize'] as int?;
     final url = item['url']?.toString() ?? '';
     final host = Uri.tryParse(url)?.host;
+    final audioOnly = isAudioOnlyItem(item);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -69,6 +112,11 @@ class OfflineInlineChips extends StatelessWidget {
           size: size,
           overlayStyle: overlayStyle,
         ),
+        // 音声アイテムは一目で判るようにバッジを出す
+        if (audioOnly) ...[
+          const SizedBox(width: 4),
+          const _AudioOnlyBadge(),
+        ],
         if (showDownloadedIcon) ...[
           const SizedBox(width: 4),
           Container(
@@ -79,8 +127,8 @@ class OfflineInlineChips extends StatelessWidget {
                   : Colors.green.withValues(alpha: 0.85),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.download_done,
+            child: Icon(
+              audioOnly ? Icons.headphones : Icons.download_done,
               size: 12,
               color: Colors.white,
             ),

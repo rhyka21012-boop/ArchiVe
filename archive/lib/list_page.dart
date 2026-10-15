@@ -15,7 +15,10 @@ import 'random_image_reload_provider.dart';
 import 'list_reload_provider.dart';
 import 'rating_label_provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'theme_provider.dart';
+import 'home_widgets.dart';
+import 'detail_page.dart';
 
 // 一覧画面の外側余白
 const double _kListPageHPadding = 20.0;
@@ -461,42 +464,8 @@ class ListPageState extends ConsumerState<ListPage>
             L10n.of(context)!.list_page_item_count(userListCount),
             style: TextStyle(fontSize: 12, color: subColor),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text('・', style: TextStyle(fontSize: 12, color: subColor)),
-          ),
-          InkWell(
-            borderRadius: BorderRadius.circular(6),
-            onTap: () {
-              setState(() {
-                _reorderMode = !_reorderMode;
-              });
-              if (_reorderMode) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content:
-                        Text(L10n.of(context)!.list_page_reorder_hint),
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Text(
-                _reorderMode
-                    ? L10n.of(context)!.list_page_reorder_done
-                    : L10n.of(context)!.list_page_reorder,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
+          // カスタマイズの入口と完了操作は FAB に集約したため、
+          // ここにはアイコンを置かない。
         ],
       ),
     );
@@ -699,6 +668,8 @@ class ListPageState extends ConsumerState<ListPage>
           const SizedBox(height: 12),
           _buildRatingCards(colorScheme, isDark),
           const SizedBox(height: 20),
+          // ホームに配置したウィジェット群 (並びは home_widgets_v1 に保存)
+          HomeWidgetsSection(editing: _reorderMode),
           _buildSectionHeader(colorScheme, isDark),
           const SizedBox(height: 8),
           _reorderMode
@@ -747,7 +718,26 @@ class ListPageState extends ConsumerState<ListPage>
           ),
           floatingActionButton: ListPageFAB(
             fabKey: fabKey,
-            onPressed: _showAddListModal,
+            reorderMode: _reorderMode,
+            onAddList: _showAddListModal,
+            // 新規アイテムの作成画面。listName を渡さないと DetailPage 側が
+            // 「選択なし」へ退避するので、ホームからはあえて指定しない。
+            onAddItem: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DetailPage()),
+            ),
+            onEnterCustomize: () {
+              setState(() => _reorderMode = true);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(L10n.of(context)!.list_page_reorder_hint),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            onAddWidget: () => showAddHomeWidgetSheet(context),
+            onDone: () => setState(() => _reorderMode = false),
           ),
           floatingActionButtonLocation: CustomFABLocation(),
         ),
@@ -1172,26 +1162,99 @@ class _AnimatedDelayState extends State<AnimatedDelay>
 }
 
 //FAB専用クラス
+/// ホームタブの FAB。
+///
+/// 通常時はスピードダイアルで「リストを追加」「ホームをカスタマイズ」を出し、
+/// カスタマイズ中は「ウィジェットを追加」と「完了」の 2 つを横に並べる。
 class ListPageFAB extends ConsumerWidget {
-  final VoidCallback onPressed;
   final GlobalKey fabKey;
+  final bool reorderMode;
+  final VoidCallback onAddList;
+  final VoidCallback onEnterCustomize;
+  final VoidCallback onAddItem;
+  final VoidCallback onAddWidget;
+  final VoidCallback onDone;
 
-  const ListPageFAB({super.key, required this.onPressed, required this.fabKey});
+  const ListPageFAB({
+    super.key,
+    required this.fabKey,
+    required this.reorderMode,
+    required this.onAddList,
+    required this.onEnterCustomize,
+    required this.onAddItem,
+    required this.onAddWidget,
+    required this.onDone,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tabIndex = ref.watch(listTabIndexProvider);
+    final l = L10n.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
 
     return Visibility(
       visible: tabIndex == 0,
       maintainState: true,
       maintainAnimation: true,
       maintainSize: true,
-      child: FloatingActionButton(
-        key: fabKey,
-        onPressed: onPressed,
-        child: const Icon(Icons.playlist_add, color: Colors.white),
-      ),
+      child: reorderMode
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 同一画面に FAB を並べるため heroTag を必ず分ける
+                // (既定値のままだと Hero タグが衝突して実行時例外になる)
+                // 追加はグレー、完了はプライマリーカラーで主従を付ける
+                FloatingActionButton.extended(
+                  heroTag: 'home_fab_add_widget',
+                  backgroundColor:
+                      isDark ? Colors.grey.shade700 : Colors.grey.shade600,
+                  foregroundColor: Colors.white,
+                  onPressed: onAddWidget,
+                  icon: const Icon(Icons.add),
+                  label: Text(l.home_widget_add_title),
+                ),
+                const SizedBox(width: 12),
+                FloatingActionButton(
+                  heroTag: 'home_fab_done',
+                  backgroundColor: cs.primary,
+                  onPressed: onDone,
+                  child: const Icon(Icons.check, color: Colors.white),
+                ),
+              ],
+            )
+          // チュートリアルが fabKey の位置を実測するため、
+          // 通常モードのボタンにキーを付けたままにする。
+          : SpeedDial(
+              key: fabKey,
+              heroTag: 'home_fab_main',
+              icon: Icons.add,
+              activeIcon: Icons.close,
+              foregroundColor: Colors.white,
+              overlayOpacity: 0.3,
+              spacing: 8,
+              // children[0] が FAB に最も近い (= 最下段) に描かれる。
+              // パッケージ側が上方向展開時に children を反転して Column に
+              // 渡すため、この順序がそのまま「下から上」になる。
+              children: [
+                // 既存の「アイテムを追加」文言を流用 (9 言語に揃っている)
+                SpeedDialChild(
+                  child: const Icon(Icons.bookmark_add_outlined),
+                  label: l.ranking_page_add_item,
+                  onTap: onAddItem,
+                ),
+                SpeedDialChild(
+                  child: const Icon(Icons.playlist_add),
+                  label: l.list_page_add_list,
+                  onTap: onAddList,
+                ),
+                SpeedDialChild(
+                  child: const Icon(Icons.tune),
+                  label: l.list_page_customize,
+                  onTap: onEnterCustomize,
+                ),
+              ],
+            ),
     );
   }
 }
