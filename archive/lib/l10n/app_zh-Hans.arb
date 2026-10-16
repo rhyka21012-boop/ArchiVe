@@ -593,5 +593,8 @@
   "settings_page_tag_name_n": "标签{n}",
   "settings_page_display_names_saved": "已保存显示名称",
   "detail_page_tag_multi": "{name} (# 多个)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "移除",
+  "pro_detail_purchase_complete": "Pro 购买成功！",
+  "pro_detail_restart_message": "Pro 功能已启用。\n应用将重新启动。"
 }

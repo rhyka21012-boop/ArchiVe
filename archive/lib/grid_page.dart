@@ -677,7 +677,14 @@ class GridPageState extends ConsumerState<GridPage> {
                                         if (_hasLocalVideo(item))
                                           const SizedBox(width: 4),
                                         GestureDetector(
-                                          onTap: () => openPlayer(item['url']),
+                                          // 選択モード中は無効。
+                                          // onTap を null にすると認識器が
+                                          // 付かないため、タップは親に抜けて
+                                          // 選択の切り替えになる。
+                                          onTap: _isSelectionMode
+                                              ? null
+                                              : () =>
+                                                  openPlayer(item['url']),
                                           child: Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: const BoxDecoration(
@@ -775,7 +782,10 @@ class GridPageState extends ConsumerState<GridPage> {
                                 if (_hasLocalVideo(item))
                                   const SizedBox(width: 4),
                                 GestureDetector(
-                                  onTap: () => openPlayer(item['url']),
+                                  // 選択モード中は無効 (タップは親の選択へ抜ける)
+                                  onTap: _isSelectionMode
+                                      ? null
+                                      : () => openPlayer(item['url']),
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: const BoxDecoration(
@@ -1467,7 +1477,10 @@ class GridPageState extends ConsumerState<GridPage> {
                   child: Image.asset(iconPath, width: 22, height: 22),
                 ),
               GestureDetector(
-                onTap: () => openPlayer(item['url']),
+                // 選択モード中は無効 (タップは親の選択へ抜ける)
+                onTap: _isSelectionMode
+                    ? null
+                    : () => openPlayer(item['url']),
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(

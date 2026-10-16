@@ -620,5 +620,8 @@
   "detail_page_tag_multi": "{name} (#で複数入力)",
   "@detail_page_tag_multi": {"placeholders": {"name": {"type": "String"}}},
   "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
-  "@detail_page_tag_placeholder": {"placeholders": {"name": {"type": "String"}}}
+  "@detail_page_tag_placeholder": {"placeholders": {"name": {"type": "String"}}},
+  "home_widget_remove": "取り外す",
+  "pro_detail_purchase_complete": "Pro を購入しました！",
+  "pro_detail_restart_message": "Pro の機能が有効になりました。\nアプリを再起動します。"
 }

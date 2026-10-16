@@ -151,7 +151,7 @@ class _PurchasePageState extends State<PurchasePage>
         if (!mounted) return;
         showPurchaseSuccessConfetti(context,
             isPro: tier == PurchaseTier.pro);
-        await _completeDialog(colorScheme);
+        await _completeDialog(colorScheme, tier == PurchaseTier.pro);
         if (mounted) AppRestart.restart(context);
       }
     } catch (e) {
@@ -166,14 +166,24 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  Future<void> _completeDialog(ColorScheme colorScheme) async {
+  /// 購入 / 復元の完了ダイアログ。
+  /// この画面は Pro と Premium の両方を扱うため、文言を切り替える。
+  /// 復元で両方が有効なときは上位の Pro を表示する (紙吹雪の判定と揃える)。
+  Future<void> _completeDialog(ColorScheme colorScheme, bool isPro) async {
+    final l = L10n.of(context)!;
+    final title = isPro
+        ? l.pro_detail_purchase_complete
+        : l.premium_detail_purchase_complete;
+    final body = isPro
+        ? l.pro_detail_restart_message
+        : l.premium_detail_restart_message;
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         backgroundColor: colorScheme.secondary,
-        title: Text(L10n.of(context)!.premium_detail_purchase_complete),
-        content: Text(L10n.of(context)!.premium_detail_restart_message),
+        title: Text(title),
+        content: Text(body),
         actions: [
           TextButton(
             style: ButtonStyle(
@@ -206,7 +216,7 @@ class _PurchasePageState extends State<PurchasePage>
         final restoredPro =
             info.entitlements.all['Pro Plan']?.isActive ?? false;
         showPurchaseSuccessConfetti(context, isPro: restoredPro);
-        await _completeDialog(colorScheme);
+        await _completeDialog(colorScheme, restoredPro);
         if (mounted) AppRestart.restart(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

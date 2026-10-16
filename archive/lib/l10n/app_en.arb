@@ -596,5 +596,8 @@
   "settings_page_tag_name_n": "Tag {n}",
   "settings_page_display_names_saved": "Display names saved",
   "detail_page_tag_multi": "{name} (# multiple)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "Remove",
+  "pro_detail_purchase_complete": "Pro purchased successfully!",
+  "pro_detail_restart_message": "Pro features have been activated.\nThe app will restart."
 }

@@ -72,16 +72,32 @@ class DownloadAdService {
     if (current > 0) await prefs.setInt(_startKey, current - 1);
   }
 
-  Future<void> _maybeShow(BuildContext context, String counterKey) async {
+  /// 最後に確認できた課金状態。
+  ///
+  /// 加入判定は毎回 RevenueCat に問い合わせており、失敗することがある
+  /// (圏外、初回取得前など)。以前は失敗時に広告を表示していたため、
+  /// 広告を消すために課金した利用者に広告が出てしまっていた。
+  /// 一度でも課金が確認できていれば、判定できない間はそれを信じる。
+  static const _paidCacheKey = 'last_known_paid';
+
+  /// 課金ユーザーかどうか。判定できなければ最後に確認できた値を使う。
+  Future<bool> _isPaid() async {
+    final prefs = await SharedPreferences.getInstance();
     try {
       final info = await Purchases.getCustomerInfo();
       final active = info.entitlements.active;
       final isPaid = active['Premium Plan']?.isActive == true ||
           active['Pro Plan']?.isActive == true;
-      if (isPaid) return;
+      await prefs.setBool(_paidCacheKey, isPaid);
+      return isPaid;
     } catch (_) {
-      // 判定失敗時は安全側で広告表示可
+      // 未確認の利用者は false (既定) になるため、無課金に広告は出続ける
+      return prefs.getBool(_paidCacheKey) ?? false;
     }
+  }
+
+  Future<void> _maybeShow(BuildContext context, String counterKey) async {
+    if (await _isPaid()) return;
 
     final prefs = await SharedPreferences.getInstance();
     final count = (prefs.getInt(counterKey) ?? 0) + 1;

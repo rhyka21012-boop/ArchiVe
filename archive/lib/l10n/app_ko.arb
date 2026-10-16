@@ -593,5 +593,8 @@
   "settings_page_tag_name_n": "태그 {n}",
   "settings_page_display_names_saved": "표시 이름을 저장했습니다",
   "detail_page_tag_multi": "{name} (# 여러 개)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "제거",
+  "pro_detail_purchase_complete": "Pro 구매가 완료되었습니다!",
+  "pro_detail_restart_message": "Pro 기능이 활성화되었습니다.\n앱이 재시작됩니다."
 }

@@ -48,6 +48,12 @@ class DownloadTask {
   /// 同じ理由で無限に再投入しないよう上限判定に使う。
   final int autoRetries;
 
+  /// 開始時の広告カウントから除外するか。
+  ///
+  /// クラウド復元後の一括再ダウンロードで使う。利用者の操作は「復元」の
+  /// 1 回なのに、件数ぶんカウントが進んで途中で広告が何度も挟まるのを防ぐ。
+  final bool suppressStartAd;
+
   const DownloadTask({
     required this.id,
     required this.url,
@@ -63,6 +69,7 @@ class DownloadTask {
     this.localPath,
     this.wasFromNewSave = false,
     this.autoRetries = 0,
+    this.suppressStartAd = false,
   });
 
   DownloadTask copyWith({
@@ -88,6 +95,7 @@ class DownloadTask {
       localPath: localPath ?? this.localPath,
       wasFromNewSave: wasFromNewSave,
       autoRetries: autoRetries,
+      suppressStartAd: suppressStartAd,
     );
   }
 }
@@ -170,6 +178,7 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
     int? preferredHeight,
     bool audioOnly = false,
     bool wasFromNewSave = false,
+    bool suppressStartAd = false,
   }) async {
     // 既に active なタスクと重複する場合は開始しない。
     // itemUrl だけで見ていると、同じページを別アイテムとして保存した場合に
@@ -192,6 +201,7 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
       audioOnly: audioOnly,
       status: DownloadStatus.queued,
       wasFromNewSave: wasFromNewSave,
+      suppressStartAd: suppressStartAd,
     );
     state = [...state, task];
     // 別マイクロタスクで実行 (呼び出し元は即帰る)
@@ -275,10 +285,12 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
     // metaData に載せた付帯情報を復元する
     var itemUrl = '';
     var audioOnly = false;
+    int? preferredHeight;
     try {
       final meta = jsonDecode(update.task.metaData) as Map<String, dynamic>;
       itemUrl = meta['itemUrl']?.toString() ?? '';
       audioOnly = meta['audioOnly'] == true;
+      preferredHeight = (meta['preferredHeight'] as num?)?.toInt();
     } catch (_) {}
 
     // 音声のみ指定の場合、ここで映像トラックを捨てた音声ファイルへ変換する。
@@ -312,6 +324,7 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
         localPath: finalPath,
         size: size,
         audioOnly: audioOnly,
+        preferredHeight: preferredHeight,
       );
     }
     _updateTask(id,
@@ -565,6 +578,7 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
       wasFromNewSave: old.wasFromNewSave,
       status: DownloadStatus.queued,
       autoRetries: old.autoRetries + 1,
+      suppressStartAd: old.suppressStartAd,
     );
     state = [
       for (final t in state)
@@ -696,6 +710,7 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
     required String localPath,
     required int size,
     bool audioOnly = false,
+    int? preferredHeight,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList('saved_metadata') ?? [];
@@ -716,6 +731,13 @@ class DownloadQueueNotifier extends StateNotifier<List<DownloadTask>> {
             map['isAudioOnly'] = true;
           } else {
             map.remove('isAudioOnly');
+          }
+          // 選んだ画質。クラウド復元後の再ダウンロードで同じ画質を使う。
+          // 無指定 (最高画質) のときは残さない。
+          if (preferredHeight != null) {
+            map['offlineHeight'] = preferredHeight;
+          } else {
+            map.remove('offlineHeight');
           }
         }
         return jsonEncode(map);

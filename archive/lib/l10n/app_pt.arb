@@ -593,5 +593,8 @@
   "settings_page_tag_name_n": "Etiqueta {n}",
   "settings_page_display_names_saved": "Nomes guardados",
   "detail_page_tag_multi": "{name} (# vários)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "Remover",
+  "pro_detail_purchase_complete": "Pro adquirido com sucesso!",
+  "pro_detail_restart_message": "As funcionalidades Pro foram ativadas.\nA aplicação será reiniciada."
 }

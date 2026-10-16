@@ -1772,6 +1772,15 @@ class L10nZh extends L10n {
   String detail_page_tag_placeholder(String name) {
     return '#${name}1 #${name}2 ...';
   }
+
+  @override
+  String get home_widget_remove => '移除';
+
+  @override
+  String get pro_detail_purchase_complete => 'Pro 购买成功！';
+
+  @override
+  String get pro_detail_restart_message => 'Pro 功能已启用。\n应用将重新启动。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -3542,4 +3551,13 @@ class L10nZhHans extends L10nZh {
   String detail_page_tag_placeholder(String name) {
     return '#${name}1 #${name}2 ...';
   }
+
+  @override
+  String get home_widget_remove => '移除';
+
+  @override
+  String get pro_detail_purchase_complete => 'Pro 购买成功！';
+
+  @override
+  String get pro_detail_restart_message => 'Pro 功能已启用。\n应用将重新启动。';
 }

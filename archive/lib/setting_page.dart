@@ -28,6 +28,8 @@ import 'package:in_app_review/in_app_review.dart';
 //import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ad_badge_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'download_queue_provider.dart';
+import 'rating_label_provider.dart';
 import 'display_names_page.dart';
 import 'tutorial_page.dart';
 
@@ -110,7 +112,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       action: () async {
         final r = await SyncService.uploadAll();
         return 'バックアップ完了\n'
-            'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / ランキング: ${r['rankings']}件';
+            'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / '
+            'ランキング: ${r['rankings']}件 / 設定: ${r['preferences']}件';
       },
     );
   }
@@ -130,18 +133,67 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     if (!mounted) return;
     final ok = await _showConfirmDialog(
       title: 'バックアップから復元',
-      content: '現在のローカルのデータは上書きされます。続行しますか？',
+      content: '作品・リスト・ランキング・評価名/タグ名・保存枠が'
+          '上書きされます。続行しますか？',
     );
     if (ok != true || !mounted) return;
     await _runWithProgress(
       label: '復元中...',
       action: () async {
         final r = await SyncService.downloadAll();
+        // 評価名・タグ名は provider がメモリに持っているため、
+        // prefs を書き換えただけでは画面に反映されない。
+        await ref.read(ratingLabelsProvider.notifier).load();
+        await ref.read(tagLabelsProvider.notifier).load();
         return '復元完了\n'
-            'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / ランキング: ${r['rankings']}件';
+            'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / '
+            'ランキング: ${r['rankings']}件 / 設定: ${r['preferences']}件';
       },
     );
     if (mounted) _countSavedItems();
+    if (mounted) await _offerOfflineRedownload();
+  }
+
+  /// 復元後、オフライン動画の再ダウンロードを促す。
+  ///
+  /// 無言で始めない。件数によっては数GBの通信になるため、
+  /// 従量制回線で意図せず走ると取り返しがつかない。
+  Future<void> _offerOfflineRedownload() async {
+    final pending = await SyncService.pendingOfflineRestores();
+    if (!mounted || pending.isEmpty) return;
+
+    final ok = await _showConfirmDialog(
+      title: 'オフライン動画の再ダウンロード',
+      content: 'ダウンロード済みだった ${pending.length} 件を'
+          '再ダウンロードしますか？\n'
+          '(通信量にご注意ください)',
+    );
+    if (ok != true || !mounted) return;
+
+    final queue = ref.read(downloadQueueProvider.notifier);
+    final prefs = await SharedPreferences.getInstance();
+    // 作品ごとの画質が無い場合 (画質を記録する前に保存した分) は、
+    // 直近に選んだ画質を使う。それも無ければ解決側の最良を使う。
+    final fallbackHeight = prefs.getInt('last_offline_height');
+    for (final item in pending) {
+      final url = (item['url'] as String?)?.trim() ?? '';
+      if (url.isEmpty) continue;
+      final title = item['title']?.toString() ?? url;
+      await queue.start(
+        url: url,
+        title: title.isEmpty ? url : title,
+        itemUrl: url,
+        preferredHeight:
+            (item['offlineHeight'] as num?)?.toInt() ?? fallbackHeight,
+        audioOnly: item['isAudioOnly'] == true,
+        // 件数ぶん広告カウントを進めない (操作は「復元」の 1 回)
+        suppressStartAd: true,
+      );
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${pending.length} 件をダウンロードキューに追加しました')),
+    );
   }
 
   Future<bool?> _showConfirmDialog({
@@ -365,7 +417,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         action: () async {
           final r = await SyncService.uploadAll();
           return 'バックアップ完了\n'
-              'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / ランキング: ${r['rankings']}件';
+              'アイテム: ${r['items']}件 / リスト: ${r['lists']}件 / '
+              'ランキング: ${r['rankings']}件 / 設定: ${r['preferences']}件';
         },
       );
     });

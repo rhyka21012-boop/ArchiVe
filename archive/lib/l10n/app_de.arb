@@ -593,5 +593,8 @@
   "settings_page_tag_name_n": "Tag {n}",
   "settings_page_display_names_saved": "Anzeigenamen gespeichert",
   "detail_page_tag_multi": "{name} (# mehrere)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "Entfernen",
+  "pro_detail_purchase_complete": "Pro erfolgreich gekauft!",
+  "pro_detail_restart_message": "Pro-Funktionen wurden aktiviert.\nDie App wird neu gestartet."
 }

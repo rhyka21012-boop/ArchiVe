@@ -46,11 +46,19 @@ const double _kRowHeight = 108;
 int homeGridColumns(double maxWidth) =>
     (maxWidth / _kTargetCellWidth).floor().clamp(3, 12);
 
-/// 各アイテムの配置先 (列, 行) を左上から詰めて決める。
+/// 保存された座標を尊重して各アイテムの配置先 (列, 行) を決める。
 ///
-/// Wrap では高さの違う部品が並ぶと行の高さが最大に揃い、低い方の下に
-/// 空きができていた。占有マスを持って実際に詰めることで隙間をなくす。
-List<(int, int)> packHomeWidgetSlots(List<(int, int)> sizes, int cols) {
+/// 端末幅で列数が変わる (スマホ 3 列 / iPad は最大 12 列) ため、保存した座標が
+/// はみ出したり他と重なったりすることがある。保存値をそのまま信じると描画が
+/// 壊れるので、置ける場所は保存値のまま使い、置けないものだけ空きへ寄せる。
+///
+/// 座標を持たないアイテム (座標を導入する前の保存値、追加直後) も
+/// 同じ経路で空きへ詰める。
+List<(int, int)> resolveHomeWidgetSlots(
+  List<HomeWidgetItem> items,
+  List<(int, int)> sizes,
+  int cols,
+) {
   final occupied = <List<bool>>[];
   void ensureRows(int upto) {
     while (occupied.length <= upto) {
@@ -59,6 +67,8 @@ List<(int, int)> packHomeWidgetSlots(List<(int, int)> sizes, int cols) {
   }
 
   bool isFree(int c, int r, int w, int h) {
+    if (c < 0 || r < 0 || c + w > cols) return false;
+    ensureRows(r + h - 1);
     for (var y = r; y < r + h; y++) {
       for (var x = c; x < c + w; x++) {
         if (occupied[y][x]) return false;
@@ -67,8 +77,33 @@ List<(int, int)> packHomeWidgetSlots(List<(int, int)> sizes, int cols) {
     return true;
   }
 
-  final slots = <(int, int)>[];
-  for (final (rawW, rawH) in sizes) {
+  void occupy(int c, int r, int w, int h) {
+    ensureRows(r + h - 1);
+    for (var y = r; y < r + h; y++) {
+      for (var x = c; x < c + w; x++) {
+        occupied[y][x] = true;
+      }
+    }
+  }
+
+  final slots = List<(int, int)?>.filled(items.length, null);
+
+  // 1 周目: 保存された座標に置けるものを先に確定させる。
+  // 後から詰めるアイテムに場所を奪われないよう、必ずこちらを先に処理する。
+  for (var i = 0; i < items.length; i++) {
+    final c = items[i].col;
+    final r = items[i].row;
+    if (c == null || r == null) continue;
+    final (w, h) = sizes[i];
+    if (!isFree(c, r, w, h)) continue;
+    occupy(c, r, w, h);
+    slots[i] = (c, r);
+  }
+
+  // 2 周目: 座標が無いもの / 座標が使えなかったものを左上から空きへ詰める
+  for (var i = 0; i < items.length; i++) {
+    if (slots[i] != null) continue;
+    final (rawW, rawH) = sizes[i];
     final w = rawW.clamp(1, cols);
     final h = rawH < 1 ? 1 : rawH;
     var placed = false;
@@ -76,18 +111,15 @@ List<(int, int)> packHomeWidgetSlots(List<(int, int)> sizes, int cols) {
       ensureRows(r + h - 1);
       for (var c = 0; c + w <= cols; c++) {
         if (!isFree(c, r, w, h)) continue;
-        for (var y = r; y < r + h; y++) {
-          for (var x = c; x < c + w; x++) {
-            occupied[y][x] = true;
-          }
-        }
-        slots.add((c, r));
+        occupy(c, r, w, h);
+        slots[i] = (c, r);
         placed = true;
         break;
       }
     }
   }
-  return slots;
+
+  return [for (final slot in slots) slot!];
 }
 
 /// 配置結果 [slots] を収めるのに必要な行数
@@ -111,10 +143,27 @@ class HomeWidgetItem {
   final int span;
   final int rows;
 
-  const HomeWidgetItem(this.kind, {this.span = 2, this.rows = 1});
+  /// 置かれた位置 (列, 行)。
+  /// null は位置未指定で、空いている先頭へ自動で詰める
+  /// (座標を導入する前の保存値、および追加直後がこれにあたる)。
+  final int? col;
+  final int? row;
 
-  Map<String, dynamic> toJson() =>
-      {'kind': kind.name, 'w': span, 'h': rows};
+  const HomeWidgetItem(
+    this.kind, {
+    this.span = 2,
+    this.rows = 1,
+    this.col,
+    this.row,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'kind': kind.name,
+        'w': span,
+        'h': rows,
+        if (col != null) 'x': col,
+        if (row != null) 'y': row,
+      };
 
   /// 保存値から復元する。
   /// 旧形式 (種類名だけの文字列) も受け付ける。
@@ -135,10 +184,16 @@ class HomeWidgetItem {
         final w = (decoded['w'] as num?)?.toInt() ?? 2;
         // 'h' は高さを導入する前の保存値には無いので 1 とみなす
         final h = (decoded['h'] as num?)?.toInt() ?? 1;
+        // 'x'/'y' は自由配置を導入する前の保存値には無い。
+        // その場合は null のまま = 自動で詰める (従来と同じ見た目になる)。
+        final x = (decoded['x'] as num?)?.toInt();
+        final y = (decoded['y'] as num?)?.toInt();
         return HomeWidgetItem(
           kind,
           span: w < 1 ? 1 : w,
           rows: h < 1 ? 1 : h,
+          col: x == null || x < 0 ? null : x,
+          row: y == null || y < 0 ? null : y,
         );
       }
     } catch (_) {
@@ -193,14 +248,25 @@ class HomeWidgetsNotifier extends StateNotifier<List<HomeWidgetItem>> {
     await _save();
   }
 
-  /// 並び順を入れ替える (カスタマイズモードのドラッグ用)
-  Future<void> move(int from, int to) async {
-    if (from == to) return;
-    if (from < 0 || from >= state.length) return;
-    if (to < 0 || to >= state.length) return;
-    final next = [...state];
-    next.insert(to, next.removeAt(from));
-    state = next;
+  /// 位置を書き換える (カスタマイズモードのドラッグ用)。
+  ///
+  /// 入れ替えでは 2 件を同時に動かすため、まとめて受け取る。
+  /// 1 件ずつ呼ぶと中間状態がいったん重なって保存されてしまう。
+  Future<void> setPositions(Map<HomeWidgetKind, (int, int)> positions) async {
+    if (positions.isEmpty) return;
+    state = [
+      for (final e in state)
+        if (positions.containsKey(e.kind))
+          HomeWidgetItem(
+            e.kind,
+            span: e.span,
+            rows: e.rows,
+            col: positions[e.kind]!.$1,
+            row: positions[e.kind]!.$2,
+          )
+        else
+          e,
+    ];
     await _save();
   }
 
@@ -213,7 +279,8 @@ class HomeWidgetsNotifier extends StateNotifier<List<HomeWidgetItem>> {
     state = [
       for (final e in state)
         if (e.kind == kind)
-          HomeWidgetItem(e.kind, span: span, rows: rows)
+          // 位置は保つ (サイズ変更で置き場所が飛ばないように)
+          HomeWidgetItem(e.kind, span: span, rows: rows, col: e.col, row: e.row)
         else
           e,
     ];
@@ -263,9 +330,9 @@ List<(int, int)> allowedSizesFor(HomeWidgetKind kind, int cols) {
     case HomeWidgetKind.continueWatching:
     case HomeWidgetKind.randomPick:
       return const [(1, 1), (2, 2)];
-    // 1×1 は全体のみ、1×2 (縦長) はタスクごとの一覧を出す
+    // 1×1 は全体のみ、2×1 (横長) はタスクごとの一覧を出す
     case HomeWidgetKind.downloadProgress:
-      return const [(1, 1), (1, 2)];
+      return const [(1, 1), (2, 1)];
     default:
       // 横スクロールで並べる種類は幅だけ選べる (高さは 1 固定)。
       //
@@ -292,6 +359,18 @@ List<(int, int)> allowedSizesFor(HomeWidgetKind kind, int cols) {
   for (final size in allowed) {
     if (size.$2 != item.rows) continue;
     final diff = (size.$1 - item.span).abs();
+    if (diff < best) {
+      best = diff;
+      nearest = size;
+    }
+  }
+  if (nearest != null) return nearest;
+
+  // 高さが一致する候補が無い場合 (縦長をやめて横長にした等) は、
+  // 占有マス数が最も近いものへ寄せる。先頭に落とすと最小に縮んでしまう。
+  final area = item.span * item.rows;
+  for (final size in allowed) {
+    final diff = (size.$1 * size.$2 - area).abs();
     if (diff < best) {
       best = diff;
       nearest = size;
@@ -334,33 +413,121 @@ class HomeWidgetsSection extends ConsumerStatefulWidget {
 /// GridView はセルごとの span を扱えず、reorderable_grid_view も均一セル
 /// 前提なので、占有マスで実際に詰めてから Stack + AnimatedPositioned で描く。
 /// これで隙間が出ず、並べ替え時も各カードが滑らかに移動する。
+/// ホーム画面に並ぶウィジェット群。
+///
+/// 幅と高さをそれぞれグリッド何個分かで指定し、置いた座標も保持する。
+/// GridView はセルごとの span を扱えず、reorderable_grid_view も均一セル
+/// 前提なので、占有マスを自分で持って Stack + AnimatedPositioned で描く。
 class _HomeWidgetsSectionState extends ConsumerState<HomeWidgetsSection> {
-  /// 掴んでいるカードの *現在の* 位置。
-  ///
-  /// Draggable の data はドラッグ開始時に固定されるため、途中で並べ替えると
-  /// 古い添字のままになる。2 マス以上動かしたときに移動元を誤るので、
-  /// 入れ替えのたびにここを更新して参照する。
-  int? _dragIndex;
+  /// グリッド本体。ドロップ位置をローカル座標へ直すために参照する。
+  final GlobalKey _gridKey = GlobalKey();
 
-  /// ドラッグ中に順序を入れ替える。
+  /// ドラッグ中の仮の位置。
   ///
-  /// ここで state を動かすと、他のカードが AnimatedPositioned で退くため
-  /// リストの並べ替えと同じ体感になる。ヒットテストの最中に provider を
-  /// 触らないよう microtask に逃がしている。
-  void _reorderDuringDrag(int to) {
-    final from = _dragIndex;
-    if (from == null || from == to) return;
-    _dragIndex = to;
-    Future.microtask(() {
-      if (!mounted) return;
-      ref.read(homeWidgetsProvider.notifier).move(from, to);
+  /// 指を動かすたびに保存すると SharedPreferences への書き込みが
+  /// 毎フレーム走るため、確定するまではここにだけ持つ。
+  /// 入れ替えでは相手の位置も入るので Map で扱う。
+  Map<HomeWidgetKind, (int, int)> _preview = {};
+
+  /// ドラッグ中は保存値ではなく仮の位置で描く
+  List<HomeWidgetItem> _applyPreview(List<HomeWidgetItem> items) {
+    if (_preview.isEmpty) return items;
+    return [
+      for (final e in items)
+        if (_preview.containsKey(e.kind))
+          HomeWidgetItem(
+            e.kind,
+            span: e.span,
+            rows: e.rows,
+            col: _preview[e.kind]!.$1,
+            row: _preview[e.kind]!.$2,
+          )
+        else
+          e,
+    ];
+  }
+
+  /// 指の位置からセルを求めて、置けるなら仮の位置を更新する。
+  void _onDragMove(
+    HomeWidgetKind kind,
+    Offset globalOffset,
+    int cols,
+    double cellW,
+    double spacing,
+  ) {
+    final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    // pointerDragAnchorStrategy によりカードの左上が指の位置にある。
+    // そのため指の位置をそのまま左上のセルとして扱える。
+    final local = box.globalToLocal(globalOffset);
+    final col = (local.dx / (cellW + spacing)).floor();
+    final row = (local.dy / (_kRowHeight + spacing)).floor();
+    _tryPlace(kind, col, row, cols);
+  }
+
+  /// [kind] を (col, row) に置こうとする。
+  ///
+  /// 空いていればそこへ。1 件とだけ重なり大きさが同じなら入れ替える。
+  /// それ以外 (複数と重なる / 大きさが違う) は動かさず、直前の位置に留める。
+  void _tryPlace(HomeWidgetKind kind, int col, int row, int cols) {
+    final items = _applyPreview(ref.read(homeWidgetsProvider));
+    final index = items.indexWhere((e) => e.kind == kind);
+    if (index < 0) return;
+
+    final sizes = [for (final item in items) resolveSize(item, cols)];
+    final (w, h) = sizes[index];
+    final targetCol = col.clamp(0, cols - w);
+    final targetRow = row < 0 ? 0 : row;
+    if (items[index].col == targetCol && items[index].row == targetRow) return;
+
+    // 現在の配置を基準に衝突を見る。
+    // 保存値が使えないものは詰めた結果が入るので、見えている位置と一致する。
+    final slots = resolveHomeWidgetSlots(items, sizes, cols);
+    final hits = <int>[];
+    for (var i = 0; i < items.length; i++) {
+      if (i == index) continue;
+      final (oc, or_) = slots[i];
+      final (ow, oh) = sizes[i];
+      final overlaps = targetCol < oc + ow &&
+          oc < targetCol + w &&
+          targetRow < or_ + oh &&
+          or_ < targetRow + h;
+      if (overlaps) hits.add(i);
+    }
+
+    if (hits.isEmpty) {
+      setState(() {
+        _preview = {..._preview, kind: (targetCol, targetRow)};
+      });
+      return;
+    }
+    if (hits.length != 1) return;
+
+    final other = hits.first;
+    if (sizes[other] != sizes[index]) return;
+    final vacated = slots[index];
+    setState(() {
+      _preview = {
+        ..._preview,
+        kind: (targetCol, targetRow),
+        items[other].kind: vacated,
+      };
     });
+  }
+
+  /// 指を離したときに一度だけ保存する
+  void _commitDrag() {
+    final pending = _preview;
+    setState(() => _preview = {});
+    if (pending.isEmpty) return;
+    ref.read(homeWidgetsProvider.notifier).setPositions(pending);
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = ref.watch(homeWidgetsProvider);
-    if (items.isEmpty) return const SizedBox.shrink();
+    final stored = ref.watch(homeWidgetsProvider);
+    if (stored.isEmpty) return const SizedBox.shrink();
+    final items = _applyPreview(stored);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -371,42 +538,82 @@ class _HomeWidgetsSectionState extends ConsumerState<HomeWidgetsSection> {
         final sizes = [
           for (final item in items) resolveSize(item, cols),
         ];
-        final slots = packHomeWidgetSlots(sizes, cols);
-        final rows = homeWidgetGridRows(slots, sizes);
+        final slots = resolveHomeWidgetSlots(items, sizes, cols);
+        // カスタマイズ中は 1 行ぶん余らせる。
+        // 余白が無いと一番下の行より先へ動かせない。
+        final rows =
+            homeWidgetGridRows(slots, sizes) + (widget.editing ? 1 : 0);
         final totalH = rows * _kRowHeight + (rows - 1) * spacing;
+
+        final grid = SizedBox(
+          key: _gridKey,
+          height: totalH < 0 ? 0 : totalH,
+          child: Stack(
+            // カードの影はセル境界の外へ描かれる。既定の hardEdge だと
+            // グリッド端の影が切れるため、はみ出しを許す。
+            clipBehavior: Clip.none,
+            children: [
+              // カスタマイズ中は置ける場所が分かるよう枠を敷く
+              if (widget.editing)
+                for (var r = 0; r < rows; r++)
+                  for (var c = 0; c < cols; c++)
+                    Positioned(
+                      left: c * (cellW + spacing),
+                      top: r * (_kRowHeight + spacing),
+                      width: cellW,
+                      height: _kRowHeight,
+                      child: _cellGuide(context),
+                    ),
+              for (var i = 0; i < items.length; i++)
+                AnimatedPositioned(
+                  // 種類で同一性を保ち、位置が変わっても同じ子が移動する
+                  key: ValueKey(items[i].kind),
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  left: slots[i].$1 * (cellW + spacing),
+                  top: slots[i].$2 * (_kRowHeight + spacing),
+                  width: sizes[i].$1 * cellW + (sizes[i].$1 - 1) * spacing,
+                  height:
+                      sizes[i].$2 * _kRowHeight + (sizes[i].$2 - 1) * spacing,
+                  child: _slot(
+                    items,
+                    i,
+                    sizes[i].$1 * cellW + (sizes[i].$1 - 1) * spacing,
+                    sizes[i].$2 * _kRowHeight + (sizes[i].$2 - 1) * spacing,
+                  ),
+                ),
+            ],
+          ),
+        );
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
-          child: SizedBox(
-            height: totalH < 0 ? 0 : totalH,
-            child: Stack(
-              // カードの影はセル境界の外へ描かれる。既定の hardEdge だと
-              // グリッド端の影が切れるため、はみ出しを許す。
-              clipBehavior: Clip.none,
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  AnimatedPositioned(
-                    // 種類で同一性を保ち、順序が変わっても同じ子が移動する
-                    key: ValueKey(items[i].kind),
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    left: slots[i].$1 * (cellW + spacing),
-                    top: slots[i].$2 * (_kRowHeight + spacing),
-                    width: sizes[i].$1 * cellW + (sizes[i].$1 - 1) * spacing,
-                    height: sizes[i].$2 * _kRowHeight +
-                        (sizes[i].$2 - 1) * spacing,
-                    child: _slot(
-                      items,
-                      i,
-                      sizes[i].$1 * cellW + (sizes[i].$1 - 1) * spacing,
-                      sizes[i].$2 * _kRowHeight + (sizes[i].$2 - 1) * spacing,
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          child: widget.editing
+              // ドロップ先はグリッド全体で 1 つ。
+              // セルごとに置くとカードに隠れて拾えない場所ができるため、
+              // 指の位置から自分でセルを割り出す。
+              ? DragTarget<HomeWidgetKind>(
+                  onWillAcceptWithDetails: (_) => true,
+                  onMove: (d) =>
+                      _onDragMove(d.data, d.offset, cols, cellW, spacing),
+                  onAcceptWithDetails: (_) => _commitDrag(),
+                  builder: (context, candidate, rejected) => grid,
+                )
+              : grid,
         );
       },
+    );
+  }
+
+  /// 置ける場所の目安となる枠 (カスタマイズ中のみ)
+  Widget _cellGuide(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: cs.onSurface.withValues(alpha: 0.03),
+        border: Border.all(color: cs.onSurface.withValues(alpha: 0.10)),
+      ),
     );
   }
 
@@ -422,26 +629,15 @@ class _HomeWidgetsSectionState extends ConsumerState<HomeWidgetsSection> {
 
     if (!widget.editing) return card(showRemove: false);
 
-    return DragTarget<int>(
-      onWillAcceptWithDetails: (d) {
-        _reorderDuringDrag(index);
-        return true;
-      },
-      builder: (context, candidate, rejected) {
-        return LongPressDraggable<int>(
-          // 受け手の型合わせ用。現在位置は _dragIndex を見る
-          data: index,
-          // 掴んだ指の位置にカードを合わせる
-          dragAnchorStrategy: pointerDragAnchorStrategy,
-          onDragStarted: () => _dragIndex = index,
-          onDragEnd: (_) => _dragIndex = null,
-          onDraggableCanceled: (_, __) => _dragIndex = null,
-          feedback: _feedback(items, index, w, h),
-          childWhenDragging: _dropPlaceholder(context),
-          // 掴んでいる間は削除バッジを出さない (誤爆を避ける)
-          child: card(showRemove: true),
-        );
-      },
+    return LongPressDraggable<HomeWidgetKind>(
+      data: item.kind,
+      // 掴んだ指の位置にカードの左上を合わせる
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      // グリッド外で離した場合もここに来る (位置は直前の仮置きで確定)
+      onDraggableCanceled: (_, __) => _commitDrag(),
+      feedback: _feedback(items, index, w, h),
+      childWhenDragging: _dropPlaceholder(context),
+      child: card(showRemove: true),
     );
   }
 
@@ -471,14 +667,14 @@ class _HomeWidgetsSectionState extends ConsumerState<HomeWidgetsSection> {
     );
   }
 
-  /// ドラッグ中、元の位置に残す枠
+  /// ドラッグ中、置き場所に残す枠
   Widget _dropPlaceholder(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: cs.onSurface.withValues(alpha: 0.04),
-        border: Border.all(color: cs.onSurface.withValues(alpha: 0.18)),
+        color: cs.primary.withValues(alpha: 0.08),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.45), width: 2),
       ),
     );
   }
@@ -510,7 +706,14 @@ class _HomeWidgetCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            child: _content(context),
+            // カスタマイズ中は中身の操作を止める。
+            // 各ウィジェットは内部にタップ処理を持つため、掴もうとして
+            // 再生やブラウザへ遷移してしまう。削除バッジは Stack の
+            // 兄弟なのでここに含めず、押せるまま残る。
+            child: IgnorePointer(
+              ignoring: editing,
+              child: _content(context),
+            ),
           ),
           if (editing)
             Positioned(
@@ -1346,8 +1549,9 @@ class _DownloadProgressContent extends ConsumerWidget {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 背が高い (1×2) なら 1 件ずつ、1×1 なら全体だけを出す
-              final detailed = constraints.maxHeight >= 150;
+              // 横長 (2×1) なら 1 件ずつ、1×1 なら全体だけを出す。
+              // 高さは 1 行ぶんで共通なので、幅で見分ける。
+              final detailed = constraints.maxWidth >= 200;
               if (!detailed) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1388,7 +1592,7 @@ class _DownloadProgressContent extends ConsumerWidget {
                 );
               }
 
-              // 縦長: 入る件数だけ行を出し、残りは数字で示す
+              // 横長: 入る件数だけ行を出し、残りは数字で示す
               const rowHeight = 27.0;
               var capacity = (constraints.maxHeight / rowHeight).floor();
               if (failedCount > 0) capacity -= 1;
@@ -1515,7 +1719,16 @@ class _AddHomeWidgetSheet extends ConsumerWidget {
 /// 1 種類につき 1 行。サイズはスイッチで切り替え、プレビューも連動させる。
 /// プレビューはホーム画面と同じ寸法で**実際のウィジェットを描画**する。
 /// モック画像を用意しないので、ウィジェット側を変更してもプレビューがずれない。
-class _GalleryEntry extends ConsumerStatefulWidget {
+/// ウィジェット追加シートの 1 行。
+///
+/// サイズのピルは「選択」ではなく「このサイズで配置する」。
+/// 以前は選択してからプレビューをタップさせていたが、2 段目の操作が
+/// 必要なことを示す手がかりが無く、さらに同じタップが追加 / サイズ変更 /
+/// 削除に化けていた (配置済みを現在のサイズでタップすると無確認で消えた)。
+///
+/// 塗られたピルは「いまホーム画面に出ているサイズ」を表す。
+/// そのため状態を持たず、配置状況からすべて導く。
+class _GalleryEntry extends ConsumerWidget {
   final HomeWidgetKind kind;
   final List<(int, int)> sizes;
   final double cellW;
@@ -1532,71 +1745,39 @@ class _GalleryEntry extends ConsumerStatefulWidget {
     required this.placed,
   });
 
-  @override
-  ConsumerState<_GalleryEntry> createState() => _GalleryEntryState();
-}
-
-class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
-  /// 選択中のサイズ。
-  ///
-  /// 配置状態が変わるたびに初期化し直すと利用者の選択と喧嘩するので、
-  /// 初回だけ「配置済みのサイズ」に合わせ、以降はこの行の状態として持つ。
-  late (int, int) _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    final placed = widget.placed;
-    if (placed != null) {
-      for (final size in widget.sizes) {
-        if (size.$1 == placed.span && size.$2 == placed.rows) {
-          _selected = size;
-          return;
-        }
-      }
+  /// プレビューに出すサイズ。
+  /// 配置済みならその大きさ、未配置なら先頭の候補。
+  (int, int) get _previewSize {
+    final current = placed;
+    if (current == null) return sizes.first;
+    for (final size in sizes) {
+      if (size.$1 == current.span && size.$2 == current.rows) return size;
     }
-    _selected = widget.sizes.first;
+    return sizes.first;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = L10n.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final notifier = ref.read(homeWidgetsProvider.notifier);
-    final placed = widget.placed;
-    final (w, h) = _selected;
-    final isCurrent =
-        placed != null && placed.span == w && placed.rows == h;
+    final (w, h) = _previewSize;
+    final isPlaced = placed != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 実物と同じ見た目のプレビュー。タップで配置 / サイズ変更 / 取り外し。
-          GestureDetector(
-            // 子を IgnorePointer にしているため、既定の deferToChild では
-            // ヒットテストに応答する子がおらず onTap が発火しない。
-            // カード全体で受け取るよう opaque を明示する。
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              if (isCurrent) {
-                notifier.remove(widget.kind);
-              } else if (placed != null) {
-                notifier.setSize(widget.kind, w, h);
-              } else {
-                notifier.add(widget.kind, span: w, rows: h);
-              }
-            },
-            child: SizedBox(
-              width: widget.cellW * w + widget.spacing * (w - 1),
-              height: widget.cellH * h + widget.spacing * (h - 1),
-              child: IgnorePointer(
-                // プレビュー内の操作は無効にし、タップは配置操作に使う
-                child: _HomeWidgetCard(
-                  item: HomeWidgetItem(widget.kind, span: w, rows: h),
-                  editing: false,
-                  onRemove: () {},
-                ),
+          SizedBox(
+            width: cellW * w + spacing * (w - 1),
+            height: cellH * h + spacing * (h - 1),
+            child: IgnorePointer(
+              // 見本なので中の操作は無効にする。
+              // 外していると「続きから見る」等が実際に再生を始めてしまう。
+              child: _HomeWidgetCard(
+                item: HomeWidgetItem(kind, span: w, rows: h),
+                editing: false,
+                onRemove: () {},
               ),
             ),
           ),
@@ -1607,9 +1788,12 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
               Padding(
                 padding: const EdgeInsets.only(top: 1),
                 child: Icon(
-                  isCurrent ? Icons.check_circle : Icons.add_circle_outline,
+                  // 配置の有無だけで決める。
+                  // 選択サイズと比べていたため、ピルを変えた瞬間に
+                  // 配置済みのものが未配置の見た目になっていた。
+                  isPlaced ? Icons.check_circle : Icons.add_circle_outline,
                   size: 16,
-                  color: isCurrent
+                  color: isPlaced
                       ? cs.primary
                       : cs.onSurface.withValues(alpha: 0.5),
                 ),
@@ -1620,7 +1804,7 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      homeWidgetLabel(context, widget.kind),
+                      homeWidgetLabel(context, kind),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -1628,7 +1812,7 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      homeWidgetDescription(context, widget.kind),
+                      homeWidgetDescription(context, kind),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1639,11 +1823,35 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
                   ],
                 ),
               ),
-              // 選べるサイズが 1 つだけなら切り替えは出さない
-              if (widget.sizes.length > 1) ...[
-                const SizedBox(width: 8),
-                _sizeSwitch(cs),
-              ],
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // 候補が 1 つの種類は、ピルの代わりに「追加」を出す
+                  if (sizes.length > 1)
+                    _sizeSwitch(context, ref, cs)
+                  else if (!isPlaced)
+                    _actionButton(
+                      context,
+                      label: l.add,
+                      color: cs.primary,
+                      onTap: () => ref
+                          .read(homeWidgetsProvider.notifier)
+                          .add(kind, span: w, rows: h),
+                    ),
+                  // 取り外しは独立させる。
+                  // 追加と同じタップに相乗りしていたため誤って消えていた。
+                  if (isPlaced)
+                    _actionButton(
+                      context,
+                      label: l.home_widget_remove,
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                      onTap: () => ref
+                          .read(homeWidgetsProvider.notifier)
+                          .remove(kind),
+                    ),
+                ],
+              ),
             ],
           ),
         ],
@@ -1651,24 +1859,34 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
     );
   }
 
-  /// サイズ切り替え。数字だけなので各言語の文言追加は不要。
-  Widget _sizeSwitch(ColorScheme cs) {
+  /// サイズ切り替え。押した時点で配置 / サイズ変更まで行う。
+  /// 数字だけなので各言語の文言追加は不要。
+  Widget _sizeSwitch(BuildContext context, WidgetRef ref, ColorScheme cs) {
+    final current = placed;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final size in widget.sizes)
+        for (final size in sizes)
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: GestureDetector(
-              onTap: () => setState(() => _selected = size),
+              onTap: () {
+                final notifier = ref.read(homeWidgetsProvider.notifier);
+                if (current == null) {
+                  notifier.add(kind, span: size.$1, rows: size.$2);
+                } else {
+                  notifier.setSize(kind, size.$1, size.$2);
+                }
+              },
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: size == _selected ? cs.primary : Colors.transparent,
+                  // 塗りは「いま出ているサイズ」。未配置なら何も塗らない。
+                  color: _isApplied(size) ? cs.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: size == _selected
+                    color: _isApplied(size)
                         ? cs.primary
                         : cs.onSurface.withValues(alpha: 0.25),
                   ),
@@ -1678,7 +1896,7 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: size == _selected
+                    color: _isApplied(size)
                         ? Colors.white
                         : cs.onSurface.withValues(alpha: 0.7),
                   ),
@@ -1687,6 +1905,38 @@ class _GalleryEntryState extends ConsumerState<_GalleryEntry> {
             ),
           ),
       ],
+    );
+  }
+
+  bool _isApplied((int, int) size) {
+    final current = placed;
+    if (current == null) return false;
+    return current.span == size.$1 && current.rows == size.$2;
+  }
+
+  Widget _actionButton(
+    BuildContext context, {
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          // 文字だけだと当たりが小さいので余白で当たりを広げる
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

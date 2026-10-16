@@ -1789,4 +1789,13 @@ class L10nKo extends L10n {
   String detail_page_tag_placeholder(String name) {
     return '#${name}1 #${name}2 ...';
   }
+
+  @override
+  String get home_widget_remove => '제거';
+
+  @override
+  String get pro_detail_purchase_complete => 'Pro 구매가 완료되었습니다!';
+
+  @override
+  String get pro_detail_restart_message => 'Pro 기능이 활성화되었습니다.\n앱이 재시작됩니다.';
 }

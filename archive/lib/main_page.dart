@@ -145,7 +145,9 @@ class _MainPageState extends ConsumerState<MainPage>
         // ── 開始検知 (queued → downloading への遷移) ──
         if (t.status == DownloadStatus.downloading &&
             prevStatus != DownloadStatus.downloading) {
-          if (mounted) {
+          // 一括再ダウンロード (クラウド復元) は件数ぶん数えない。
+          // 利用者の操作は「復元」1 回なので、途中で何度も広告を挟まない。
+          if (mounted && !t.suppressStartAd) {
             DownloadAdService().maybeShowBeforeDownload(context);
           }
         }

@@ -593,5 +593,8 @@
   "settings_page_tag_name_n": "Tag {n}",
   "settings_page_display_names_saved": "Noms enregistrés",
   "detail_page_tag_multi": "{name} (# multiple)",
-  "detail_page_tag_placeholder": "#{name}1 #{name}2 ..."
+  "detail_page_tag_placeholder": "#{name}1 #{name}2 ...",
+  "home_widget_remove": "Retirer",
+  "pro_detail_purchase_complete": "Pro acheté avec succès !",
+  "pro_detail_restart_message": "Les fonctionnalités Pro ont été activées.\nL’application va redémarrer."
 }

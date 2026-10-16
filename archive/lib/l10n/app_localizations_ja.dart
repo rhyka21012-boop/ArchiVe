@@ -1790,4 +1790,13 @@ class L10nJa extends L10n {
   String detail_page_tag_placeholder(String name) {
     return '#${name}1 #${name}2 ...';
   }
+
+  @override
+  String get home_widget_remove => '取り外す';
+
+  @override
+  String get pro_detail_purchase_complete => 'Pro を購入しました！';
+
+  @override
+  String get pro_detail_restart_message => 'Pro の機能が有効になりました。\nアプリを再起動します。';
 }

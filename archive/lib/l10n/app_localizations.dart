@@ -3463,6 +3463,24 @@ abstract class L10n {
   /// In ja, this message translates to:
   /// **'#{name}1 #{name}2 ...'**
   String detail_page_tag_placeholder(String name);
+
+  /// No description provided for @home_widget_remove.
+  ///
+  /// In ja, this message translates to:
+  /// **'取り外す'**
+  String get home_widget_remove;
+
+  /// No description provided for @pro_detail_purchase_complete.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro を購入しました！'**
+  String get pro_detail_purchase_complete;
+
+  /// No description provided for @pro_detail_restart_message.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pro の機能が有効になりました。\nアプリを再起動します。'**
+  String get pro_detail_restart_message;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

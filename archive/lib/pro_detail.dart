@@ -190,8 +190,8 @@ class _ProPurchasePageState extends State<ProPurchasePage> {
           barrierDismissible: false,
           builder: (_) => AlertDialog(
             backgroundColor: colorScheme.secondary,
-            title: Text(L10n.of(context)!.premium_detail_purchase_complete),
-            content: Text(L10n.of(context)!.premium_detail_restart_message),
+            title: Text(L10n.of(context)!.pro_detail_purchase_complete),
+            content: Text(L10n.of(context)!.pro_detail_restart_message),
             actions: [
               TextButton(
                 style: ButtonStyle(
@@ -231,8 +231,8 @@ class _ProPurchasePageState extends State<ProPurchasePage> {
           barrierDismissible: false,
           builder: (_) => AlertDialog(
             backgroundColor: colorScheme.secondary,
-            title: Text(L10n.of(context)!.premium_detail_purchase_complete),
-            content: Text(L10n.of(context)!.premium_detail_restart_message),
+            title: Text(L10n.of(context)!.pro_detail_purchase_complete),
+            content: Text(L10n.of(context)!.pro_detail_restart_message),
             actions: [
               TextButton(
                 style: ButtonStyle(

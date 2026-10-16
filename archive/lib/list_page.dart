@@ -296,23 +296,26 @@ class ListPageState extends ConsumerState<ListPage>
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => GridPage(
-                    selectedItems: <String, List<String>>{},
-                    searchText: '',
-                    rating: spec.rating,
-                    listName: '',
-                    onDeleted: () async {
-                      await _loadLists();
-                    },
-                  ),
-                ),
-              );
-              await _loadLists();
-            },
+            // 並べ替え中は遷移させない (リストカードと同じ扱い)
+            onTap: _reorderMode
+                ? null
+                : () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GridPage(
+                          selectedItems: <String, List<String>>{},
+                          searchText: '',
+                          rating: spec.rating,
+                          listName: '',
+                          onDeleted: () async {
+                            await _loadLists();
+                          },
+                        ),
+                      ),
+                    );
+                    await _loadLists();
+                  },
             child: Padding(
               padding: EdgeInsets.fromLTRB(14, 10, _reorderMode ? 32 : 14, 10),
               child: Column(
